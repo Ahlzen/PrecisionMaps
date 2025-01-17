@@ -1,0 +1,90 @@
+﻿namespace MapLib.Geometry;
+
+/// <summary>
+/// 2D polygon. Immutable.
+/// </summary>
+public class Polygon : Line
+{
+    public Polygon(Coord[] coords) : base(coords) {
+        Validate();
+    }
+
+    public Polygon(IEnumerable<Coord> coords) : base(coords) {
+        Validate();
+    }
+
+    private void Validate()
+    {
+        if (Coords.Length < 3)
+            throw new ArgumentException("A polygon requires at least three coordinates", "coords");
+        if (Coords[0] != Coords[Coords.Length - 1])
+            throw new ArgumentException("First and last points must be the same", "coords");
+    }
+
+    public MultiPolygon AsMultiPolygon()
+        => new MultiPolygon(this);
+
+    public override Polygon Transform(Func<Coord, Coord> transformation)
+        => new Polygon(Coords.Select(transformation));
+
+    public override Polygon Reverse()
+        => new Polygon(Coords.Reverse());
+
+    public new MultiPolygon Offset(double d)
+        => AsMultiPolygon().Offset(d);
+
+    #region Operations and properties
+
+    /// <summary>
+    /// Returns the area of the polygon (positive if CCW, negative if CW).
+    /// </summary>
+    /// <remarks>
+    /// This algorithm works for both convex and concave
+    /// polygons, as well as overlapping polygons.
+    /// Based on https://stackoverflow.com/questions/1165647/how-to-determine-if-a-list-of-polygon-points-are-in-clockwise-order/1180256#1180256
+    /// </remarks>
+    public double Area {
+        get {
+            if (_area == null) {
+                double sum = 0;
+                for (int n = 0; n < Coords.Length - 1; n++)
+                    sum += (Coords[n + 1].X - Coords[n].X) * (Coords[n + 1].Y + Coords[n].Y);
+                _area = sum / 2.0;
+            }
+            return -_area.Value; // invert since outer is CCW
+        }
+    }
+    private double? _area; // cached value
+
+    /// <summary>
+    /// Returns the winding of the polygon (true if CW, false if CCW).
+    /// </summary>
+    public bool IsClockwise => Area < 0;
+
+    /// <summary>
+    /// Returns the winding of the polygon (false if CW, true if CCW).
+    /// </summary>
+    public bool IsCounterClockwise => Area > 0;
+
+    #endregion
+
+    #region Static primitive factory methods
+
+    public static Polygon CreateCircle(Coord center, double radius,
+        int pointsPerRev = DEFAULT_POINTS_PER_REVOLUTION)
+    {
+        Coord[] coords = new Coord[pointsPerRev+1];
+        double radsPerPoint = 2.0 * Math.PI / pointsPerRev;
+        double angle = 0;
+        for (int p = 0; p < pointsPerRev; p++) {
+            coords[p] = new Coord(
+                center.X + Math.Sin(angle)*radius,
+                center.Y + Math.Cos(angle)*radius);
+            angle += radsPerPoint;
+        }
+        coords[pointsPerRev] = coords[0];
+        return new Polygon(coords);
+    }
+
+    #endregion
+}

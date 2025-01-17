@@ -1,0 +1,16 @@
+﻿Coordinate system
+=================
+Origin at bottom left
+
+^ Y
+|
+o -> X
+
+
+Polygons
+========
+Outer polygons: CCW, holes: CW
+(Simple Features/WKT/GML/KML: outer CCW, holes CW)
+(GeoJSON: outer CCW, innter CW)
+(ESRI Shapefile: outer CW, holes CCW)
+(TopoJSON: outer CW, inner CCW)
