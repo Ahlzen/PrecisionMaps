@@ -7,11 +7,10 @@ namespace MapLib.Geometry;
 /// </summary>
 public class MultiPoint : Shape, IEnumerable<Coord>
 {
-    // 
     public Coord[] Coords { get; }
 
     public MultiPoint(Coord coord) {
-        Coords = new Coord[] { coord };
+        Coords = [coord];
     }
 
     public MultiPoint(Coord[] coords) {
@@ -23,7 +22,7 @@ public class MultiPoint : Shape, IEnumerable<Coord>
     }
 
     public MultiPoint(Point point) {
-        Coords = new Coord[] { point.Coord };
+        Coords = [point.Coord];
     }
 
     public MultiPoint(IEnumerable<Point> points) {

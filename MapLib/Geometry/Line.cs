@@ -1,6 +1,4 @@
-﻿using MapLib.Geometry.Helpers;
-
-namespace MapLib.Geometry;
+﻿namespace MapLib.Geometry;
 
 /// <summary>
 /// 2D (multi-point) line. Immutable.
@@ -51,7 +49,7 @@ public class Line : Shape
     public virtual Line Offset(double d)
     {
         // TEST CODE
-        // TODO: user clipper
+        // TODO: use clipper
 
         if (d == 0) return this;
 
@@ -81,22 +79,6 @@ public class Line : Shape
 
     public override MultiPolygon Buffer(double radius)
         => AsMultiLine().Buffer(radius);
-    //{
-        //double scale = ClipperUtils.GetScale(radius, this);
-            
-        //// Convert to polygon with IntPoints
-        //List<IntPoint> inPoints = this.ToIntPoints(scale, true);
-        //List<List<IntPoint>> inPolys = new List<List<IntPoint>>(1);
-        //inPolys.Add(inPoints);
-
-        //// Perform the offset
-        //List<List<IntPoint>> outPolyPoints =
-        //    Clipper.OffsetPolygons(inPolys, (long)(radius * scale));
-
-        //// Convert back to fp coords
-        //var mp = outPolyPoints.ToMultiPolygon(scale);
-        //return mp;
-    //}
 
     /// <summary>
     /// Finds intersection between lines a1-a2 and b1-b2.

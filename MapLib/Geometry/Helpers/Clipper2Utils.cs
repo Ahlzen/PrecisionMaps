@@ -15,22 +15,10 @@ internal static class Clipper2Utils
         }
         return pathD;
     }
-
     public static PathD ToPathD(this Polygon polygon)
         => ToPathD(polygon.Coords);
-
     public static PathD ToPathD(this Line line)
         => ToPathD(line.Coords);
-
-    //{
-    //PathD pathD = new PathD(polygon.Coords.Length);
-    //foreach (Coord coord in polygon.Coords)
-    //{
-    //    pathD.Add(new PointD(coord.X, coord.Y));
-    //}
-    //return pathD;
-    //}
-
 
     public static PathsD ToPathsD(this Line[] lines)
     {
@@ -42,34 +30,10 @@ internal static class Clipper2Utils
         }
         return pathsD;
     }
-
     public static PathsD ToPathsD(this MultiPolygon multiPolygon)
         => ToPathsD(multiPolygon.Polygons);
-
     public static PathsD ToPathsD(this MultiLine multiLine)
         => ToPathsD(multiLine.Lines);
-
-    //public static PathsD ToPathsD(this MultiPolygon multiPolygon)
-    //{
-    //    PathsD pathsD = new PathsD(multiPolygon.Count);
-    //    foreach (Polygon polygon in multiPolygon)
-    //    {
-    //        PathD pathD = ToPathD(polygon);
-    //        pathsD.Add(pathD);
-    //    }
-    //    return pathsD;
-    //}
-
-    //public static PathsD ToPathsD(this MultiLine multiLine)
-    //{
-    //    PathsD pathsD = new PathsD(multiLine.Count);
-    //    foreach (Polygon line in multiLine)
-    //    {
-    //        PathD pathD = ToPathD(line);
-    //        pathsD.Add(pathD);
-    //    }
-    //    return pathsD;
-    //}
 
 
     // Clipper to geometry
@@ -81,19 +45,10 @@ internal static class Clipper2Utils
             coords[i] = new Coord(path[i].x, path[i].y);
         return coords;
     }
-
     public static Polygon ToPolygon(this PathD path)
         => new Polygon(ToCoords(path));
-
     public static Line ToLine(this PathD path)
         => new Line(ToCoords(path));
-
-    //{
-    //    var coords = new Coord[path.Count];
-    //    for (int i = 0; i < coords.Length; i++)
-    //        coords[i] = new Coord(path[i].x, path[i].y);
-    //    return new Polygon(coords);
-    //}
 
     public static Polygon[] ToPolygons(this PathsD paths)
     {
@@ -102,28 +57,10 @@ internal static class Clipper2Utils
             polygons[p] = paths[p].ToPolygon();
         return polygons;
     }
-
     public static MultiPolygon ToMultiPolygon(this PathsD paths)
         => new MultiPolygon(ToPolygons(paths));
-
     public static MultiLine ToMultiLine(this PathsD paths)
         => new MultiLine(ToPolygons(paths));
-
-    //public static MultiPolygon ToMultiPolygon(this PathsD paths)
-    //{
-    //    var polygons = new Polygon[paths.Count];
-    //    for (int p = 0; p < polygons.Length; p++)
-    //        polygons[p] = paths[p].ToPolygon();
-    //    return new MultiPolygon(polygons);
-    //}
-
-    //public static MultiPolygon ToMultiLine(this PathsD paths)
-    //{
-    //    var polygons = new Polygon[paths.Count];
-    //    for (int p = 0; p < polygons.Length; p++)
-    //        polygons[p] = paths[p].ToPolygon();
-    //    return new MultiPolygon(polygons);
-    //}
 
 
     /// <summary>

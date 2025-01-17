@@ -12,7 +12,7 @@ public class MultiLine : Shape, IEnumerable<Line>
     public Line[] Lines { get; }
 
     public MultiLine(Line line) {
-        Lines = new Line[] { line };
+        Lines = [line];
     }
 
     public MultiLine(Line[] lines) {
@@ -57,12 +57,5 @@ public class MultiLine : Shape, IEnumerable<Line>
         PathsD paths = this.ToPathsD();
         PathsD result = Clipper.InflatePaths(paths, radius, JoinType.Round, EndType.Round);
         return result.ToMultiPolygon();
-
-        //double scale = ClipperUtils.GetScale(radius, this);
-        //List<List<IntPoint>> inPolys = this.ToIntPoints(scale, true);
-        //List<List<IntPoint>> outPolyPoints =
-        //    Clipper.OffsetPolygons(inPolys, (long)(radius * scale));
-        //return outPolyPoints.ToMultiPolygon(scale);
     }
-
 }

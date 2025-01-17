@@ -21,15 +21,15 @@ public struct Bounds
 
     public double Width => XMax - XMin;
     public double Height => YMax - YMin;
-    public Coord BottomLeft => new Coord(XMin, YMin);
-    public Coord BottomRight => new Coord(XMax, YMin);
-    public Coord TopLeft => new Coord(XMin, YMax);
-    public Coord TopRight => new Coord(XMax, YMax);
-    public Coord Center => new Coord(
+    public Coord BottomLeft => new(XMin, YMin);
+    public Coord BottomRight => new(XMax, YMin);
+    public Coord TopLeft => new(XMin, YMax);
+    public Coord TopRight => new(XMax, YMax);
+    public Coord Center => new(
         (XMax + XMin) * 0.5, (YMax + YMin) * 0.5);
 
     public Polygon AsPolygon() => new Polygon(
-        new Coord[] { (XMin, YMin), (XMin, YMax), (XMax, YMax), (XMax, YMin), (XMin, YMin) });
+        [(XMin, YMin), (XMin, YMax), (XMax, YMax), (XMax, YMin), (XMin, YMin)]);
 
     public static Bounds FromCoords(IEnumerable<Coord> srcCoords)
     {
