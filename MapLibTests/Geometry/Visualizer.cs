@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using MapLib.Geometry;
 using System.Runtime.Versioning;
+using System.Data.Common;
 
 namespace MapLib.Tests.Geometry;
 
@@ -45,6 +46,7 @@ internal class Visualizer
             FileName = filename,
             UseShellExecute = true
         });
+        Debug.WriteLine(filename);
     }
 
     internal void Save(string filename) {

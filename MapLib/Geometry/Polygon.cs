@@ -71,10 +71,13 @@ public class Polygon : Line
     #region Static primitive factory methods
 
     public static Polygon CreateCircle(Coord center, double radius,
-        int pointsPerRev = DEFAULT_POINTS_PER_REVOLUTION)
+        int pointsPerRev = DEFAULT_POINTS_PER_REVOLUTION,
+        bool outer = true)
     {
         Coord[] coords = new Coord[pointsPerRev+1];
         double radsPerPoint = 2.0 * Math.PI / pointsPerRev;
+        if (outer)
+            radsPerPoint *= -1; // this ensures CCW outer polygon
         double angle = 0;
         for (int p = 0; p < pointsPerRev; p++) {
             coords[p] = new Coord(

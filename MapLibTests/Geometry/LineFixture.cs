@@ -9,21 +9,21 @@ namespace MapLib.Tests.Geometry;
 internal class LineFixture
 {
     // squiggly line (for testing offsetting)
-    private static readonly Line TestLine1 = new Line(new Coord[] {
-            (1,1), (5,3), (6,2), (7,5), (8,-2)});
+    private static readonly Line TestLine1 = new Line([
+            (1,1), (5,3), (6,2), (7,5), (8,-2)]);
 
     // intersecting lines
-    private static readonly Line l1 = new Line(new Coord[] { (1, 1), (4, 3) });
-    private static readonly Line l2 = new Line(new Coord[] { (1, 2), (6, 3) });
-    private static readonly Line l3 = new Line(new Coord[] { (1.5, 0), (1.2, 4) });
+    private static readonly Line l1 = new Line([(1, 1), (4, 3)]);
+    private static readonly Line l2 = new Line([(1, 2), (6, 3)]);
+    private static readonly Line l3 = new Line([(1.5, 0), (1.2, 4)]);
 
     // parallel lines
-    private static readonly Line l4 = new Line(new Coord[] { (1, 1), (6, 3) });
-    private static readonly Line l5 = new Line(new Coord[] { (1, 2), (6, 4) });
+    private static readonly Line l4 = new Line([(1, 1), (6, 3)]);
+    private static readonly Line l5 = new Line([(1, 2), (6, 4)]);
 
     // non-parallel disjoint
-    private static readonly Line l6 = new Line(new Coord[] { (1, 3), (6, 4) });
-    private static readonly Line l7 = new Line(new Coord[] { (1, 1), (6, 3) });
+    private static readonly Line l6 = new Line([(1, 3), (6, 4)]);
+    private static readonly Line l7 = new Line([(1, 1), (6, 3)]);
 
     [Test]
     public void TestOffsetLine() {

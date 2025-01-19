@@ -38,17 +38,27 @@ internal static class Clipper2Utils
 
     // Clipper to geometry
 
-    public static Coord[] ToCoords(this PathD path)
+    /// <param name="isPolygon">
+    /// If true, this method ensure that the first and last points
+    /// are equal (Clipper doesn't guarantee this)
+    /// </param>
+    public static Coord[] ToCoords(this PathD path, bool isPolygon)
     {
-        var coords = new Coord[path.Count];
-        for (int i = 0; i < coords.Length; i++)
+        // If this is a polygon, we require start and end point to be equal
+        bool needsEndPoint = isPolygon && path[0] != path[^1];
+        int coordCount = path.Count + (needsEndPoint ? 1 : 0);
+        var coords = new Coord[coordCount];
+        for (int i = 0; i < path.Count; i++)
             coords[i] = new Coord(path[i].x, path[i].y);
+        if (needsEndPoint)
+            coords[^1] = coords[0];
         return coords;
     }
     public static Polygon ToPolygon(this PathD path)
-        => new Polygon(ToCoords(path));
+        => new Polygon(ToCoords(path, true));
     public static Line ToLine(this PathD path)
-        => new Line(ToCoords(path));
+        => new Line(ToCoords(path, false));
+
 
     public static Polygon[] ToPolygons(this PathsD paths)
     {
@@ -57,10 +67,18 @@ internal static class Clipper2Utils
             polygons[p] = paths[p].ToPolygon();
         return polygons;
     }
+
+    public static Line[] ToLines(this PathsD paths)
+    {
+        var lines = new Line[paths.Count];
+        for (int p = 0; p < paths.Count; p++)
+            lines[p] = paths[p].ToLine();
+        return lines;
+    }
     public static MultiPolygon ToMultiPolygon(this PathsD paths)
         => new MultiPolygon(ToPolygons(paths));
     public static MultiLine ToMultiLine(this PathsD paths)
-        => new MultiLine(ToPolygons(paths));
+        => new MultiLine(ToLines(paths));
 
 
     /// <summary>

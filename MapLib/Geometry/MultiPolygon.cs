@@ -56,7 +56,7 @@ public class MultiPolygon : Shape, IEnumerable<Polygon>
 
     public MultiPolygon Offset(double d) {
         PathsD paths = this.ToPathsD();
-        PathsD result = Clipper.InflatePaths(paths, d, JoinType.Round, EndType.Round);
+        PathsD result = Clipper.InflatePaths(paths, d, JoinType.Round, EndType.Polygon);
         return result.ToMultiPolygon();
     }
 
