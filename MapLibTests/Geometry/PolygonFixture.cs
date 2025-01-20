@@ -1,8 +1,4 @@
-﻿using NUnit.Framework;
-using MapLib.Geometry;
-using System.Runtime.Versioning;
-
-namespace MapLib.Tests.Geometry;
+﻿namespace MapLib.Tests.Geometry;
 
 [TestFixture]
 [SupportedOSPlatform("windows")]

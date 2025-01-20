@@ -1,6 +1,4 @@
-﻿using System.Collections;
-
-namespace MapLib.Geometry;
+﻿namespace MapLib.Geometry;
 
 /// <summary>
 /// Collection of points. Immutable.

@@ -40,11 +40,6 @@ public class Point : Shape
 
     #endregion
 
-    //public static Polygon CreateBufferPolygon(
-    //    Coord c, double radius, TagDictionary? tags)
-    //    => Polygon.CreateCircle(c, radius, tags,
-    //        // TODO
-    //        DEFAULT_POINTS_PER_REVOLUTION);
     public static Coord[] CreateBuffer(Coord c, double radius)
         => Coord.CreateCircle(c, radius, DEFAULT_POINTS_PER_REVOLUTION);
 }

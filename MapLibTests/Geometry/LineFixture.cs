@@ -60,7 +60,6 @@ internal class LineFixture
         Coord intersection =
             Line.LineSegmentIntersection(
                 l4[0], l4[1], l5[0], l5[1]);
-        //Assert.AreEqual(Coord.None, intersection);
         Assert.That(intersection, Is.EqualTo(Coord.None));
     }
 
@@ -69,7 +68,6 @@ internal class LineFixture
         Coord intersection =
             Line.LineSegmentIntersection(
                 l6[0], l6[1], l7[0], l7[1]);
-        //Assert.AreEqual(Coord.None, intersection);
         Assert.That(intersection, Is.EqualTo(Coord.None));
     }
 }
