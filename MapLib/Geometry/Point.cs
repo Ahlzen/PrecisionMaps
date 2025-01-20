@@ -7,20 +7,20 @@ public class Point : Shape
 {
     public Coord Coord { get; }
 
-    public Point(Coord coord)
+    public Point(Coord coord, TagDictionary? tags) : base(tags)
     {
         Coord = coord;
     }
-    public Point(double x, double y)
+    public Point(double x, double y, TagDictionary? tags) : base(tags)
     {
         Coord = new Coord(x, y);
     }
 
     public static implicit operator Coord(Point p) => p.Coord;
-    public static implicit operator Point(Coord c) => new Point(c);
+    public static implicit operator Point(Coord c) => new Point(c, null);
 
     public Point Transform(Func<Coord, Coord> transformation)
-        => new Point(transformation(Coord));
+        => new Point(transformation(Coord), Tags);
 
     public override Bounds GetBounds()
         => new Bounds(Coord.X, Coord.X, Coord.Y, Coord.Y);
@@ -36,16 +36,15 @@ public class Point : Shape
     #region Operations
 
     public override MultiPolygon Buffer(double radius)
-    {
-        return CreateBufferPolygon(Coord, radius)
-            .AsMultiPolygon();
-    }
+        => new MultiPolygon([CreateBuffer(Coord, radius)], Tags);
 
     #endregion
 
-    public static Polygon CreateBufferPolygon(
-        Coord c, double radius)
-        => Polygon.CreateCircle(c, radius,
-            // TODO
-            DEFAULT_POINTS_PER_REVOLUTION);
+    //public static Polygon CreateBufferPolygon(
+    //    Coord c, double radius, TagDictionary? tags)
+    //    => Polygon.CreateCircle(c, radius, tags,
+    //        // TODO
+    //        DEFAULT_POINTS_PER_REVOLUTION);
+    public static Coord[] CreateBuffer(Coord c, double radius)
+        => Coord.CreateCircle(c, radius, DEFAULT_POINTS_PER_REVOLUTION);
 }

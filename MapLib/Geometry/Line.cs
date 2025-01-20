@@ -7,12 +7,12 @@ public class Line : Shape
 {
     public Coord[] Coords { get; }
 
-    public Line(Coord[] coords)
+    public Line(Coord[] coords, TagDictionary? tags) : base(tags)
     {
         Coords = coords;
     }
 
-    public Line(IEnumerable<Coord> coords)
+    public Line(IEnumerable<Coord> coords, TagDictionary? tags) : base(tags)
     {
         Coords = coords.ToArray();
     }
@@ -34,13 +34,13 @@ public class Line : Shape
     #region Modifiers
 
     public virtual MultiLine AsMultiLine()
-        => new MultiLine(this);
+        => new MultiLine([Coords], Tags);
 
     public virtual Line Transform(Func<Coord, Coord> transformation)
-        => new Line(Coords.Select(transformation));
+        => new Line(Coords.Select(transformation), Tags);
 
     public virtual Line Reverse()
-        => new Line(Coords.Reverse());
+        => new Line(Coords.Reverse(), Tags);
 
     /// <summary>
     /// Offsets a line the given distance. Positive is right
@@ -62,7 +62,7 @@ public class Line : Shape
             if (c1 != lastCoord) coords.Add(c1); // connector (if applicable)
             coords.Add(c2);
         }
-        return new Line(coords);
+        return new Line(coords, Tags);
     }
 
     private Coord ComputeOffset(Coord c1, Coord c2, double distance)

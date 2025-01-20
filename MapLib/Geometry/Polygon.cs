@@ -5,11 +5,11 @@
 /// </summary>
 public class Polygon : Line
 {
-    public Polygon(Coord[] coords) : base(coords) {
+    public Polygon(Coord[] coords, TagDictionary? tags) : base(coords, tags) {
         Validate();
     }
 
-    public Polygon(IEnumerable<Coord> coords) : base(coords) {
+    public Polygon(IEnumerable<Coord> coords, TagDictionary? tags) : base(coords, tags) {
         Validate();
     }
 
@@ -22,13 +22,13 @@ public class Polygon : Line
     }
 
     public MultiPolygon AsMultiPolygon()
-        => new MultiPolygon(this);
+        => new MultiPolygon(this, Tags);
 
     public override Polygon Transform(Func<Coord, Coord> transformation)
-        => new Polygon(Coords.Select(transformation));
+        => new Polygon(Coords.Select(transformation), Tags);
 
     public override Polygon Reverse()
-        => new Polygon(Coords.Reverse());
+        => new Polygon(Coords.Reverse(), Tags);
 
     public new MultiPolygon Offset(double d)
         => AsMultiPolygon().Offset(d);
@@ -71,22 +71,12 @@ public class Polygon : Line
     #region Static primitive factory methods
 
     public static Polygon CreateCircle(Coord center, double radius,
-        int pointsPerRev = DEFAULT_POINTS_PER_REVOLUTION,
+        TagDictionary? tags,
+        int pointsPerRevolution = DEFAULT_POINTS_PER_REVOLUTION,
         bool outer = true)
     {
-        Coord[] coords = new Coord[pointsPerRev+1];
-        double radsPerPoint = 2.0 * Math.PI / pointsPerRev;
-        if (outer)
-            radsPerPoint *= -1; // this ensures CCW outer polygon
-        double angle = 0;
-        for (int p = 0; p < pointsPerRev; p++) {
-            coords[p] = new Coord(
-                center.X + Math.Sin(angle)*radius,
-                center.Y + Math.Cos(angle)*radius);
-            angle += radsPerPoint;
-        }
-        coords[pointsPerRev] = coords[0];
-        return new Polygon(coords);
+        Coord[] coords = Coord.CreateCircle(center, radius, pointsPerRevolution, outer);
+        return new Polygon(coords, tags);
     }
 
     #endregion

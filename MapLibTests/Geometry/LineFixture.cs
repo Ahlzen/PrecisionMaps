@@ -1,29 +1,25 @@
-﻿using NUnit.Framework;
-using MapLib.Geometry;
-using System.Runtime.Versioning;
-
-namespace MapLib.Tests.Geometry;
+﻿namespace MapLib.Tests.Geometry;
 
 [TestFixture]
 [SupportedOSPlatform("windows")]
 internal class LineFixture
 {
     // squiggly line (for testing offsetting)
-    private static readonly Line TestLine1 = new Line([
-            (1,1), (5,3), (6,2), (7,5), (8,-2)]);
+    private static readonly Line TestLine1 =
+        new Line([(1,1), (5,3), (6,2), (7,5), (8,-2)], null);
 
     // intersecting lines
-    private static readonly Line l1 = new Line([(1, 1), (4, 3)]);
-    private static readonly Line l2 = new Line([(1, 2), (6, 3)]);
-    private static readonly Line l3 = new Line([(1.5, 0), (1.2, 4)]);
+    private static readonly Line l1 = new Line([(1, 1), (4, 3)], null);
+    private static readonly Line l2 = new Line([(1, 2), (6, 3)], null);
+    private static readonly Line l3 = new Line([(1.5, 0), (1.2, 4)], null);
 
     // parallel lines
-    private static readonly Line l4 = new Line([(1, 1), (6, 3)]);
-    private static readonly Line l5 = new Line([(1, 2), (6, 4)]);
+    private static readonly Line l4 = new Line([(1, 1), (6, 3)], null);
+    private static readonly Line l5 = new Line([(1, 2), (6, 4)], null);
 
     // non-parallel disjoint
-    private static readonly Line l6 = new Line([(1, 3), (6, 4)]);
-    private static readonly Line l7 = new Line([(1, 1), (6, 3)]);
+    private static readonly Line l6 = new Line([(1, 3), (6, 4)], null);
+    private static readonly Line l7 = new Line([(1, 1), (6, 3)], null);
 
     [Test]
     public void TestOffsetLine() {
@@ -43,7 +39,7 @@ internal class LineFixture
 
     [Test]
     public void TestBufferMultiLine() {
-        var ml = new MultiLine(new[] { l1, l2, l3 });
+        var ml = new MultiLine(new[] { l1, l2, l3 }, null);
         MultiPolygon buffer1 = ml.Buffer(0.1);
         MultiPolygon buffer2 = ml.Buffer(2);
         Visualizer.RenderAndShow(800, 500,

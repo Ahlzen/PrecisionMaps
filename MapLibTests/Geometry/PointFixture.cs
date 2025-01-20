@@ -8,23 +8,23 @@ namespace MapLib.Tests.Geometry;
 [SupportedOSPlatform("windows")]
 public class PointFixture
 {
-    private List<Point> _testPoints = null!; // initialized in SetUp
+    private List<Coord> _testCoords = null!; // initialized in SetUp
     private MultiPoint _testMultiPoint = null!; // initialized in SetUp
 
     [SetUp]
     public void SetUp()
     {
         Random random = new Random(12345); // use known seed for predictable points
-        _testPoints = new List<Point>(
-            Enumerable.Range(1, 50).Select(n => new Point(
+        _testCoords = new List<Coord>(
+            Enumerable.Range(1, 50).Select(n => new Coord(
                 random.NextDouble() * 20 - 10,
                 random.NextDouble() * 20 - 10)));
-        _testMultiPoint = new MultiPoint(_testPoints);
+        _testMultiPoint = new MultiPoint(_testCoords, null);
     }
 
     [Test]
     public void TestPoints_Show() {
-        Visualizer.RenderAndShow(800, 800, _testPoints.ToArray());
+        Visualizer.RenderAndShow(800, 800, _testCoords.ToArray());
     }
 
     [Test]

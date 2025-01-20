@@ -29,7 +29,7 @@ public struct Bounds
         (XMax + XMin) * 0.5, (YMax + YMin) * 0.5);
 
     public Polygon AsPolygon() => new Polygon(
-        [(XMin, YMin), (XMin, YMax), (XMax, YMax), (XMax, YMin), (XMin, YMin)]);
+        [(XMin, YMin), (XMin, YMax), (XMax, YMax), (XMax, YMin), (XMin, YMin)], null);
 
     public static Bounds FromCoords(IEnumerable<Coord> srcCoords)
     {

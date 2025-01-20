@@ -20,10 +20,20 @@ internal static class Clipper2Utils
     public static PathD ToPathD(this Line line)
         => ToPathD(line.Coords);
 
-    public static PathsD ToPathsD(this Line[] lines)
+    //public static PathsD ToPathsD(this Line[] lines)
+    //{
+    //    PathsD pathsD = new PathsD(lines.Length);
+    //    foreach (Line line in lines)
+    //    {
+    //        PathD pathD = ToPathD(line);
+    //        pathsD.Add(pathD);
+    //    }
+    //    return pathsD;
+    //}
+    public static PathsD ToPathsD(this Coord[][] lines)
     {
         PathsD pathsD = new PathsD(lines.Length);
-        foreach (Line line in lines)
+        foreach (Coord[] line in lines)
         {
             PathD pathD = ToPathD(line);
             pathsD.Add(pathD);
@@ -31,9 +41,9 @@ internal static class Clipper2Utils
         return pathsD;
     }
     public static PathsD ToPathsD(this MultiPolygon multiPolygon)
-        => ToPathsD(multiPolygon.Polygons);
+        => ToPathsD(multiPolygon.Coords);
     public static PathsD ToPathsD(this MultiLine multiLine)
-        => ToPathsD(multiLine.Lines);
+        => ToPathsD(multiLine.Coords);
 
 
     // Clipper to geometry
@@ -54,31 +64,42 @@ internal static class Clipper2Utils
             coords[^1] = coords[0];
         return coords;
     }
-    public static Polygon ToPolygon(this PathD path)
-        => new Polygon(ToCoords(path, true));
-    public static Line ToLine(this PathD path)
-        => new Line(ToCoords(path, false));
+    public static Polygon ToPolygon(this PathD path, TagDictionary? tags)
+        => new Polygon(ToCoords(path, true), tags);
+    public static Line ToLine(this PathD path, TagDictionary? tags)
+        => new Line(ToCoords(path, false), tags);
 
 
-    public static Polygon[] ToPolygons(this PathsD paths)
+    //public static Polygon[] ToPolygons(this PathsD paths, TagDictionary? tags)
+    //{
+    //    var polygons = new Polygon[paths.Count];
+    //    for (int p = 0; p < polygons.Length; p++)
+    //        polygons[p] = paths[p].ToPolygon(tags);
+    //    return polygons;
+    //}
+    //public static Line[] ToLines(this PathsD paths, TagDictionary? tags)
+    //{
+    //    var lines = new Line[paths.Count];
+    //    for (int p = 0; p < paths.Count; p++)
+    //        lines[p] = paths[p].ToLine(tags);
+    //    return lines;
+    //}
+    public static Coord[][] ToCoords(this PathsD paths, bool arePolygons)
     {
-        var polygons = new Polygon[paths.Count];
-        for (int p = 0; p < polygons.Length; p++)
-            polygons[p] = paths[p].ToPolygon();
-        return polygons;
+        List<Coord[]> coords = new List<Coord[]>(paths.Count);
+        //Coord[][] coords = new Coord[][paths.Count];
+        //for (int p = 0; p < paths.Count; p++)
+        //polygons[p] = paths[p].ToPolygon(tags);
+        foreach (PathD path in paths)
+            coords.Add(ToCoords(path, arePolygons));
+        return coords.ToArray();
     }
-
-    public static Line[] ToLines(this PathsD paths)
-    {
-        var lines = new Line[paths.Count];
-        for (int p = 0; p < paths.Count; p++)
-            lines[p] = paths[p].ToLine();
-        return lines;
-    }
-    public static MultiPolygon ToMultiPolygon(this PathsD paths)
-        => new MultiPolygon(ToPolygons(paths));
-    public static MultiLine ToMultiLine(this PathsD paths)
-        => new MultiLine(ToLines(paths));
+    public static MultiPolygon ToMultiPolygon(this PathsD paths, TagDictionary? tags)
+        //=> new MultiPolygon(ToPolygons(paths, tags));
+        => new MultiPolygon(ToCoords(paths, true), tags);
+    public static MultiLine ToMultiLine(this PathsD paths, TagDictionary? tags)
+        //=> new MultiLine(ToLines(paths, tags));
+        => new MultiLine(ToCoords(paths, true), tags);
 
 
     /// <summary>

@@ -9,32 +9,37 @@ public class MultiPoint : Shape, IEnumerable<Coord>
 {
     public Coord[] Coords { get; }
 
-    public MultiPoint(Coord coord) {
+    public MultiPoint(Coord coord, TagDictionary? tags) : base(tags) {
         Coords = [coord];
     }
 
-    public MultiPoint(Coord[] coords) {
+    public MultiPoint(Coord[] coords, TagDictionary? tags) : base(tags)
+    {
         Coords = coords;
     }
         
-    public MultiPoint(IEnumerable<Coord> coords) {
-        Coords = Coords.ToArray();
+    public MultiPoint(IEnumerable<Coord> coords, TagDictionary? tags) : base(tags)
+    {
+        Coords = coords.ToArray();
     }
 
-    public MultiPoint(Point point) {
+    public MultiPoint(Point point, TagDictionary? tags) : base(tags)
+    {
         Coords = [point.Coord];
     }
 
-    public MultiPoint(IEnumerable<Point> points) {
+    public MultiPoint(IEnumerable<Point> points, TagDictionary? tags) : base(tags)
+    {
         Coords = points.Select(p => p.Coord).ToArray();
     }
 
-    public MultiPoint(IEnumerable<MultiPoint> multiPoints) {
+    public MultiPoint(IEnumerable<MultiPoint> multiPoints, TagDictionary? tags) : base(tags)
+    {
         Coords = multiPoints.SelectMany(mp => mp.Coords).ToArray();
     }
 
     public virtual MultiPoint Transform(Func<Coord, Coord> transformation)
-        => new MultiPoint(Coords.Select(c => transformation(c)));
+        => new MultiPoint(Coords.Select(c => transformation(c)), Tags);
 
     public override Coord GetCenter()
         => GetBounds().Center;
@@ -61,7 +66,7 @@ public class MultiPoint : Shape, IEnumerable<Coord>
 
     public override MultiPolygon Buffer(double radius) {
         var mp = new MultiPolygon(
-            Coords.Select(c => Point.CreateBufferPolygon(c, radius)));
+            Coords.Select(c => Point.CreateBuffer(c, radius)).ToArray(), Tags);
         return mp.Merge();
     }
 }

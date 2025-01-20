@@ -76,4 +76,28 @@ public struct Coord : IEquatable<Coord>
 
     public static Coord None =
         new Coord(double.MinValue, double.MinValue);
+
+    #region Static primitive factory methods
+
+    public static Coord[] CreateCircle(Coord center, double radius,
+        int pointsPerRevolution = Shape.DEFAULT_POINTS_PER_REVOLUTION,
+        bool outer = true)
+    {
+        Coord[] coords = new Coord[pointsPerRevolution + 1];
+        double radsPerPoint = 2.0 * Math.PI / pointsPerRevolution;
+        if (outer)
+            radsPerPoint *= -1; // this ensures CCW outer polygon
+        double angle = 0;
+        for (int p = 0; p < pointsPerRevolution; p++)
+        {
+            coords[p] = new Coord(
+                center.X + Math.Sin(angle) * radius,
+                center.Y + Math.Cos(angle) * radius);
+            angle += radsPerPoint;
+        }
+        coords[pointsPerRevolution] = coords[0];
+        return coords;
+    }
+
+    #endregion
 }

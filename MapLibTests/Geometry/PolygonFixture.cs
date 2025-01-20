@@ -11,21 +11,21 @@ internal class PolygonFixture
 
     [Test]
     public void TestValidPolygon() {
-        var p1 = new Polygon([(0, 0), (0, 1), (2, 1), (2, 0), (0, 0)]);
+        var p1 = new Polygon([(0, 0), (0, 1), (2, 1), (2, 0), (0, 0)], null);
     }
 
     [Test]
     public void TestInvalidPolygon()
     {
         // Last point must be same as first point
-        Assert.Throws<ArgumentException>(() =>
-            new Polygon([(0, 0), (0, 1), (2, 1), (2, 0)]));
+        Assert.Throws<ArgumentException>(() => new
+            Polygon([(0, 0), (0, 1), (2, 1), (2, 0)], null));
     }
 
     [Test]
     public void TestArea_Square()
     {
-        var p1cw = new Polygon([(0, 0), (0, 1), (2, 1), (2, 0), (0, 0)]);
+        var p1cw = new Polygon([(0, 0), (0, 1), (2, 1), (2, 0), (0, 0)], null);
         var p1ccw = p1cw.Reverse();
         Visualizer.RenderAndShow(800, 800, p1ccw);
 
@@ -39,7 +39,7 @@ internal class PolygonFixture
     }
 
     private static readonly Polygon TestPolygon1 =
-        new Polygon([(1,1),(8,-2),(7,5),(6,2),(5,3),(1,1)]);
+        new Polygon([(1,1),(8,-2),(7,5),(6,2),(5,3),(1,1)], null);
 
     [Test]
     public void TestOffset_Outward()
