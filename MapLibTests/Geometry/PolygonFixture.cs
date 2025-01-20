@@ -60,7 +60,7 @@ internal class PolygonFixture
 
         // Offset past when there's no area left:
         MultiPolygon offset4 = offset3.Offset(-0.5);
-        Assert.That(offset4, Has.Exactly(0).Items);
+        Assert.That(offset4.Coords, Has.Exactly(0).Items);
 
         Visualizer.RenderAndShow(800, 500, TestPolygon1,
             offset1, offset2, offset3);

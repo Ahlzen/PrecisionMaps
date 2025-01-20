@@ -196,19 +196,19 @@ internal class Visualizer
     private void Render(Graphics g, Color c, MapLib.Geometry.Point point, float diameterPixels = 6.0f)
         => RenderCoord(g, c, point.Coord, diameterPixels);
     
-    private void Render(Graphics g, Color c, MapLib.Geometry.Line line, float diameterPixels = 6.0f)
+    private void Render(Graphics g, Color c, MapLib.Geometry.Line line, float diameterPixels = 1.0f)
         => RenderCoordsAsLine(g, c, line.Coords, diameterPixels);
-    private void Render(Graphics g, Color c, MapLib.Geometry.Polygon polygon, float diameterPixels = 6.0f)
+    private void Render(Graphics g, Color c, MapLib.Geometry.Polygon polygon, float diameterPixels = 1.0f)
         => RenderCoordsAsLine(g, c, polygon.Coords, diameterPixels);
     private void Render(Graphics g, Color c, MapLib.Geometry.MultiPoint multiPoint, float diameterPixels = 6.0f) {
         foreach (Coord coord in multiPoint.Coords)
             RenderCoord(g, c, coord, diameterPixels);
     }
-    private void Render(Graphics g, Color c, MapLib.Geometry.MultiLine multiLine, float diameterPixels = 6.0f) {
+    private void Render(Graphics g, Color c, MapLib.Geometry.MultiLine multiLine, float diameterPixels = 1.0f) {
         foreach (Coord[] coords in multiLine.Coords)
             RenderCoordsAsLine(g, c, coords, diameterPixels);
     }
-    private void Render(Graphics g, Color c, MapLib.Geometry.MultiPolygon multiPolygon, float diameterPixels = 6.0f) {
+    private void Render(Graphics g, Color c, MapLib.Geometry.MultiPolygon multiPolygon, float diameterPixels = 1.0f) {
         foreach (Coord[] coords in multiPolygon.Coords)
             RenderCoordsAsLine(g, c, coords, diameterPixels);
     }
