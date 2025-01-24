@@ -1,4 +1,6 @@
-﻿namespace MapLib.FileFormats;
+﻿using System.IO;
+
+namespace MapLib.FileFormats;
 
 public interface IVectorFormatReader
 {

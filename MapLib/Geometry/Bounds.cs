@@ -55,6 +55,15 @@ public struct Bounds
         return bounds;
     }
 
+    //public static Bounds? FromBounds(IEnumerable<Bounds?> srcBounds)
+    //{
+    //    if (!srcBounds.Any()) return null;
+    //    Bounds? bounds = srcBounds.First();
+    //    foreach (var bound in srcBounds)
+    //        bounds += bound;
+    //    return bounds;
+    //}
+
     public static Bounds operator +(Bounds b1, Bounds b2)
     {
         return new Bounds(
@@ -64,8 +73,13 @@ public struct Bounds
             Math.Max(b1.YMax, b2.YMax));
     }
 
-    public static readonly Bounds Origin =
-        new Bounds(0, 0, 0, 0);
+    public static Bounds? operator +(Bounds? b1, Bounds? b2)
+    {
+        if (b1 == null && b2 == null) return null;
+        if (b1 == null) return b2;
+        if (b2 == null) return b1;
+        return b1.Value + b2.Value;
+    }
 
     public override string ToString() =>
         $"X: ({XMin}, {XMax}) Y: ({YMin}, {YMax})";
