@@ -24,7 +24,7 @@ public class VectorData : GeoData
 
         Lines = lines ?? new Line[0];
         MultiLines = multiLines ?? new MultiLine[0];
-        
+
         Polygons = polygons ?? new Polygon[0];
         MultiPolygons = multiPolygons ?? new MultiPolygon[0];
 

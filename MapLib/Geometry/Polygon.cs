@@ -3,6 +3,10 @@
 /// <summary>
 /// 2D polygon. Immutable.
 /// </summary>
+/// <remarks>
+/// Simple linear ring with no holes. If a polygon has holes, it
+/// is considered a MultiPolygon in our data model.
+/// </remarks>
 public class Polygon : Line
 {
     public Polygon(Coord[] coords, TagDictionary? tags) : base(coords, tags) {

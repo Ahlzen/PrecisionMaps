@@ -1,4 +1,4 @@
-﻿using MapLib.Gdal;
+﻿using MapLib.GdalSupport;
 using MapLib.Geometry;
 using System.Drawing;
 

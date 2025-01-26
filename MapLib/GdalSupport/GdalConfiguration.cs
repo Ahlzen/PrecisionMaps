@@ -27,13 +27,13 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
+using OSGeo.OGR;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using Ogr = OSGeo.OGR.Ogr;
 
-namespace MapLib.Gdal;
+namespace MapLib.GdalSupport;
 
 public static partial class GdalConfiguration
 {

@@ -15,8 +15,8 @@ public abstract class Shape
         new Dictionary<string, string>().AsReadOnly();
 
     public TagDictionary Tags { get; }
-
     public Shape(TagDictionary? tags) { Tags = tags ?? NoTags; }
+
 
     public abstract Coord GetCenter();
     public abstract Bounds GetBounds();

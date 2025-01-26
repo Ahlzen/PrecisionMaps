@@ -1,17 +1,18 @@
 ﻿using MapLib;
 using MapLib.FileFormats.Vector;
+using System.IO;
 
 namespace MapLibTests.FileFormats;
 
 [TestFixture]
-internal class OsmDataReaderFixture
+internal class OsmDataReaderFixture : BaseFixture
 {
     [Test]
     public void TestReadOsmData()
     {
         OsmDataReader reader = new();
-        Console.WriteLine(Environment.CurrentDirectory);
-        VectorData map = reader.ReadFile("../../../data/map.osm");
+        VectorData map = reader.ReadFile(Path.Join(TestDataPath, "map.osm"));
+
         Assert.That(map.Bounds.Width, Is.GreaterThan(0));
         Assert.That(map.Bounds.Height, Is.GreaterThan(0));
         Assert.That(map.Points, Is.Not.Empty);

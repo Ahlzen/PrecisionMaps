@@ -5,9 +5,7 @@ using OSGeo.GDAL;
 using OSGeo.OSR;
 using MapLib.Geometry;
 
-namespace MapLib.Gdal;
-
-using Gdal = OSGeo.GDAL.Gdal;
+namespace MapLib.GdalSupport;
 
 /// <remarks>
 /// Parts based on examples from:
@@ -16,6 +14,11 @@ using Gdal = OSGeo.GDAL.Gdal;
 public static class GdalUtils
 {
     static GdalUtils()
+    {
+        Initialize();
+    }
+
+    public static void Initialize()
     {
         GdalConfiguration.ConfigureGdal();
         GdalConfiguration.ConfigureOgr();
@@ -344,7 +347,7 @@ public static class GdalUtils
         try
         {
             int stride = bitmapData.Stride;
-            IntPtr buf = bitmapData.Scan0;
+            nint buf = bitmapData.Scan0;
 
             ds.ReadRaster(xOffset, yOffset, width, height, buf, imageWidth, imageHeight, dataType,
                 channelCount, bandMap, pixelSpace, stride, 1);
