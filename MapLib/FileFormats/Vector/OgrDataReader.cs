@@ -32,7 +32,7 @@ public class OgrDataReader : IVectorFormatReader
 
             // Read features
             layer.ResetReading();
-            Feature feature = null;
+            Feature feature;
             do
             {
                 feature = layer.GetNextFeature();
@@ -44,7 +44,6 @@ public class OgrDataReader : IVectorFormatReader
                     // Get geometry
                     OSGeo.OGR.Geometry geometry = feature.GetGeometryRef();
                     wkbGeometryType type = geometry.GetGeometryType();
-                    Coord[] coords;
                     switch (type)
                     {
                         case wkbGeometryType.wkbPoint:
