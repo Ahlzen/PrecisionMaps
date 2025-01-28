@@ -1,5 +1,7 @@
 ﻿using MapLib;
 using MapLib.GdalSupport;
+using System.Diagnostics;
+using System.IO;
 using System.Text;
 
 namespace MapLibTests;
@@ -29,5 +31,27 @@ public abstract class BaseFixture
         sb.AppendLine($"Polygons: {data.Polygons.Length}");
         sb.AppendLine($"MultiPolygons: {data.MultiPolygons.Length}");
         return sb.ToString();
+    }
+
+    internal static string GetTempFileName(string extension)
+    {
+        return TrimEnd(Path.GetTempFileName(), ".tmp") + ".png";
+    }
+
+    internal static string TrimEnd(string source, string value)
+    {
+        if (!source.EndsWith(value))
+            return source;
+        return source.Remove(source.LastIndexOf(value));
+    }
+
+    internal static void ShowFile(string filename)
+    {
+        Process.Start(new ProcessStartInfo
+        {
+            FileName = filename,
+            UseShellExecute = true
+        });
+        Debug.WriteLine(filename);
     }
 }

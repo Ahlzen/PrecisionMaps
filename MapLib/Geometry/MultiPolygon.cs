@@ -1,4 +1,5 @@
-﻿using Clipper2Lib;
+﻿using System.Runtime.InteropServices.ComTypes;
+using Clipper2Lib;
 using MapLib.Geometry.Helpers;
 
 namespace MapLib.Geometry;
@@ -29,6 +30,12 @@ public class MultiPolygon : Shape, IEnumerable<Coord[]>
         Coords = multiPolygons.SelectMany(mp =>  mp.Coords).ToArray();
     }
 
+    /// <returns>
+    /// Returns the polygons transformed as (X*scale+offsetX, Y*scale+offsetY)
+    /// </returns>
+    public virtual MultiPolygon Transform(double scale, double offsetX, double offsetY)
+        => new(Coords.Select(c => c.Transform(scale, offsetX, offsetY)).ToArray(), Tags);
+
     public virtual MultiPolygon Transform(Func<Coord, Coord> transformation)
         => new MultiPolygon(
             Coords.Select(l => l.Select(c => transformation(c)).ToArray()).ToArray(), Tags);
@@ -51,7 +58,7 @@ public class MultiPolygon : Shape, IEnumerable<Coord[]>
     }
 
     public IEnumerator<Coord[]> GetEnumerator() =>
-        (IEnumerator<Coord[]>)Coords.GetEnumerator();
+        ((IEnumerable<Coord[]>)Coords).GetEnumerator();
 
     IEnumerator IEnumerable.GetEnumerator()
         => GetEnumerator();

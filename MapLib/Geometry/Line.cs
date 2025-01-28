@@ -1,9 +1,11 @@
-﻿namespace MapLib.Geometry;
+﻿using System.Reflection.Metadata.Ecma335;
+
+namespace MapLib.Geometry;
 
 /// <summary>
 /// 2D (multi-point) line. Immutable.
 /// </summary>
-public class Line : Shape
+public class Line : Shape, IEnumerable<Coord>
 {
     public Coord[] Coords { get; }
 
@@ -34,7 +36,13 @@ public class Line : Shape
     #region Modifiers
 
     public virtual MultiLine AsMultiLine()
-        => new MultiLine([Coords], Tags);
+        => new MultiLine(new Coord[][]{Coords}, Tags);
+
+    /// <returns>
+    /// Returns the line transformed as (X*scale+offsetX, Y*scale+offsetY)
+    /// </returns>
+    public virtual Line Transform(double scale, double offsetX, double offsetY)
+        => new(Coords.Transform(scale, offsetX, offsetY), Tags);
 
     public virtual Line Transform(Func<Coord, Coord> transformation)
         => new Line(Coords.Select(transformation), Tags);
@@ -144,4 +152,8 @@ public class Line : Shape
     }
 
     #endregion
+
+    public IEnumerator<Coord> GetEnumerator() => (IEnumerator<Coord>) Coords.GetEnumerator();
+
+    IEnumerator IEnumerable.GetEnumerator() => Coords.GetEnumerator();
 }

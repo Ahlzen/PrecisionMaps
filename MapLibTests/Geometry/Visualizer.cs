@@ -1,6 +1,7 @@
 ﻿using System.Drawing;
 using System.Diagnostics;
 using System.IO;
+using MapLibTests;
 
 namespace MapLib.Tests.Geometry;
 
@@ -26,8 +27,9 @@ internal class Visualizer
         _shapes.Add(s);
     }
 
-    internal void Show() {
-        string filename = TrimEnd(Path.GetTempFileName(), ".tmp") + ".png";
+    internal void Show()
+    {
+        string filename = BaseFixture.GetTempFileName(".png"); //TrimEnd(Path.GetTempFileName(), ".tmp") + ".png";
         Save(filename);
         Process.Start(new ProcessStartInfo {
             FileName = filename,
@@ -186,12 +188,7 @@ internal class Visualizer
             RenderCoordsAsLine(g, c, coords, diameterPixels);
     }
         
-    public string TrimEnd(string source, string value)
-    {
-        if (!source.EndsWith(value))
-            return source;
-        return source.Remove(source.LastIndexOf(value));
-    }
+
 
     public Coord InvertY(Coord c) => new Coord(c.X, -c.Y);
 

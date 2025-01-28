@@ -28,6 +28,13 @@ public class MultiLine : Shape, IEnumerable<Coord[]>
         Coords = multiLines.SelectMany(ml => ml.Coords).ToArray();
     }
 
+    /// <returns>
+    /// Returns the lines transformed as (X*scale+offsetX, Y*scale+offsetY)
+    /// </returns>
+    public virtual MultiLine Transform(double scale, double offsetX, double offsetY)
+        => new(Coords.Select(c => c.Transform(scale, offsetX, offsetY)).ToArray(), Tags);
+
+
     public virtual MultiLine Transform(Func<Coord, Coord> transformation)
         => new MultiLine(
             Coords.Select(l => l.Select(c => transformation(c)).ToArray()).ToArray(), Tags);

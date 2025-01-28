@@ -100,7 +100,9 @@ public class SvgCanvasLayer : CanvasLayer
     }
 
     public override void DrawLines(
-        IEnumerable<IEnumerable<Coord>> lines, double width, Color color,
+        //IEnumerable<IEnumerable<Coord>> lines,
+        IEnumerable<Coord[]> lines,
+        double width, Color color,
         LineCap cap = LineCap.Butt, LineJoin join = LineJoin.Miter,
         double[] dasharray = null)
     {

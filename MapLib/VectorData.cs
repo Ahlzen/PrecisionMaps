@@ -60,4 +60,16 @@ public class VectorData : GeoData
     // TODO: This can probably be made more efficient. Refactor.
     private Bounds ComputeBounds(IEnumerable<Shape> shapes)
         => Bounds.FromBounds(shapes.Select(s => s.GetBounds()));
+
+    /// <returns>
+    /// Returns all geometry transformed as (X*scale+offsetX, Y*scale+offsetY)
+    /// </returns>
+    public virtual VectorData Transform(double scale, double offsetX, double offsetY)
+        => new(
+            Points.Select(feature => feature.Transform(scale, offsetX, offsetY)).ToArray(),
+            MultiPoints.Select(feature => feature.Transform(scale, offsetX, offsetY)).ToArray(),
+            Lines.Select(feature => feature.Transform(scale, offsetX, offsetY)).ToArray(),
+            MultiLines.Select(feature => feature.Transform(scale, offsetX, offsetY)).ToArray(),
+            Polygons.Select(feature => feature.Transform(scale, offsetX, offsetY)).ToArray(),
+            MultiPolygons.Select(feature => feature.Transform(scale, offsetX, offsetY)).ToArray());
 }

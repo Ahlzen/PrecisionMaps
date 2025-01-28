@@ -31,6 +31,12 @@ public class Polygon : Line
     public override Polygon Transform(Func<Coord, Coord> transformation)
         => new Polygon(Coords.Select(transformation), Tags);
 
+    /// <returns>
+    /// Returns the polygon transformed as (X*scale+offsetX, Y*scale+offsetY)
+    /// </returns>
+    public virtual Polygon Transform(double scale, double offsetX, double offsetY)
+        => new(Coords.Transform(scale, offsetX, offsetY), Tags);
+
     public override Polygon Reverse()
         => new Polygon(Coords.Reverse(), Tags);
 

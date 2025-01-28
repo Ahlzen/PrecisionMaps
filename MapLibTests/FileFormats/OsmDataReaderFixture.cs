@@ -19,4 +19,5 @@ internal class OsmDataReaderFixture : BaseFixture
         Assert.That(map.Lines, Is.Not.Empty);
         Assert.That(map.MultiPolygons, Is.Not.Empty);
     }
+
 }

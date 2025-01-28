@@ -19,9 +19,6 @@ public class Point : Shape
     public static implicit operator Coord(Point p) => p.Coord;
     public static implicit operator Point(Coord c) => new Point(c, null);
 
-    public Point Transform(Func<Coord, Coord> transformation)
-        => new Point(transformation(Coord), Tags);
-
     public override Bounds GetBounds()
         => new Bounds(Coord.X, Coord.X, Coord.Y, Coord.Y);
 
@@ -32,6 +29,19 @@ public class Point : Shape
 
     public override string ToString()
         => "Coord" + Coord.ToString();
+
+    #region Transformations
+
+    public Point Transform(Func<Coord, Coord> transformation)
+        => new Point(transformation(Coord), Tags);
+
+    /// <returns>
+    /// Returns the transformed point at (X*scale+offsetX, Y*scale+offsetY)
+    /// </returns>
+    public Point Transform(double scale, double offsetX, double offsetY)
+        => new(Coord.X * scale + offsetX, Coord.Y * scale + offsetY, Tags);
+
+    #endregion
 
     #region Operations
 
