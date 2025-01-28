@@ -56,16 +56,25 @@ public class BitmapCanvas : Canvas
     }
 }
 
+/// <remarks>
+/// NOTE: Since the GDI+ coordinate system has positive Y down,
+/// and our coordinates are positive Y up, drawing operations have to
+/// flip (offset and negate) the Y coordinate.
+/// </remarks>
 internal class BitmapCanvasLayer : CanvasLayer
 {
     private static readonly Color DebugColor = Color.Red;
 
     private readonly Graphics _graphics;
+    private int _layerHeight;
+    private int _layerWidth;
 
     internal BitmapCanvasLayer(int width, int height)
     {
         Bitmap = new Bitmap(width, height, PixelFormat.Format32bppArgb);
         Bitmap.MakeTransparent(Bitmap.GetPixel(0, 0));
+        _layerWidth = width;
+        _layerHeight = height;
         _graphics = Graphics.FromImage(Bitmap);
         _graphics.SmoothingMode = SmoothingMode.HighQuality;
     }
@@ -95,9 +104,9 @@ internal class BitmapCanvasLayer : CanvasLayer
                ColorAdjustType.Bitmap);
             GraphicsUnit unit = GraphicsUnit.Pixel;
             _graphics.DrawImage(srcBitmap, new[] {
-                    new PointF((float)x, (float)y),
-                    new PointF((float)(x+width), (float)y),
-                    new PointF((float)x, (float)(y +height))},
+                    new PointF((float)x, (float)(_layerHeight-y)),
+                    new PointF((float)(x+width), (float)(_layerHeight-y)),
+                    new PointF((float)x, (float)(_layerHeight - y + height))},
                 srcBitmap.GetBounds(ref unit),
                 GraphicsUnit.Pixel,
                 imageAttributes
@@ -106,16 +115,15 @@ internal class BitmapCanvasLayer : CanvasLayer
         else
         {
             _graphics.DrawImage(srcBitmap, new[] {
-                    new PointF((float)x, (float)y),
-                    new PointF((float)(x+width), (float)y),
-                    new PointF((float)x, (float)(y +height))
+                    new PointF((float)x, (float)(_layerHeight-y)),
+                    new PointF((float)(x+width), (float)(_layerHeight-y)),
+                    new PointF((float)x, (float)(_layerHeight - y + height))
                 });
         }
 
     }
 
     public override void DrawLines(
-        //IEnumerable<IEnumerable<Coord>> lines,
         IEnumerable<Coord[]> lines,
         double width,
         Color color, LineCap cap = LineCap.Butt, LineJoin join = LineJoin.Miter,
@@ -156,7 +164,7 @@ internal class BitmapCanvasLayer : CanvasLayer
             pen.DashPattern = dasharray.Select(d => (float)d).ToArray();
         foreach (IEnumerable<Coord> line in lines)
             _graphics.DrawLines(pen, line.Select(c =>
-                new PointF((float)c.X, (float)c.Y)).ToArray());
+                new PointF((float)c.X, _layerHeight-(float)c.Y)).ToArray());
         pen.Dispose();
     }
 
@@ -164,7 +172,7 @@ internal class BitmapCanvasLayer : CanvasLayer
     {
         foreach (Coord point in points)
             _graphics.FillEllipse(new SolidBrush(color),
-                new Rectangle((int)point.X, (int)point.Y, (int)radius, (int)radius));
+                new RectangleF((float)(point.X-radius/2), (float)(_layerHeight-point.Y-radius/2), (int)radius, (int)radius));
     }
 
     public override void DrawFilledPolygons(IEnumerable<IEnumerable<Coord>> polygons, Color color)
@@ -172,7 +180,7 @@ internal class BitmapCanvasLayer : CanvasLayer
         var brush = new SolidBrush(color);
         foreach (IEnumerable<Coord> polygon in polygons)
             _graphics.FillPolygon(brush, polygon.Select(c =>
-                new PointF((float)c.X, (float)c.Y)).ToArray());
+                new PointF((float)c.X, (float)(_layerHeight-c.Y))).ToArray());
         brush.Dispose();
     }
 
@@ -185,7 +193,7 @@ internal class BitmapCanvasLayer : CanvasLayer
             var path = new GraphicsPath(FillMode.Alternate);
             foreach (IEnumerable<Coord> polygon in multipolygon)
                 path.AddPolygon(polygon.Select(c =>
-                    new PointF((float)c.X, (float)c.Y)).ToArray());
+                    new PointF((float)c.X, (float)(_layerHeight-c.Y))).ToArray());
             _graphics.FillPath(brush, path);
             path.Dispose();
         }
@@ -201,6 +209,9 @@ internal class BitmapCanvasLayer : CanvasLayer
 
         SizeF stringSize = _graphics.MeasureString(s, font);
         double baseline = GetBaseline(font);
+
+        // Flip Y coordinate
+        coord = new Coord(coord.X, _layerHeight - coord.Y);
 
         double offsetX = 0;
         switch (hAlign)

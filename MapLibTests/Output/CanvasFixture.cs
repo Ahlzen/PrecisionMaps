@@ -75,7 +75,7 @@ public class CanvasFixture : BaseFixture
                 opacity *= 0.7;
                 lineWidth *= 0.9;
 
-                currentPolygon = currentPolygon.Offset(7);
+                currentPolygon = currentPolygon.Offset(-7);
 
             }
 
