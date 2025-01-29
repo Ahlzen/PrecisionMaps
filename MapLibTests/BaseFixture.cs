@@ -35,7 +35,7 @@ public abstract class BaseFixture
 
     internal static string GetTempFileName(string extension)
     {
-        return TrimEnd(Path.GetTempFileName(), ".tmp") + ".png";
+        return TrimEnd(Path.GetTempFileName(), ".tmp") + extension;
     }
 
     internal static string TrimEnd(string source, string value)

@@ -12,7 +12,7 @@ public class CanvasFixture : BaseFixture
     [Test]
     public void TestRenderMultipolygon()
     {
-        LoadOgrDataAndProcessPolygons(
+        LoadOgrDataAndDrawPolygons(
             Path.Join(TestDataPath, "Aaron River Reservoir.geojson"),
             600, 600, Color.AntiqueWhite, (canvas, multiPolygons) => {
                 CanvasLayer layer = canvas.AddNewLayer("water");
@@ -24,7 +24,7 @@ public class CanvasFixture : BaseFixture
     [Test]
     public void TestRenderShorelinePolygons()
     {
-        LoadOgrDataAndProcessPolygons(
+        LoadOgrDataAndDrawPolygons(
             Path.Join(TestDataPath, "Aaron River Reservoir.geojson"),
             600, 600, Color.AntiqueWhite, (canvas, multiPolygons) =>
             {
@@ -59,27 +59,35 @@ public class CanvasFixture : BaseFixture
 
     ///// Helpers
 
-    private void LoadOgrDataAndProcessPolygons(string inputFilename, int canvasWidth, int canvasHeight,
-    Color background, Action<BitmapCanvas, IEnumerable<MultiPolygon>> drawingFunc)
+    private void LoadOgrDataAndDrawPolygons(string inputFilename, int canvasWidth, int canvasHeight,
+    Color background, Action<Canvas, IEnumerable<MultiPolygon>> drawingFunc)
     {
         // Read data
         OgrDataReader reader = new OgrDataReader();
         VectorData data = reader.ReadFile(inputFilename);
         Console.WriteLine(FormatVectorDataSummary(data));
         VectorData transformedData = TransformToFit(data, canvasWidth, canvasHeight);
-        BitmapCanvas canvas = new BitmapCanvas(canvasWidth, canvasHeight, background);
+        BitmapCanvas bitmapCanvas = new BitmapCanvas(canvasWidth, canvasHeight, background);
+        SvgCanvas svgCanvas = new SvgCanvas(canvasWidth, canvasHeight, background);
 
         // Use multipolygons for everything
         List<MultiPolygon> multiPolygons = new();
         multiPolygons.AddRange(transformedData.MultiPolygons);
         multiPolygons.AddRange(transformedData.Polygons.Select(p => p.AsMultiPolygon()));
 
-        drawingFunc(canvas, multiPolygons);
+        drawingFunc(bitmapCanvas, multiPolygons);
+        drawingFunc(svgCanvas, multiPolygons);
 
-        var bitmap = canvas.GetBitmap();
-        string filename = GetTempFileName(".png");
-        bitmap.Save(filename);
-        ShowFile(filename);
+        // Write bitmap
+        Bitmap bitmap = bitmapCanvas.GetBitmap();
+        string pngFilename = GetTempFileName(".png");
+        bitmap.Save(pngFilename);
+        ShowFile(pngFilename);
+
+        // Write SVG
+        string svg = svgCanvas.GetSvg();
+        string svgFilename = GetTempFileName(".svg");
+        File.WriteAllText(svgFilename, svg);
     }
 
     // TODO: If this is useful elsewhere, it should be moved
