@@ -207,7 +207,16 @@ public class SvgCanvasLayer : CanvasLayer
         double[] dasharray = null)
     {
         yield return new XAttribute("fill", "none");
-        yield return new XAttribute("stroke", color.ToHexCode());
+        if (color.A != 255)
+        {
+            // transparent or semi-transparent stroke
+            yield return new XAttribute("stroke", Color.FromArgb(255, color).ToHexCode());
+            yield return new XAttribute("stroke-opacity", color.A / 255.0);
+        }
+        else
+        {
+            yield return new XAttribute("stroke", color.ToHexCode());
+        }
         yield return new XAttribute("stroke-width", width);
 
         switch (cap)
