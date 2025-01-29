@@ -72,14 +72,24 @@ public class SvgCanvas : Canvas
     }
 }
 
+/// <remarks>
+/// NOTE: Since the SVG coordinate system has positive Y down,
+/// and our coordinates are positive Y up, drawing operations have to
+/// flip (offset and negate) the Y coordinate.
+/// </remarks>
 public class SvgCanvasLayer : CanvasLayer
 {
     private SvgCanvas _canvas;
     private List<XObject> _objects = new List<XObject>();
+    private double _layerHeight;
+    private double _layerWidth;
+
 
     internal SvgCanvasLayer(SvgCanvas canvas)
     {
         _canvas = canvas;
+        _layerWidth = canvas.Width;
+        _layerHeight = canvas.Height;
     }
 
     internal XElement GetSvgData()
@@ -89,18 +99,15 @@ public class SvgCanvasLayer : CanvasLayer
             _objects);
     }
 
-
-
     public override void DrawBitmap(Bitmap bitmap,
         double x, double y, double width, double height, double opacity)
     {
         _objects.Add(new XElement(SvgCanvas.XmlNs + "g",
             GetRasterAttributes(opacity),
-            GetRasterData(bitmap, x, y, width, height)));
+            GetRasterData(bitmap, x, _layerHeight-y, width, height)));
     }
 
     public override void DrawLines(
-        //IEnumerable<IEnumerable<Coord>> lines,
         IEnumerable<Coord[]> lines,
         double width, Color color,
         LineCap cap = LineCap.Butt, LineJoin join = LineJoin.Miter,
@@ -262,7 +269,7 @@ public class SvgCanvasLayer : CanvasLayer
             sb.Append(isFirst ? "M " : " L ");
             sb.Append(point.X.ToString(_canvas.SvgCoordFormat));
             sb.Append(" ");
-            sb.Append(point.Y.ToString(_canvas.SvgCoordFormat));
+            sb.Append((_layerHeight - point.Y).ToString(_canvas.SvgCoordFormat));
             isFirst = false;
         }
         return sb.ToString();
@@ -272,7 +279,7 @@ public class SvgCanvasLayer : CanvasLayer
     {
         return new XElement(SvgCanvas.XmlNs + "circle",
             new XAttribute("cx", point.X.ToString(_canvas.SvgCoordFormat)),
-            new XAttribute("cy", point.Y.ToString(_canvas.SvgCoordFormat)),
+            new XAttribute("cy", (_layerHeight-point.Y).ToString(_canvas.SvgCoordFormat)),
             new XAttribute("r", radius.ToString(_canvas.SvgCoordFormat))
             );
     }
