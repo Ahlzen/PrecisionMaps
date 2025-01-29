@@ -238,7 +238,16 @@ public class SvgCanvasLayer : CanvasLayer
 
     private IEnumerable<XAttribute> GetFillAttributes(Color color)
     {
-        yield return new XAttribute("fill", color.ToHexCode());
+        if (color.A != 255)
+        {
+            // transparent or semi-transparent fill
+            yield return new XAttribute("fill", Color.FromArgb(255, color).ToHexCode());
+            yield return new XAttribute("fill-opacity", color.A / 255.0);
+        }
+        else
+        {
+            yield return new XAttribute("fill", color.ToHexCode());
+        }
         yield return new XAttribute("fill-rule", "evenodd"); // for mutipolygons etc
     }
 
