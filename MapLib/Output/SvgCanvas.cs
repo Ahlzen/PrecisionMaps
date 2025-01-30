@@ -41,8 +41,8 @@ public class SvgCanvas : Canvas
 
     public override void RemoveLayer(CanvasLayer layer)
     {
-        var svgCanvasLayer = layer as SvgCanvasLayer;
-        if (layer == null) return;
+        SvgCanvasLayer? svgCanvasLayer = layer as SvgCanvasLayer;
+        if (svgCanvasLayer == null) return;
         _layers.Remove(svgCanvasLayer);
     }
 
@@ -95,7 +95,7 @@ public class SvgCanvasLayer : CanvasLayer
     internal XElement GetSvgData()
     {
         return new XElement(SvgCanvas.XmlNs + "g",
-            new XAttribute("id", Name),
+            new XAttribute("id", Name ?? ""),
             _objects);
     }
 
@@ -111,7 +111,7 @@ public class SvgCanvasLayer : CanvasLayer
         IEnumerable<Coord[]> lines,
         double width, Color color,
         LineCap cap = LineCap.Butt, LineJoin join = LineJoin.Miter,
-        double[] dasharray = null)
+        double[]? dasharray = null)
     {
         _objects.Add(new XElement(SvgCanvas.XmlNs + "g",
             GetStrokeAttributes(width, color, cap, join, dasharray),
@@ -204,7 +204,7 @@ public class SvgCanvasLayer : CanvasLayer
     private IEnumerable<XAttribute> GetStrokeAttributes(
         double width, Color color,
         LineCap cap = LineCap.Butt, LineJoin join = LineJoin.Miter,
-        double[] dasharray = null)
+        double[]? dasharray = null)
     {
         yield return new XAttribute("fill", "none");
         if (color.A != 255)

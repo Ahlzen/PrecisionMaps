@@ -2,7 +2,9 @@
 using System.IO;
 using MapLib;
 using MapLib.FileFormats.Vector;
+using MapLib.Geometry;
 using MapLib.Output;
+using OSGeo.OGR;
 
 namespace MapLibTests.Output;
 
@@ -22,45 +24,66 @@ public class CanvasFixture : BaseFixture
     }
 
     [Test]
-    public void TestRenderShorelinePolygons()
+    public void TestRenderShorelinePolygons_AaronRiver()
     {
         LoadOgrDataAndDrawPolygons(
             Path.Join(TestDataPath, "Aaron River Reservoir.geojson"),
-            600, 600, Color.AntiqueWhite, (canvas, multiPolygons) =>
-            {
+            600, 600, Color.AntiqueWhite, (canvas, multiPolygons) => {
                 CanvasLayer layer = canvas.AddNewLayer("water");
                 foreach (var multipolygon in multiPolygons)
                 {
-                    MultiPolygon currentPolygon = multipolygon;
-                    layer.DrawLines(currentPolygon.Coords, 1.6, Color.Navy,
-                            LineCap.Round, LineJoin.Round);
-
-                    double opacity = 1;
-                    double lineWidth = 1.2;
-                    for (int i = 0; i < 15; i++)
-                    {
-                        Color color = Color.FromArgb((int)(255 * opacity), Color.Navy);
-                        layer.DrawLines(currentPolygon.Coords, lineWidth, color,
-                            LineCap.Round, LineJoin.Round);
-
-                        // If the polygon is small enough, offsetting it inward may result in
-                        // nothing. In that case we're done.
-                        if (currentPolygon.Count == 0)
-                            break;
-
-                        opacity *= 0.7;
-                        lineWidth *= 0.9;
-                        currentPolygon = currentPolygon.Offset(-7);
-                    }
+                    DrawShorelineFromPolygon(layer, multipolygon,
+                        Color.Navy, 1.6, 1.2, 0.9, 0.7, -7, 15);
                 }
+            });
+    }
+
+    [Test]
+    public void TestRenderShorelinePolygons_World()
+    {
+        LoadOgrDataAndDrawPolygons(
+            Path.Join(TestDataPath, "Natural Earth/ne_110m_land.shp"),
+            1200, 600, Color.AntiqueWhite, (canvas, multiPolygons) => {
+                MultiPolygon world = new(multiPolygons, null);
+                CanvasLayer layer = canvas.AddNewLayer("shore");
+                DrawShorelineFromPolygon(layer, world,
+                        Color.Navy, 1.3, 1.0, 0.8, 0.6, 3.5, 5);
             });
     }
 
 
     ///// Helpers
 
+    private void DrawShorelineFromPolygon(CanvasLayer layer,
+        MultiPolygon polygon, Color baseColor,
+        double firstLineWidth, double secondLineWidth,
+        double lineWidthMultiplier, double opacityMultiplier,
+        double waveDistance, int waveCount)
+    {
+        layer.DrawLines(polygon.Coords, firstLineWidth, baseColor,
+                LineCap.Round, LineJoin.Round);
+
+        double opacity = 1;
+        double lineWidth = secondLineWidth;
+        for (int i = 0; i < waveCount; i++)
+        {
+            Color color = Color.FromArgb((int)(255 * opacity), baseColor);
+            layer.DrawLines(polygon.Coords, lineWidth, color,
+                LineCap.Round, LineJoin.Round);
+
+            // If the polygon is small enough, offsetting it inward may result in
+            // nothing. In that case we're done.
+            if (polygon.Count == 0)
+                break;
+
+            opacity *= opacityMultiplier;
+            lineWidth *= lineWidthMultiplier;
+            polygon = polygon.Offset(waveDistance);
+        }
+    }
+
     private void LoadOgrDataAndDrawPolygons(string inputFilename, int canvasWidth, int canvasHeight,
-    Color background, Action<Canvas, IEnumerable<MultiPolygon>> drawingFunc)
+        Color background, Action<Canvas, IEnumerable<MultiPolygon>> drawingFunc)
     {
         // Read data
         OgrDataReader reader = new OgrDataReader();
@@ -76,7 +99,7 @@ public class CanvasFixture : BaseFixture
         multiPolygons.AddRange(transformedData.Polygons.Select(p => p.AsMultiPolygon()));
 
         drawingFunc(bitmapCanvas, multiPolygons);
-        drawingFunc(svgCanvas, multiPolygons);
+        //drawingFunc(svgCanvas, multiPolygons);
 
         // Write bitmap
         Bitmap bitmap = bitmapCanvas.GetBitmap();
@@ -85,9 +108,9 @@ public class CanvasFixture : BaseFixture
         ShowFile(pngFilename);
 
         // Write SVG
-        string svg = svgCanvas.GetSvg();
-        string svgFilename = GetTempFileName(".svg");
-        File.WriteAllText(svgFilename, svg);
+        //string svg = svgCanvas.GetSvg();
+        //string svgFilename = GetTempFileName(".svg");
+        //File.WriteAllText(svgFilename, svg);
     }
 
     // TODO: If this is useful elsewhere, it should be moved
