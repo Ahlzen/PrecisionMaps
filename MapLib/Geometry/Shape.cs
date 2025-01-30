@@ -11,11 +11,11 @@ public abstract class Shape
     /// </summary>
     public const int DEFAULT_POINTS_PER_REVOLUTION = 24;
 
-    public static readonly TagDictionary NoTags =
-        new Dictionary<string, string>().AsReadOnly();
+    public static readonly TagList NoTags =
+        new KeyValuePair<string, string>[0];
 
-    public TagDictionary Tags { get; }
-    public Shape(TagDictionary? tags) { Tags = tags ?? NoTags; }
+    public TagList Tags { get; }
+    public Shape(TagList? tags) { Tags = tags ?? NoTags; }
 
 
     public abstract Coord GetCenter();

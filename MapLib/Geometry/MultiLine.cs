@@ -10,7 +10,7 @@ public class MultiLine : Shape, IEnumerable<Coord[]>
 {
     public Coord[][] Coords { get; }
 
-    public MultiLine(Coord[][] coords, TagDictionary? tags) : base(tags)
+    public MultiLine(Coord[][] coords, TagList? tags) : base(tags)
     {
         Coords = coords;
     }
@@ -20,11 +20,11 @@ public class MultiLine : Shape, IEnumerable<Coord[]>
         Coords = [line.Coords];
     }
 
-    public MultiLine(IEnumerable<Line> lines, TagDictionary? tags) : base(tags) {
+    public MultiLine(IEnumerable<Line> lines, TagList? tags) : base(tags) {
         Coords = lines.Select(l => l.Coords).ToArray();
     }
 
-    public MultiLine(IEnumerable<MultiLine> multiLines, TagDictionary? tags) : base(tags) {
+    public MultiLine(IEnumerable<MultiLine> multiLines, TagList? tags) : base(tags) {
         Coords = multiLines.SelectMany(ml => ml.Coords).ToArray();
     }
 

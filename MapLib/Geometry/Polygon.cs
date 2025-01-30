@@ -9,11 +9,11 @@
 /// </remarks>
 public class Polygon : Line
 {
-    public Polygon(Coord[] coords, TagDictionary? tags) : base(coords, tags) {
+    public Polygon(Coord[] coords, TagList? tags) : base(coords, tags) {
         Validate();
     }
 
-    public Polygon(IEnumerable<Coord> coords, TagDictionary? tags) : base(coords, tags) {
+    public Polygon(IEnumerable<Coord> coords, TagList? tags) : base(coords, tags) {
         Validate();
     }
 
@@ -81,7 +81,7 @@ public class Polygon : Line
     #region Static primitive factory methods
 
     public static Polygon CreateCircle(Coord center, double radius,
-        TagDictionary? tags,
+        TagList? tags,
         int pointsPerRevolution = DEFAULT_POINTS_PER_REVOLUTION,
         bool outer = true)
     {

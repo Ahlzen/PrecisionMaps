@@ -11,21 +11,21 @@ public class MultiPolygon : Shape, IEnumerable<Coord[]>
 {
     public Coord[][] Coords { get; }
 
-    public MultiPolygon(Coord[][] coords, TagDictionary? tags) : base(tags)
+    public MultiPolygon(Coord[][] coords, TagList? tags) : base(tags)
     {
         Coords = coords;
     }
 
-    public MultiPolygon(Polygon polygon, TagDictionary? tags) : base(tags) {
+    public MultiPolygon(Polygon polygon, TagList? tags) : base(tags) {
         Coords = [polygon.Coords];
     }
 
-    public MultiPolygon(IEnumerable<Polygon> polygons, TagDictionary? tags) : base(tags)
+    public MultiPolygon(IEnumerable<Polygon> polygons, TagList? tags) : base(tags)
     {
         Coords = polygons.Select(p => p.Coords).ToArray();
     }
 
-    public MultiPolygon(IEnumerable<MultiPolygon> multiPolygons, TagDictionary? tags) : base(tags)
+    public MultiPolygon(IEnumerable<MultiPolygon> multiPolygons, TagList? tags) : base(tags)
     {
         Coords = multiPolygons.SelectMany(mp =>  mp.Coords).ToArray();
     }

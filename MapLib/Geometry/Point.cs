@@ -7,11 +7,11 @@ public class Point : Shape
 {
     public Coord Coord { get; }
 
-    public Point(Coord coord, TagDictionary? tags) : base(tags)
+    public Point(Coord coord, TagList? tags) : base(tags)
     {
         Coord = coord;
     }
-    public Point(double x, double y, TagDictionary? tags) : base(tags)
+    public Point(double x, double y, TagList? tags) : base(tags)
     {
         Coord = new Coord(x, y);
     }

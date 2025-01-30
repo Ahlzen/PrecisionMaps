@@ -122,7 +122,7 @@ public class OsmDataReader : IVectorFormatReader
         var coord = new Coord(
             double.Parse(xmlNode.Attributes?["lon"]?.Value ?? ""),
             double.Parse(xmlNode.Attributes?["lat"]?.Value ?? ""));
-        Dictionary<string, string> tags = ParseTags(xmlNode);
+        TagList tags = ParseTags(xmlNode);
         nodes.Add(id, new Point(coord, tags));
     }
 
@@ -148,7 +148,7 @@ public class OsmDataReader : IVectorFormatReader
                 .Select(child => long.Parse(child.Attributes?["ref"]?.Value ?? ""))
                 .Select(pointId => nodes[pointId].Coord)
                 .ToArray();
-        Dictionary<string, string> tags = ParseTags(xmlNode);
+        TagList tags = ParseTags(xmlNode);
         ways.Add(id, new Line(coords, tags));
     }
 
@@ -172,10 +172,12 @@ public class OsmDataReader : IVectorFormatReader
         Dictionary<long, MultiPolygon> multiPolygons)
     {
         long id = long.Parse(xmlNode.Attributes?["id"]?.Value ?? "");
-        Dictionary<string, string> tags = ParseTags(xmlNode);
+        TagList tags = ParseTags(xmlNode);
 
         // We're (currently) only interested in multipolygon relations
-        if (!tags.ContainsKey("type") || tags["type"] != "multipolygon") return;
+        KeyValuePair<string, string>? typeTag = tags.Where(tag => tag.Key == "type").SingleOrDefault();
+        if (typeTag == null || typeTag.Value.Value != "multipolygon")
+            return;
 
         // TODO: Parse routes?
 
@@ -190,15 +192,16 @@ public class OsmDataReader : IVectorFormatReader
         multiPolygons.Add(id, new MultiPolygon(polygons, tags));
     }
 
-    protected Dictionary<string, string> ParseTags(XmlNode node)
+    protected TagList ParseTags(XmlNode node)
     {
         return node.ChildNodes
             .Cast<XmlNode>()
             .Where(child => child.Name == "tag")
             .Where(child => IncludeTag(child.Attributes?["k"]?.Value ?? ""))
-            .ToDictionary(
-                child => child.Attributes?["k"]?.Value ?? "",
-                child => child.Attributes?["v"]?.Value ?? "");
+            .Select(child => new KeyValuePair<string, string>(
+                    child.Attributes?["k"]?.Value ?? "",
+                    child.Attributes?["v"]?.Value ?? ""))
+            .ToArray();
     }
 
     protected bool IncludeTag(string tagName)

@@ -7,31 +7,31 @@ public class MultiPoint : Shape, IEnumerable<Coord>
 {
     public Coord[] Coords { get; }
 
-    public MultiPoint(Coord coord, TagDictionary? tags) : base(tags) {
+    public MultiPoint(Coord coord, TagList? tags) : base(tags) {
         Coords = [coord];
     }
 
-    public MultiPoint(Coord[] coords, TagDictionary? tags) : base(tags)
+    public MultiPoint(Coord[] coords, TagList? tags) : base(tags)
     {
         Coords = coords;
     }
         
-    public MultiPoint(IEnumerable<Coord> coords, TagDictionary? tags) : base(tags)
+    public MultiPoint(IEnumerable<Coord> coords, TagList? tags) : base(tags)
     {
         Coords = coords.ToArray();
     }
 
-    public MultiPoint(Point point, TagDictionary? tags) : base(tags)
+    public MultiPoint(Point point, TagList? tags) : base(tags)
     {
         Coords = [point.Coord];
     }
 
-    public MultiPoint(IEnumerable<Point> points, TagDictionary? tags) : base(tags)
+    public MultiPoint(IEnumerable<Point> points, TagList? tags) : base(tags)
     {
         Coords = points.Select(p => p.Coord).ToArray();
     }
 
-    public MultiPoint(IEnumerable<MultiPoint> multiPoints, TagDictionary? tags) : base(tags)
+    public MultiPoint(IEnumerable<MultiPoint> multiPoints, TagList? tags) : base(tags)
     {
         Coords = multiPoints.SelectMany(mp => mp.Coords).ToArray();
     }

@@ -9,12 +9,12 @@ public class Line : Shape, IEnumerable<Coord>
 {
     public Coord[] Coords { get; }
 
-    public Line(Coord[] coords, TagDictionary? tags) : base(tags)
+    public Line(Coord[] coords, TagList? tags) : base(tags)
     {
         Coords = coords;
     }
 
-    public Line(IEnumerable<Coord> coords, TagDictionary? tags) : base(tags)
+    public Line(IEnumerable<Coord> coords, TagList? tags) : base(tags)
     {
         Coords = coords.ToArray();
     }

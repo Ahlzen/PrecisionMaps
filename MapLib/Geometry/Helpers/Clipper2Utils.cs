@@ -64,9 +64,9 @@ internal static class Clipper2Utils
             coords[^1] = coords[0];
         return coords;
     }
-    public static Polygon ToPolygon(this PathD path, TagDictionary? tags)
+    public static Polygon ToPolygon(this PathD path, TagList? tags)
         => new Polygon(ToCoords(path, true), tags);
-    public static Line ToLine(this PathD path, TagDictionary? tags)
+    public static Line ToLine(this PathD path, TagList? tags)
         => new Line(ToCoords(path, false), tags);
 
 
@@ -94,10 +94,10 @@ internal static class Clipper2Utils
             coords.Add(ToCoords(path, arePolygons));
         return coords.ToArray();
     }
-    public static MultiPolygon ToMultiPolygon(this PathsD paths, TagDictionary? tags)
+    public static MultiPolygon ToMultiPolygon(this PathsD paths, TagList? tags)
         //=> new MultiPolygon(ToPolygons(paths, tags));
         => new MultiPolygon(ToCoords(paths, true), tags);
-    public static MultiLine ToMultiLine(this PathsD paths, TagDictionary? tags)
+    public static MultiLine ToMultiLine(this PathsD paths, TagList? tags)
         //=> new MultiLine(ToLines(paths, tags));
         => new MultiLine(ToCoords(paths, true), tags);
 

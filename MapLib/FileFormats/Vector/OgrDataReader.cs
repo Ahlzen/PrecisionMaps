@@ -39,7 +39,7 @@ public class OgrDataReader : IVectorFormatReader
                 if (feature != null)
                 {
                     // Get tags
-                    TagDictionary tags = ReadTags(feature);
+                    TagList tags = ReadTags(feature);
 
                     // Get geometry
                     OSGeo.OGR.Geometry geometry = feature.GetGeometryRef();
@@ -102,7 +102,7 @@ public class OgrDataReader : IVectorFormatReader
 
     private void ReadAndAddPoint(
         OSGeo.OGR.Geometry geometry,
-        TagDictionary tags,
+        TagList tags,
         VectorDataBuilder builder)
     {
         Debug.Assert(geometry.GetPointCount() == 1);
@@ -114,7 +114,7 @@ public class OgrDataReader : IVectorFormatReader
 
     private void ReadAndAddLine(
         OSGeo.OGR.Geometry geometry,
-        TagDictionary tags,
+        TagList tags,
         VectorDataBuilder builder)
     {
         Coord[] coords = Read2DCoords(geometry);
@@ -123,7 +123,7 @@ public class OgrDataReader : IVectorFormatReader
 
     private void ReadAndAddPolygon(
         OSGeo.OGR.Geometry geometry,
-        TagDictionary tags,
+        TagList tags,
         VectorDataBuilder builder)
     {
         // OGR/SimpleFeatures polygons consist of one or more
@@ -176,10 +176,10 @@ public class OgrDataReader : IVectorFormatReader
         return coords;
     }
 
-    private TagDictionary ReadTags(OSGeo.OGR.Feature feature)
+    private TagList ReadTags(OSGeo.OGR.Feature feature)
     {
-        Dictionary<string, string> tags = new();
         int fieldCount = feature.GetFieldCount();
+        TagList tags = new KeyValuePair<string, string>[fieldCount];
         for (int i = 0; i < fieldCount; i++)
         {
             FieldDefn fd = feature.GetFieldDefnRef(i);
@@ -206,7 +206,7 @@ public class OgrDataReader : IVectorFormatReader
                         "Unsupported field type: " + ft);
                     // Note this is only a sub-set of the possible field types
             }
-            tags.Add(key, value);
+            tags[i] = new KeyValuePair<string, string>(key, value);
         }
         return tags;
     }
