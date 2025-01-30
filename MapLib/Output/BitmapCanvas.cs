@@ -127,7 +127,7 @@ internal class BitmapCanvasLayer : CanvasLayer
         IEnumerable<Coord[]> lines,
         double width,
         Color color, LineCap cap = LineCap.Butt, LineJoin join = LineJoin.Miter,
-        double[] dasharray = null)
+        double[]? dasharray = null)
     {
         Pen pen = new Pen(color, (float)width);
         System.Drawing.Drawing2D.LineCap wCap = System.Drawing.Drawing2D.LineCap.Flat;

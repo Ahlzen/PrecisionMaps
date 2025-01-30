@@ -5,7 +5,7 @@ namespace MapLib.Output;
 
 public abstract class CanvasLayer
 {
-    public string Name { get; set; }
+    public string? Name { get; set; }
 
     // TODO: layer opacity, blending modes, mask
 
@@ -26,7 +26,7 @@ public abstract class CanvasLayer
         double width, Color color,
         LineCap cap = LineCap.Butt,
         LineJoin join = LineJoin.Miter, // TODO: miter limit
-        double[] dasharray = null);
+        double[]? dasharray = null);
 
     public abstract void DrawFilledPolygons(
         IEnumerable<IEnumerable<Coord>> polygons,

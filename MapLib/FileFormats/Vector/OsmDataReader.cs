@@ -61,6 +61,10 @@ public class OsmDataReader : IVectorFormatReader
     //   <bounds minlat="54.0889580" minlon="12.2487570" maxlat="54.0913900" maxlon="12.2524800"/>
     //   <node id="298884269" lat="54.0901746" lon="12.2482632" user="SvenHRO" uid="46882" visible="true" version="1" changeset="676636" timestamp="2008-09-21T21:37:45Z"/>
     //   ...
+    
+    /// <exception cref="FormatException">
+    /// Thrown if the OSM XML data is invalid or can otherwise not be parsed.
+    /// </exception>
     public VectorData ParseOsmXml(string xmlData)
     {
         var doc = new XmlDocument();
@@ -70,7 +74,10 @@ public class OsmDataReader : IVectorFormatReader
         var ways = new Dictionary<long, Line>();
         var multiPolygons = new Dictionary<long, MultiPolygon>();
 
-        XmlNode rootNode = doc.ChildNodes[1];
+        XmlNode? rootNode = doc.ChildNodes[1];
+        if (rootNode == null)
+            throw new FormatException("Root node not found in OSM XML data.");
+
         foreach (XmlNode xmlNode in rootNode.ChildNodes)
         {
             switch (xmlNode.Name)
@@ -107,13 +114,14 @@ public class OsmDataReader : IVectorFormatReader
     //   <tag k="attribution" v="Office of Geographic and Environmental Information (MassGIS)"/>
     //   <tag k="source" v="massgis_import_v0.1_20071009085031"/>
     // </node>
+
     private void ParseNode(XmlNode xmlNode,
         Dictionary<long, Point> nodes)
     {
-        long id = long.Parse(xmlNode.Attributes["id"].Value);
+        long id = long.Parse(xmlNode.Attributes?["id"]?.Value ?? "");
         var coord = new Coord(
-            double.Parse(xmlNode.Attributes["lon"].Value),
-            double.Parse(xmlNode.Attributes["lat"].Value));
+            double.Parse(xmlNode.Attributes?["lon"]?.Value ?? ""),
+            double.Parse(xmlNode.Attributes?["lat"]?.Value ?? ""));
         Dictionary<string, string> tags = ParseTags(xmlNode);
         nodes.Add(id, new Point(coord, tags));
     }
@@ -128,15 +136,16 @@ public class OsmDataReader : IVectorFormatReader
     //   <tag k="par" v="4"/>
     //   <tag k="ref" v="18"/>
     // </way>
+
     private void ParseWay(XmlNode xmlNode,
         Dictionary<long, Point> nodes,
         Dictionary<long, Line> ways)
     {
-        long id = long.Parse(xmlNode.Attributes["id"].Value);
+        long id = long.Parse(xmlNode.Attributes?["id"]?.Value ?? "");
         Coord[] coords = xmlNode.ChildNodes
                 .Cast<XmlNode>()
                 .Where(child => child.Name == "nd")
-                .Select(child => long.Parse(child.Attributes["ref"].Value))
+                .Select(child => long.Parse(child.Attributes?["ref"]?.Value ?? ""))
                 .Select(pointId => nodes[pointId].Coord)
                 .ToArray();
         Dictionary<string, string> tags = ParseTags(xmlNode);
@@ -162,7 +171,7 @@ public class OsmDataReader : IVectorFormatReader
         Dictionary<long, Line> ways,
         Dictionary<long, MultiPolygon> multiPolygons)
     {
-        long id = long.Parse(xmlNode.Attributes["id"].Value);
+        long id = long.Parse(xmlNode.Attributes?["id"]?.Value ?? "");
         Dictionary<string, string> tags = ParseTags(xmlNode);
 
         // We're (currently) only interested in multipolygon relations
@@ -173,8 +182,8 @@ public class OsmDataReader : IVectorFormatReader
         Coord[][] polygons = xmlNode.ChildNodes
             .Cast<XmlNode>()
             .Where(child => child.Name == "member")
-            .Where(child => child.Attributes["type"].Value == "way")
-            .Select(child => long.Parse(child.Attributes["ref"].Value))
+            .Where(child => child.Attributes?["type"]?.Value == "way")
+            .Select(child => long.Parse(child.Attributes?["ref"]?.Value ?? ""))
             .Where(ways.ContainsKey) // no guarantee we have all relation members
             .Select(wayId => ways[wayId].Coords.ToArray())
             .ToArray();
@@ -186,10 +195,10 @@ public class OsmDataReader : IVectorFormatReader
         return node.ChildNodes
             .Cast<XmlNode>()
             .Where(child => child.Name == "tag")
-            .Where(child => IncludeTag(child.Attributes["k"].Value))
+            .Where(child => IncludeTag(child.Attributes?["k"]?.Value ?? ""))
             .ToDictionary(
-                child => child.Attributes["k"].Value,
-                child => child.Attributes["v"].Value);
+                child => child.Attributes?["k"]?.Value ?? "",
+                child => child.Attributes?["v"]?.Value ?? "");
     }
 
     protected bool IncludeTag(string tagName)

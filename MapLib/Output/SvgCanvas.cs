@@ -145,7 +145,7 @@ public class SvgCanvasLayer : CanvasLayer
         Color color, string font, double size,
         TextHAlign hAlign)
     {
-        string anchorStr = null;
+        string? anchorStr = null;
         switch (hAlign)
         {
             case TextHAlign.Left: anchorStr = "start"; break;

@@ -196,7 +196,7 @@ public static class GdalUtils
         bool hasAlpha = false;
         bool isIndexed = false;
         int channelSize = 8;
-        ColorTable ct = null;
+        ColorTable? ct = null;
         // Evaluate the bands and find out a proper image transfer format
         for (int i = 0; i < ds.RasterCount; i++)
         {

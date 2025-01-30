@@ -35,6 +35,10 @@ using System.Runtime.InteropServices;
 
 namespace MapLib.GdalSupport;
 
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
+#pragma warning disable CS8604 // Possible null reference argument.
+#pragma warning disable SYSLIB0044 // Type or member is obsolete
+
 public static partial class GdalConfiguration
 {
     private static volatile bool _configuredOgr;
@@ -55,7 +59,9 @@ public static partial class GdalConfiguration
     /// </summary>
     static GdalConfiguration()
     {
+
         string executingDirectory = null, gdalPath = null, nativePath = null;
+
         try
         {
             if (!IsWindows)
@@ -65,7 +71,7 @@ public static partial class GdalConfiguration
                 _usable = tmp != notSet;
                 return;
             }
-
+            
             string executingAssemblyFile = new Uri(Assembly.GetExecutingAssembly().GetName().CodeBase).LocalPath;
             executingDirectory = Path.GetDirectoryName(executingAssemblyFile);
 
@@ -210,3 +216,7 @@ public static partial class GdalConfiguration
 #endif
     }
 }
+
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
+#pragma warning restore CS8604 // Possible null reference argument.
+#pragma warning restore SYSLIB0044 // Type or member is obsolete

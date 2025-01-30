@@ -34,7 +34,7 @@ public class Polygon : Line
     /// <returns>
     /// Returns the polygon transformed as (X*scale+offsetX, Y*scale+offsetY)
     /// </returns>
-    public virtual Polygon Transform(double scale, double offsetX, double offsetY)
+    public override Polygon Transform(double scale, double offsetX, double offsetY)
         => new(Coords.Transform(scale, offsetX, offsetY), Tags);
 
     public override Polygon Reverse()
