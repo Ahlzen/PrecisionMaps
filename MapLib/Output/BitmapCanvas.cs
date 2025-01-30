@@ -81,21 +81,17 @@ internal class BitmapCanvasLayer : CanvasLayer
 
     internal Bitmap Bitmap { get; }
 
-    //public override void Clear(Color color) {
-    //    _graphics.Clear(color);
-    //}
-
     public override void DrawBitmap(Bitmap srcBitmap,
         double x, double y, double width, double height, double opacity)
     {
         if (opacity < 1.0)
         {
             float[][] colorMatrixElements = {
-                   new float[] {1, 0, 0, 0, 0},
-                   new float[] {0, 1, 0, 0, 0},
-                   new float[] {0, 0, 1, 0, 0},
-                   new float[] {0, 0, 0, (float)opacity, 0},
-                   new float[] {0, 0, 0, 0, 1}};
+                   [1, 0, 0, 0, 0],
+                   [0, 1, 0, 0, 0],
+                   [0, 0, 1, 0, 0],
+                   [0, 0, 0, (float)opacity, 0],
+                   [0, 0, 0, 0, 1]};
             var colorMatrix = new ColorMatrix(colorMatrixElements);
             var imageAttributes = new ImageAttributes();
             imageAttributes.SetColorMatrix(
@@ -103,10 +99,10 @@ internal class BitmapCanvasLayer : CanvasLayer
                ColorMatrixFlag.Default,
                ColorAdjustType.Bitmap);
             GraphicsUnit unit = GraphicsUnit.Pixel;
-            _graphics.DrawImage(srcBitmap, new[] {
+            _graphics.DrawImage(srcBitmap, [
                     new PointF((float)x, (float)(_layerHeight-y)),
                     new PointF((float)(x+width), (float)(_layerHeight-y)),
-                    new PointF((float)x, (float)(_layerHeight - y + height))},
+                    new PointF((float)x, (float)(_layerHeight - y + height))],
                 srcBitmap.GetBounds(ref unit),
                 GraphicsUnit.Pixel,
                 imageAttributes
@@ -120,7 +116,6 @@ internal class BitmapCanvasLayer : CanvasLayer
                     new PointF((float)x, (float)(_layerHeight - y + height))
                 });
         }
-
     }
 
     public override void DrawLines(
@@ -222,11 +217,12 @@ internal class BitmapCanvasLayer : CanvasLayer
         }
 
 #if EXTRADEBUG
-            DrawFilledCircles(new[] { coord }, 3, DebugColor);
-            DrawLines(new[] {
-                new[]{new Coord(coord.X+offsetX, coord.Y-baseline),new Coord(coord.X+offsetX+stringSize.Width, coord.Y-baseline)},
-                new[]{new Coord(coord.X+offsetX, coord.Y+stringSize.Height-baseline),new Coord(coord.X+offsetX+stringSize.Width, coord.Y+stringSize.Height-baseline)},
-                new[]{new Coord(coord.X+offsetX, coord.Y),new Coord(coord.X+offsetX+stringSize.Width, coord.Y)},},
+        DrawFilledCircles([coord], 3, DebugColor);
+        Coord[] coords = [new Coord(coord.X + offsetX, coord.Y), new Coord(coord.X + offsetX + stringSize.Width, coord.Y)];
+        DrawLines([
+                [new Coord(coord.X + offsetX, coord.Y- baseline), new Coord(coord.X + offsetX + stringSize.Width, coord.Y- baseline)],
+                [new Coord(coord.X + offsetX, coord.Y+ stringSize.Height - baseline), new Coord(coord.X + offsetX + stringSize.Width, coord.Y+ stringSize.Height- baseline)],
+                coords,],
                 1, DebugColor);
 #endif
 

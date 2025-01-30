@@ -12,7 +12,7 @@ public abstract class Shape
     public const int DEFAULT_POINTS_PER_REVOLUTION = 24;
 
     public static readonly TagList NoTags =
-        new KeyValuePair<string, string>[0];
+        Array.Empty<KeyValuePair<string, string>>();
 
     public TagList Tags { get; }
     public Shape(TagList? tags) { Tags = tags ?? NoTags; }

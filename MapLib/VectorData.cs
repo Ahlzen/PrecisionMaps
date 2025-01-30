@@ -19,14 +19,14 @@ public class VectorData : GeoData
         Line[]? lines, MultiLine[]? multiLines,
         Polygon[]? polygons, MultiPolygon[]? multiPolygons)
     {
-        Points = points ?? new Point[0];
-        MultiPoints = multiPoints ?? new MultiPoint[0];
+        Points = points ?? [];
+        MultiPoints = multiPoints ?? [];
 
-        Lines = lines ?? new Line[0];
-        MultiLines = multiLines ?? new MultiLine[0];
+        Lines = lines ?? [];
+        MultiLines = multiLines ?? [];
 
-        Polygons = polygons ?? new Polygon[0];
-        MultiPolygons = multiPolygons ?? new MultiPolygon[0];
+        Polygons = polygons ?? [];
+        MultiPolygons = multiPolygons ?? [];
 
         Bounds = ComputeBounds();
     }

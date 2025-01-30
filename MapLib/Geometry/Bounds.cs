@@ -55,15 +55,6 @@ public struct Bounds
         return bounds;
     }
 
-    //public static Bounds? FromBounds(IEnumerable<Bounds?> srcBounds)
-    //{
-    //    if (!srcBounds.Any()) return null;
-    //    Bounds? bounds = srcBounds.First();
-    //    foreach (var bound in srcBounds)
-    //        bounds += bound;
-    //    return bounds;
-    //}
-
     public static Bounds operator +(Bounds b1, Bounds b2)
     {
         return new Bounds(

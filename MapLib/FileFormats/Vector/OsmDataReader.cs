@@ -14,10 +14,6 @@ public class OsmDataReader : IVectorFormatReader
             "nhd:*", "gnis:*", "massgis:*"
         };
 
-    //private string _filename;
-    //private Bounds _bounds;
-
-
     public OsmDataReader()
     {
     }

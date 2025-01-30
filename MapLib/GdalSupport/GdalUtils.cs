@@ -312,7 +312,6 @@ public static class GdalUtils
             }
         }
 
-
         // Create a Bitmap to store the GDAL image in
         Bitmap bitmap = new Bitmap(imageWidth, imageHeight, pixelFormat);
 

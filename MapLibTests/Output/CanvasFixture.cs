@@ -2,9 +2,7 @@
 using System.IO;
 using MapLib;
 using MapLib.FileFormats.Vector;
-using MapLib.Geometry;
 using MapLib.Output;
-using OSGeo.OGR;
 
 namespace MapLibTests.Output;
 

@@ -1,6 +1,5 @@
 ﻿using System.Drawing;
 using System.Diagnostics;
-using System.IO;
 using MapLibTests;
 
 namespace MapLib.Tests.Geometry;
@@ -29,7 +28,7 @@ internal class Visualizer
 
     internal void Show()
     {
-        string filename = BaseFixture.GetTempFileName(".png"); //TrimEnd(Path.GetTempFileName(), ".tmp") + ".png";
+        string filename = BaseFixture.GetTempFileName(".png");
         Save(filename);
         Process.Start(new ProcessStartInfo {
             FileName = filename,
@@ -83,7 +82,6 @@ internal class Visualizer
 
         // TODO: set up coordinate system
         var bounds = Bounds.FromBounds(_shapes.Select(s => s.GetBounds()));
-        //_maxY = bounds.YMax;
 
         _scale = (float)(Math.Min(_width / bounds.Width, _height / bounds.Height));
         _scale *= (1f / (1f + 2f * Margin)); // add margins
@@ -101,9 +99,7 @@ internal class Visualizer
         Render(g, debugColor, bounds.AsPolygon(), 1.0f); 
         // x
         Pen pen = new Pen(debugColor, 1.0f / _scale);
-        pen.DashPattern = new float[] { 5/_scale, 5/_scale };
-        //g.DrawLine(pen, (float)bounds.XMin, (float)bounds.YMin, (float)bounds.XMax, (float)bounds.YMax);
-        //g.DrawLine(pen, (float)bounds.XMin, (float)bounds.YMax, (float)bounds.XMax, (float)bounds.YMin);
+        pen.DashPattern = [5/_scale, 5/_scale];
         // axes
         g.DrawLine(pen, (float)canvas.Left, 0, (float)canvas.Right, 0);
         g.DrawLine(pen, 0, (float)canvas.Bottom, 0, (float)canvas.Top);
@@ -137,10 +133,8 @@ internal class Visualizer
         }
 
         g.ResetTransform(); // or text will draw upside down if y inverted
-        //using (var font = new Font(FontFamily.GenericSansSerif, 7f / _scale, FontStyle.Regular))
         using (var font = new Font(FontFamily.GenericSansSerif, 7f, FontStyle.Regular))
             g.DrawString("Bounds: " + bounds.ToString(),
-                //font, Brushes.Silver, new PointF(0, (float)bounds.YMax));
                 font, Brushes.Silver, new PointF(0, 0));
 
         g.Dispose();
@@ -187,8 +181,6 @@ internal class Visualizer
         foreach (Coord[] coords in multiPolygon.Coords)
             RenderCoordsAsLine(g, c, coords, diameterPixels);
     }
-        
-
 
     public Coord InvertY(Coord c) => new Coord(c.X, -c.Y);
 

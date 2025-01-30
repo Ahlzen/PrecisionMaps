@@ -18,7 +18,6 @@ public abstract class BaseFixture
         GdalUtils.Initialize();
     }
 
-
     protected string FormatVectorDataSummary(VectorData data)
     {
         StringBuilder sb = new();

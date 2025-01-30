@@ -14,13 +14,6 @@ public abstract class CanvasLayer
         double x, double y, double width, double height,
         double opacity);
 
-    //public abstract void DrawLines(
-    //    IEnumerable<IEnumerable<Coord>> lines,
-    //    double width, Color color,
-    //    LineCap cap = LineCap.Butt,
-    //    LineJoin join = LineJoin.Miter, // TODO: miter limit
-    //    double[] dasharray = null);
-
     public abstract void DrawLines(
         IEnumerable<Coord[]> lines,
         double width, Color color,

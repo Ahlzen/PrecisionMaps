@@ -1,6 +1,4 @@
-﻿using System.Reflection.Metadata.Ecma335;
-
-namespace MapLib.Geometry;
+﻿namespace MapLib.Geometry;
 
 /// <summary>
 /// 2D (multi-point) line. Immutable.

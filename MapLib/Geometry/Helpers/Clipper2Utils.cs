@@ -20,16 +20,6 @@ internal static class Clipper2Utils
     public static PathD ToPathD(this Line line)
         => ToPathD(line.Coords);
 
-    //public static PathsD ToPathsD(this Line[] lines)
-    //{
-    //    PathsD pathsD = new PathsD(lines.Length);
-    //    foreach (Line line in lines)
-    //    {
-    //        PathD pathD = ToPathD(line);
-    //        pathsD.Add(pathD);
-    //    }
-    //    return pathsD;
-    //}
     public static PathsD ToPathsD(this Coord[][] lines)
     {
         PathsD pathsD = new PathsD(lines.Length);
@@ -69,36 +59,16 @@ internal static class Clipper2Utils
     public static Line ToLine(this PathD path, TagList? tags)
         => new Line(ToCoords(path, false), tags);
 
-
-    //public static Polygon[] ToPolygons(this PathsD paths, TagDictionary? tags)
-    //{
-    //    var polygons = new Polygon[paths.Count];
-    //    for (int p = 0; p < polygons.Length; p++)
-    //        polygons[p] = paths[p].ToPolygon(tags);
-    //    return polygons;
-    //}
-    //public static Line[] ToLines(this PathsD paths, TagDictionary? tags)
-    //{
-    //    var lines = new Line[paths.Count];
-    //    for (int p = 0; p < paths.Count; p++)
-    //        lines[p] = paths[p].ToLine(tags);
-    //    return lines;
-    //}
     public static Coord[][] ToCoords(this PathsD paths, bool arePolygons)
     {
         List<Coord[]> coords = new List<Coord[]>(paths.Count);
-        //Coord[][] coords = new Coord[][paths.Count];
-        //for (int p = 0; p < paths.Count; p++)
-        //polygons[p] = paths[p].ToPolygon(tags);
         foreach (PathD path in paths)
             coords.Add(ToCoords(path, arePolygons));
         return coords.ToArray();
     }
     public static MultiPolygon ToMultiPolygon(this PathsD paths, TagList? tags)
-        //=> new MultiPolygon(ToPolygons(paths, tags));
         => new MultiPolygon(ToCoords(paths, true), tags);
     public static MultiLine ToMultiLine(this PathsD paths, TagList? tags)
-        //=> new MultiLine(ToLines(paths, tags));
         => new MultiLine(ToCoords(paths, true), tags);
 
 

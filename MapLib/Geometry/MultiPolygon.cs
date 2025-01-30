@@ -1,5 +1,4 @@
-﻿using System.Runtime.InteropServices.ComTypes;
-using Clipper2Lib;
+﻿using Clipper2Lib;
 using MapLib.Geometry.Helpers;
 
 namespace MapLib.Geometry;
