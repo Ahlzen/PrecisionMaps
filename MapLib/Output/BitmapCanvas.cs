@@ -170,6 +170,14 @@ internal class BitmapCanvasLayer : CanvasLayer
                 new RectangleF((float)(point.X-radius/2), (float)(_layerHeight-point.Y-radius/2), (int)radius, (int)radius));
     }
 
+    public override void DrawFilledPolygon(IEnumerable<Coord> polygon, Color color)
+    {
+        var brush = new SolidBrush(color);
+        _graphics.FillPolygon(brush, polygon.Select(c =>
+            new PointF((float)c.X, (float)(_layerHeight - c.Y))).ToArray());
+        brush.Dispose();
+    }
+
     public override void DrawFilledPolygons(IEnumerable<IEnumerable<Coord>> polygons, Color color)
     {
         var brush = new SolidBrush(color);

@@ -45,23 +45,12 @@ public class Polygon : Line
 
     #region Operations and properties
 
-    /// <summary>
-    /// Returns the area of the polygon (positive if CCW, negative if CW).
-    /// </summary>
-    /// <remarks>
-    /// This algorithm works for both convex and concave
-    /// polygons, as well as overlapping polygons.
-    /// Based on https://stackoverflow.com/questions/1165647/how-to-determine-if-a-list-of-polygon-points-are-in-clockwise-order/1180256#1180256
-    /// </remarks>
     public double Area {
         get {
             if (_area == null) {
-                double sum = 0;
-                for (int n = 0; n < Coords.Length - 1; n++)
-                    sum += (Coords[n + 1].X - Coords[n].X) * (Coords[n + 1].Y + Coords[n].Y);
-                _area = sum / 2.0;
+                _area = Coords.CalculatePolygonArea();
             }
-            return -_area.Value; // invert since outer is CCW
+            return _area.Value;
         }
     }
     private double? _area; // cached value

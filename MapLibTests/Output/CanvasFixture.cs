@@ -9,6 +9,77 @@ namespace MapLibTests.Output;
 [TestFixture]
 public class CanvasFixture : BaseFixture
 {
+    #region Artificial tests
+
+    /// <summary>
+    /// Test that renders a canvas with many different kinds of drawing
+    /// primitives, to visually check that they work.
+    /// </summary>
+    [Test]
+    public void DrawTestCanvas()
+    {
+        int width = 1600;
+        int height = 800;
+        var bitmapCanvas = new BitmapCanvas(width, height, Color.Transparent);
+        var svgCanvas = new SvgCanvas(width, height, Color.Transparent);
+
+        OgrDataReader reader = new();
+        VectorData reservoirData = reader.ReadFile(Path.Join(TestDataPath, "Aaron River Reservoir.geojson"));
+        Assert.That(reservoirData.Polygons.Count, Is.EqualTo(0));
+        Assert.That(reservoirData.MultiPolygons.Count, Is.EqualTo(1));
+        VectorData scaledReservoirData = TransformToFit(reservoirData, 180, 180);
+        MultiPolygon reservoirPolygon = scaledReservoirData.MultiPolygons[0];
+
+        Assert.That(reservoirPolygon.Count(cs => cs.IsCounterClockwise()), Is.EqualTo(1)); // outer ring (perimeter)
+        Assert.That(reservoirPolygon.Count(cs => cs.IsClockwise()), Is.GreaterThan(1)); // inner rings (islands)
+
+        foreach (Canvas canvas in new Canvas[] { bitmapCanvas, svgCanvas })
+        {
+            CanvasLayer layer = canvas.AddNewLayer("main");
+
+            // Try polygon styles
+
+            // Solid light blue fill
+            layer.DrawFilledPolygons(reservoirPolygon.Transform(1.0, 10, 10).Coords, Color.CadetBlue);
+
+            // Transparent dark green fill
+            layer.DrawFilledPolygons(reservoirPolygon.Transform(1.0, 210, 10).Coords, Color.FromArgb(128, Color.DarkGreen));
+
+            // Line thicknesses
+            layer.DrawLines(reservoirPolygon.Transform(1.0, 410, 10).Coords, 2, Color.Navy);
+            layer.DrawLines(reservoirPolygon.Transform(1.0, 410, 10).Offset(-8) .Coords, 1, Color.Navy);
+            layer.DrawLines(reservoirPolygon.Transform(1.0, 410, 10).Offset(-16).Coords, 0.5, Color.Navy);
+            layer.DrawLines(reservoirPolygon.Transform(1.0, 410, 10).Offset(-24).Coords, 0.25, Color.Navy);
+
+            // Line dasharrays and joins/caps
+            layer.DrawLines(reservoirPolygon.Transform(1.0, 610, 10).Coords, 3, Color.DarkOliveGreen,
+                LineCap.Round, LineJoin.Round);
+            layer.DrawLines(reservoirPolygon.Transform(1.0, 610, 10).Offset(-6).Coords, 3, Color.DarkOliveGreen,
+                LineCap.Square, LineJoin.Miter);
+            layer.DrawLines(reservoirPolygon.Transform(1.0, 610, 10).Offset(-12).Coords, 1, Color.DarkOliveGreen,
+                LineCap.Butt, LineJoin.Miter, [6, 2, 2, 2]);
+            layer.DrawLines(reservoirPolygon.Transform(1.0, 610, 10).Offset(-18).Coords, 1, Color.DarkOliveGreen,
+                LineCap.Butt, LineJoin.Miter, [10, 10]);
+
+        }
+
+        // Write bitmap
+        Bitmap bitmap = bitmapCanvas.GetBitmap();
+        string pngFilename = GetTempFileName(".png");
+        bitmap.Save(pngFilename);
+        ShowFile(pngFilename);
+
+        // Write SVG
+        string svg = svgCanvas.GetSvg();
+        string svgFilename = GetTempFileName(".svg");
+        File.WriteAllText(svgFilename, svg);
+    }
+
+    #endregion
+
+
+    #region Tests that render real data
+
     [Test]
     public void TestRenderMultipolygon()
     {
@@ -48,6 +119,8 @@ public class CanvasFixture : BaseFixture
                         Color.Navy, 1.3, 1.0, 0.8, 0.6, 3.5, 5);
             });
     }
+
+    #endregion
 
 
     ///// Helpers
@@ -97,7 +170,7 @@ public class CanvasFixture : BaseFixture
         multiPolygons.AddRange(transformedData.Polygons.Select(p => p.AsMultiPolygon()));
 
         drawingFunc(bitmapCanvas, multiPolygons);
-        //drawingFunc(svgCanvas, multiPolygons);
+        drawingFunc(svgCanvas, multiPolygons);
 
         // Write bitmap
         Bitmap bitmap = bitmapCanvas.GetBitmap();
@@ -106,9 +179,9 @@ public class CanvasFixture : BaseFixture
         ShowFile(pngFilename);
 
         // Write SVG
-        //string svg = svgCanvas.GetSvg();
-        //string svgFilename = GetTempFileName(".svg");
-        //File.WriteAllText(svgFilename, svg);
+        string svg = svgCanvas.GetSvg();
+        string svgFilename = GetTempFileName(".svg");
+        File.WriteAllText(svgFilename, svg);
     }
 
     // TODO: If this is useful elsewhere, it should be moved

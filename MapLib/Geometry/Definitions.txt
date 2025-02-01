@@ -10,8 +10,11 @@ o -> X
 Polygons
 ========
 First and last point must be the same.
+
 Outer polygons: CCW, holes: CW
  (Simple Features/WKT/GML/KML: outer CCW, holes CW)
  (GeoJSON: outer CCW, innter CW)
  (ESRI Shapefile: outer CW, holes CCW)
  (TopoJSON: outer CW, inner CCW)
+
+Area is positive for CCW, negative for CW.

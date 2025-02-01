@@ -118,6 +118,14 @@ public class SvgCanvasLayer : CanvasLayer
             lines.Select(line => GetSvgPath(line))));
     }
 
+    public override void DrawFilledPolygon(IEnumerable<Coord> polygon, Color color)
+    {
+        // TODO: is this an issue with the fill rule?
+        _objects.Add(new XElement(SvgCanvas.XmlNs + "g",
+            GetFillAttributes(color),
+            GetSvgPath(polygon)));
+    }
+
     public override void DrawFilledPolygons(IEnumerable<IEnumerable<Coord>> polygons, Color color)
     {
         // TODO: is this an issue with the fill rule?

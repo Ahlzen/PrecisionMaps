@@ -21,6 +21,10 @@ public abstract class CanvasLayer
         LineJoin join = LineJoin.Miter, // TODO: miter limit
         double[]? dasharray = null);
 
+    public abstract void DrawFilledPolygon(
+        IEnumerable<Coord> polygon,
+        Color color);
+
     public abstract void DrawFilledPolygons(
         IEnumerable<IEnumerable<Coord>> polygons,
         Color color);
