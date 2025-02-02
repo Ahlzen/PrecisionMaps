@@ -118,11 +118,122 @@ internal class BitmapCanvasLayer : CanvasLayer
         }
     }
 
+    public override void DrawLine(Coord[] coords,
+        double width, Color color, LineCap cap = LineCap.Butt,
+        LineJoin join = LineJoin.Miter, double[]? dasharray = null)
+    {
+        using Pen pen = GetPen(width, color, cap, join, dasharray);
+        _graphics.DrawLines(pen, ToPoints(coords));
+    }
+
     public override void DrawLines(
         IEnumerable<Coord[]> lines,
-        double width,
-        Color color, LineCap cap = LineCap.Butt, LineJoin join = LineJoin.Miter,
+        double width, Color color, LineCap cap = LineCap.Butt,
+        LineJoin join = LineJoin.Miter, double[]? dasharray = null)
+    {
+        using Pen pen = GetPen(width, color, cap, join, dasharray);
+        foreach (Coord[] line in lines)
+            _graphics.DrawLines(pen, ToPoints(line));
+    }
+
+    public override void DrawPolygon(Coord[] coords,
+        double width, Color color, LineJoin join = LineJoin.Miter,
         double[]? dasharray = null)
+    {
+        using Pen pen = GetPen(width, color,
+            LineCap.Square, // doesn't matter since this is always closed
+            join, dasharray);
+        PointF[] points = ToPoints(coords);
+        _graphics.DrawPolygon(pen, points);
+    }
+
+    public override void DrawFilledCircles(
+        IEnumerable<Coord> points, double radius, Color color)
+    {
+        foreach (Coord point in points)
+            _graphics.FillEllipse(new SolidBrush(color),
+                new RectangleF((float)(point.X-radius/2), (float)(_layerHeight-point.Y-radius/2), (int)radius, (int)radius));
+    }
+
+    public override void DrawFilledPolygon(Coord[] polygon, Color color)
+    {
+        using var brush = new SolidBrush(color);
+        _graphics.FillPolygon(brush, ToPoints(polygon));
+    }
+
+    public override void DrawFilledPolygons(
+        IEnumerable<Coord[]> polygons, Color color)
+    {
+        using var brush = new SolidBrush(color);
+        foreach (Coord[] polygon in polygons)
+            _graphics.FillPolygon(brush, ToPoints(polygon));
+    }
+
+    public override void DrawFilledMultiPolygon(
+        IEnumerable<Coord[]> multiPolygon, Color color)
+    {
+        using SolidBrush brush = new(color);
+        using GraphicsPath path = new(FillMode.Winding);
+        foreach (Coord[] coords in multiPolygon)
+        {
+            path.AddPolygon(ToPoints(coords));
+        }
+        _graphics.FillPath(brush, path);
+    }
+
+    public override void DrawFilledMultiPolygons(
+        IEnumerable<IEnumerable<Coord[]>> multipolygons, Color color)
+    {
+        using SolidBrush brush = new(color);
+        foreach (IEnumerable<Coord[]> multipolygon in multipolygons)
+        {
+            using GraphicsPath path = new(FillMode.Winding);
+            foreach (Coord[] polygon in multipolygon)
+                path.AddPolygon(ToPoints(polygon));
+            _graphics.FillPath(brush, path);
+        }
+    }
+
+    public override void DrawText(string s, Coord coord,
+        Color color, string fontName, double size,
+        TextHAlign hAlign)
+    {
+        using Font font = new Font(fontName, (float)size);
+        using Brush brush = new SolidBrush(color);
+
+        SizeF stringSize = _graphics.MeasureString(s, font);
+        double baseline = GetBaseline(font);
+
+        // Flip Y coordinate
+        coord = new Coord(coord.X, _layerHeight - coord.Y);
+
+        double offsetX = 0;
+        switch (hAlign)
+        {
+            case TextHAlign.Left: break; // no extra offset
+            case TextHAlign.Center: offsetX = -stringSize.Width / 2.0; break;
+            case TextHAlign.Right: offsetX = -stringSize.Width; break;
+        }
+
+#if EXTRADEBUG
+        DrawFilledCircles([coord], 3, DebugColor);
+        Coord[] coords = [new Coord(coord.X + offsetX, coord.Y), new Coord(coord.X + offsetX + stringSize.Width, coord.Y)];
+        DrawLines([
+                [new Coord(coord.X + offsetX, coord.Y- baseline), new Coord(coord.X + offsetX + stringSize.Width, coord.Y- baseline)],
+                [new Coord(coord.X + offsetX, coord.Y+ stringSize.Height - baseline), new Coord(coord.X + offsetX + stringSize.Width, coord.Y+ stringSize.Height- baseline)],
+                coords,],
+                1, DebugColor);
+#endif
+
+        _graphics.DrawString(s, font, brush,
+            new PointF((float)(coord.X + offsetX), (float)(coord.Y - baseline)));
+    }
+
+    #region Helpers
+
+    public Pen GetPen(double width, Color color,
+        LineCap cap, LineJoin join,
+        double[]? dasharray)
     {
         Pen pen = new Pen(color, (float)width);
         System.Drawing.Drawing2D.LineCap wCap = System.Drawing.Drawing2D.LineCap.Flat;
@@ -157,88 +268,8 @@ internal class BitmapCanvasLayer : CanvasLayer
         pen.LineJoin = wJoin;
         if (dasharray != null)
             pen.DashPattern = dasharray.Select(d => (float)d).ToArray();
-        foreach (IEnumerable<Coord> line in lines)
-            _graphics.DrawLines(pen, line.Select(c =>
-                new PointF((float)c.X, _layerHeight-(float)c.Y)).ToArray());
-        pen.Dispose();
+        return pen;
     }
-
-    public override void DrawFilledCircles(IEnumerable<Coord> points, double radius, Color color)
-    {
-        foreach (Coord point in points)
-            _graphics.FillEllipse(new SolidBrush(color),
-                new RectangleF((float)(point.X-radius/2), (float)(_layerHeight-point.Y-radius/2), (int)radius, (int)radius));
-    }
-
-    public override void DrawFilledPolygon(IEnumerable<Coord> polygon, Color color)
-    {
-        var brush = new SolidBrush(color);
-        _graphics.FillPolygon(brush, polygon.Select(c =>
-            new PointF((float)c.X, (float)(_layerHeight - c.Y))).ToArray());
-        brush.Dispose();
-    }
-
-    public override void DrawFilledPolygons(IEnumerable<IEnumerable<Coord>> polygons, Color color)
-    {
-        var brush = new SolidBrush(color);
-        foreach (IEnumerable<Coord> polygon in polygons)
-            _graphics.FillPolygon(brush, polygon.Select(c =>
-                new PointF((float)c.X, (float)(_layerHeight-c.Y))).ToArray());
-        brush.Dispose();
-    }
-
-    public override void DrawFilledMultiPolygons(
-        IEnumerable<IEnumerable<IEnumerable<Coord>>> multipolygons, Color color)
-    {
-        var brush = new SolidBrush(color);
-        foreach (IEnumerable<IEnumerable<Coord>> multipolygon in multipolygons)
-        {
-            var path = new GraphicsPath(FillMode.Alternate);
-            foreach (IEnumerable<Coord> polygon in multipolygon)
-                path.AddPolygon(polygon.Select(c =>
-                    new PointF((float)c.X, (float)(_layerHeight-c.Y))).ToArray());
-            _graphics.FillPath(brush, path);
-            path.Dispose();
-        }
-        brush.Dispose();
-    }
-
-    public override void DrawText(string s, Coord coord,
-        Color color, string fontName, double size,
-        TextHAlign hAlign)
-    {
-        Font font = new Font(fontName, (float)size);
-        Brush brush = new SolidBrush(color);
-
-        SizeF stringSize = _graphics.MeasureString(s, font);
-        double baseline = GetBaseline(font);
-
-        // Flip Y coordinate
-        coord = new Coord(coord.X, _layerHeight - coord.Y);
-
-        double offsetX = 0;
-        switch (hAlign)
-        {
-            case TextHAlign.Left: break; // no extra offset
-            case TextHAlign.Center: offsetX = -stringSize.Width / 2.0; break;
-            case TextHAlign.Right: offsetX = -stringSize.Width; break;
-        }
-
-#if EXTRADEBUG
-        DrawFilledCircles([coord], 3, DebugColor);
-        Coord[] coords = [new Coord(coord.X + offsetX, coord.Y), new Coord(coord.X + offsetX + stringSize.Width, coord.Y)];
-        DrawLines([
-                [new Coord(coord.X + offsetX, coord.Y- baseline), new Coord(coord.X + offsetX + stringSize.Width, coord.Y- baseline)],
-                [new Coord(coord.X + offsetX, coord.Y+ stringSize.Height - baseline), new Coord(coord.X + offsetX + stringSize.Width, coord.Y+ stringSize.Height- baseline)],
-                coords,],
-                1, DebugColor);
-#endif
-
-        _graphics.DrawString(s, font, brush,
-            new PointF((float)(coord.X + offsetX), (float)(coord.Y - baseline)));
-    }
-
-    #region Helpers
 
     private double GetBaseline(Font font)
     {
@@ -247,6 +278,18 @@ internal class BitmapCanvasLayer : CanvasLayer
         float ascent = ff.GetCellAscent(font.Style);
         float baseline = font.GetHeight(_graphics) * ascent / lineSpace;
         return baseline;
+    }
+
+    public PointF[] ToPoints(Coord[] coords)
+    {
+        PointF[] points = new PointF[coords.Length];
+        for (int i = 0; i < coords.Length; i++)
+        {
+            points[i] = new PointF(
+                (float)coords[i].X,
+                _layerHeight - (float)coords[i].Y);
+        }
+        return points;
     }
 
     #endregion

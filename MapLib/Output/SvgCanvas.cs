@@ -107,39 +107,67 @@ public class SvgCanvasLayer : CanvasLayer
             GetRasterData(bitmap, x, _layerHeight-y, width, height)));
     }
 
-    public override void DrawLines(
-        IEnumerable<Coord[]> lines,
-        double width, Color color,
-        LineCap cap = LineCap.Butt, LineJoin join = LineJoin.Miter,
-        double[]? dasharray = null)
+    public override void DrawLine(Coord[] coords, double width,
+        Color color, LineCap cap = LineCap.Butt,
+        LineJoin join = LineJoin.Miter, double[]? dasharray = null)
     {
         _objects.Add(new XElement(SvgCanvas.XmlNs + "g",
             GetStrokeAttributes(width, color, cap, join, dasharray),
-            lines.Select(line => GetSvgPath(line))));
+            GetSvgPath(coords, isClosedPath: false)));
     }
 
-    public override void DrawFilledPolygon(IEnumerable<Coord> polygon, Color color)
+    public override void DrawLines(IEnumerable<Coord[]> lines, double width,
+        Color color, LineCap cap = LineCap.Butt,
+        LineJoin join = LineJoin.Miter, double[]? dasharray = null)
     {
-        // TODO: is this an issue with the fill rule?
         _objects.Add(new XElement(SvgCanvas.XmlNs + "g",
-            GetFillAttributes(color),
-            GetSvgPath(polygon)));
+            GetStrokeAttributes(width, color, cap, join, dasharray),
+            lines.Select(l => GetSvgPath(l, isClosedPath: false))));
     }
 
-    public override void DrawFilledPolygons(IEnumerable<IEnumerable<Coord>> polygons, Color color)
+    public override void DrawPolygon(Coord[] coords, double width,
+        Color color, LineJoin join = LineJoin.Miter, double[]? dasharray = null)
     {
-        // TODO: is this an issue with the fill rule?
+        _objects.Add(new XElement(SvgCanvas.XmlNs + "g",
+            GetStrokeAttributes(width, color,
+                LineCap.Square, // doesn't matter since shape is closed
+                join, dasharray),
+            GetSvgPath(coords, isClosedPath: true)));
+    }
+
+    public override void DrawFilledPolygon(Coord[] coords, Color color)
+    {
         _objects.Add(new XElement(SvgCanvas.XmlNs + "g",
             GetFillAttributes(color),
-            polygons.Select(polygon => GetSvgPath(polygon))));
+            GetSvgPath(coords, isClosedPath: true)));
+    }
+
+    public override void DrawFilledPolygons(
+        IEnumerable<Coord[]> polygons, Color color)
+    {
+        _objects.Add(new XElement(SvgCanvas.XmlNs + "g",
+            GetFillAttributes(color),
+            // one path per polygon
+            polygons.Select(polygon => GetSvgPath(polygon, isClosedPath: true))));
+    }
+
+    public override void DrawFilledMultiPolygon(
+        IEnumerable<Coord[]> multiPolygon, Color color)
+    {
+        _objects.Add(new XElement(SvgCanvas.XmlNs + "g",
+            GetFillAttributes(color),
+            // single multi-segment path for multipolygon
+            GetSvgPath(multiPolygon, areClosedPaths: true)));
     }
 
     public override void DrawFilledMultiPolygons(
-        IEnumerable<IEnumerable<IEnumerable<Coord>>> multipolygons, Color color)
+        IEnumerable<IEnumerable<Coord[]>> multipolygons, Color color)
     {
         _objects.Add(new XElement(SvgCanvas.XmlNs + "g",
             GetFillAttributes(color),
-            multipolygons.Select(multipolygon => GetSvgPath(multipolygon))));
+            // one multi-segment path for each multipolygon
+            multipolygons.Select(multipolygon => GetSvgPath(
+                multipolygon, areClosedPaths: true))));
     }
 
     public override void DrawFilledCircles(IEnumerable<Coord> points, double radius, Color color)
@@ -263,43 +291,52 @@ public class SvgCanvasLayer : CanvasLayer
 
     #region SVG Utils
 
-    private XElement GetSvgPath(IEnumerable<Coord> points)
+    private XElement GetSvgPath(Coord[] points, bool isClosedPath)
     {
         return new XElement(SvgCanvas.XmlNs + "path",
-            new XAttribute("d", GetSvgPathCoords(points)));
+            new XAttribute("d", GetSvgPathCoords(points, isClosedPath)));
     }
 
-    private XElement GetSvgPath(IEnumerable<IEnumerable<Coord>> polygons)
+    private XElement GetSvgPath(IEnumerable<Coord[]> paths, bool areClosedPaths)
     {
         return new XElement(SvgCanvas.XmlNs + "path",
-            new XAttribute("d", GetSvgPathCoords(polygons)));
+            new XAttribute("d", GetSvgPathCoords(paths, areClosedPaths)));
     }
 
-    private string GetSvgPathCoords(IEnumerable<IEnumerable<Coord>> polygons)
+    private string GetSvgPathCoords(IEnumerable<Coord[]> paths, bool areClosedPaths)
     {
         var sb = new StringBuilder();
-        foreach (IEnumerable<Coord> polygon in polygons)
+        foreach (Coord[] path in paths)
         {
-            sb.Append(GetSvgPathCoords(polygon));
+            AddSvgPathCoords(sb, path, areClosedPaths);
             sb.Append(" ");
         }
         return sb.ToString().TrimEnd();
     }
 
-    private string GetSvgPathCoords(IEnumerable<Coord> points)
+    private string GetSvgPathCoords(Coord[] coords, bool isClosedPath)
     {
         var sb = new StringBuilder();
-        bool isFirst = true;
-        foreach (Coord point in points)
-        {
-            sb.Append(isFirst ? "M " : " L ");
-            sb.Append(point.X.ToString(_canvas.SvgCoordFormat));
-            sb.Append(" ");
-            sb.Append((_layerHeight - point.Y).ToString(_canvas.SvgCoordFormat));
-            isFirst = false;
-        }
+        AddSvgPathCoords(sb, coords, isClosedPath);
         return sb.ToString();
     }
+
+    private void AddSvgPathCoords(StringBuilder sb, Coord[] coords,
+        bool isClosedPath)
+    {
+        bool isFirst = true;
+        foreach (Coord coord in coords)
+        {
+            sb.Append(isFirst ? "M " : " L ");
+            sb.Append(coord.X.ToString(_canvas.SvgCoordFormat));
+            sb.Append(" ");
+            sb.Append((_layerHeight - coord.Y).ToString(_canvas.SvgCoordFormat));
+            isFirst = false;
+        }
+        if (isClosedPath)
+          sb.Append(" X");
+    }
+
 
     private XElement GetSvgCircle(Coord point, double radius)
     {

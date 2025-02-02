@@ -45,20 +45,23 @@ public class CanvasFixture : BaseFixture
             // Transparent dark green fill
             layer.DrawFilledPolygons(reservoirPolygon.Transform(1.0, 210, 10).Coords, Color.FromArgb(128, Color.DarkGreen));
 
+            // Transparent dark green fill
+            layer.DrawFilledMultiPolygon(reservoirPolygon.Transform(1.0, 410, 10).Coords, Color.FromArgb(128, Color.DarkGreen));
+
             // Line thicknesses
-            layer.DrawLines(reservoirPolygon.Transform(1.0, 410, 10).Coords, 2, Color.Navy);
-            layer.DrawLines(reservoirPolygon.Transform(1.0, 410, 10).Offset(-8) .Coords, 1, Color.Navy);
-            layer.DrawLines(reservoirPolygon.Transform(1.0, 410, 10).Offset(-16).Coords, 0.5, Color.Navy);
-            layer.DrawLines(reservoirPolygon.Transform(1.0, 410, 10).Offset(-24).Coords, 0.25, Color.Navy);
+            layer.DrawLines(reservoirPolygon.Transform(1.0, 610, 10).Coords, 2, Color.Navy);
+            layer.DrawLines(reservoirPolygon.Transform(1.0, 610, 10).Offset(-8) .Coords, 1, Color.Navy);
+            layer.DrawLines(reservoirPolygon.Transform(1.0, 610, 10).Offset(-16).Coords, 0.5, Color.Navy);
+            layer.DrawLines(reservoirPolygon.Transform(1.0, 610, 10).Offset(-24).Coords, 0.25, Color.Navy);
 
             // Line dasharrays and joins/caps
-            layer.DrawLines(reservoirPolygon.Transform(1.0, 610, 10).Coords, 3, Color.DarkOliveGreen,
+            layer.DrawLines(reservoirPolygon.Transform(1.0, 810, 10).Coords, 3, Color.DarkOliveGreen,
                 LineCap.Round, LineJoin.Round);
-            layer.DrawLines(reservoirPolygon.Transform(1.0, 610, 10).Offset(-6).Coords, 3, Color.DarkOliveGreen,
+            layer.DrawLines(reservoirPolygon.Transform(1.0, 810, 10).Offset(-6).Coords, 3, Color.DarkOliveGreen,
                 LineCap.Square, LineJoin.Miter);
-            layer.DrawLines(reservoirPolygon.Transform(1.0, 610, 10).Offset(-12).Coords, 1, Color.DarkOliveGreen,
+            layer.DrawLines(reservoirPolygon.Transform(1.0, 810, 10).Offset(-12).Coords, 1, Color.DarkOliveGreen,
                 LineCap.Butt, LineJoin.Miter, [6, 2, 2, 2]);
-            layer.DrawLines(reservoirPolygon.Transform(1.0, 610, 10).Offset(-18).Coords, 1, Color.DarkOliveGreen,
+            layer.DrawLines(reservoirPolygon.Transform(1.0, 810, 10).Offset(-18).Coords, 1, Color.DarkOliveGreen,
                 LineCap.Butt, LineJoin.Miter, [10, 10]);
 
         }
@@ -87,8 +90,23 @@ public class CanvasFixture : BaseFixture
             Path.Join(TestDataPath, "Aaron River Reservoir.geojson"),
             600, 600, Color.AntiqueWhite, (canvas, multiPolygons) => {
                 CanvasLayer layer = canvas.AddNewLayer("water");
+                foreach (MultiPolygon multipolygon in multiPolygons)
+                    //layer.DrawLines(multipolygon, 1.2, Color.Navy, LineCap.Round, LineJoin.Round);
+                    foreach (Coord[] polygon in multipolygon)
+                        layer.DrawPolygon(polygon, 1.2, Color.Navy, LineJoin.Round);
+            });
+    }
+
+    [Test]
+    public void TestRenderFilledMultipolygon()
+    {
+        LoadOgrDataAndDrawPolygons(
+            Path.Join(TestDataPath, "Aaron River Reservoir.geojson"),
+            600, 600, Color.AntiqueWhite, (canvas, multiPolygons) => {
+                CanvasLayer layer = canvas.AddNewLayer("water");
                 foreach (var multipolygon in multiPolygons)
-                    layer.DrawLines(multipolygon, 1.2, Color.Navy, LineCap.Round, LineJoin.Round);
+                    //layer.DrawFilledPolygons(multipolygon, Color.CornflowerBlue);
+                    layer.DrawFilledMultiPolygon(multipolygon, Color.CornflowerBlue);
             });
     }
 
