@@ -64,24 +64,46 @@ public class CanvasFixture : BaseFixture
             layer.DrawLines(reservoirPolygon.Transform(1.0, 810, 10).Offset(-18).Coords, 1, Color.DarkOliveGreen,
                 LineCap.Butt, LineJoin.Miter, [10, 10]);
 
+            SaveCanvas(canvas, false);
         }
-
-        // Write bitmap
-        Bitmap bitmap = bitmapCanvas.GetBitmap();
-        string pngFilename = GetTempFileName(".png");
-        bitmap.Save(pngFilename);
-        ShowFile(pngFilename);
-
-        // Write SVG
-        string svg = svgCanvas.GetSvg();
-        string svgFilename = GetTempFileName(".svg");
-        File.WriteAllText(svgFilename, svg);
     }
 
     #endregion
 
 
     #region Tests that render real data
+
+    [Test]
+    public void TestRenderSimpleMultipolygon()
+    {
+        var outerRing = new Coord[]{
+            new Coord(100, 400),
+            new Coord(100, 100),
+            new Coord(400, 100),
+            new Coord(400, 400),
+            new Coord(100, 400)
+        };
+        var innerRing = new Coord[]{
+            new Coord(200, 200),
+            new Coord(300, 200),
+            new Coord(300, 300),
+            new Coord(200, 300),
+            new Coord(200, 200)
+        };
+        MultiPolygon multipolygon = new([outerRing, innerRing], null);
+
+        BitmapCanvas bitmapCanvas = new BitmapCanvas(500, 500, Color.White);
+        SvgCanvas svgCanvas = new SvgCanvas(500, 500, Color.White);
+
+        foreach (Canvas canvas in new Canvas[] { bitmapCanvas, svgCanvas })
+        {
+            CanvasLayer layer = canvas.AddNewLayer("test layer");
+            layer.DrawFilledMultiPolygon(multipolygon, Color.CadetBlue);
+            layer.DrawPolygon(outerRing, 5.0, Color.DarkRed);
+            layer.DrawPolygon(innerRing, 5.0, Color.DarkGreen);
+            SaveCanvas(canvas, false);
+        }
+    }
 
     [Test]
     public void TestRenderMultipolygon()
@@ -91,7 +113,6 @@ public class CanvasFixture : BaseFixture
             600, 600, Color.AntiqueWhite, (canvas, multiPolygons) => {
                 CanvasLayer layer = canvas.AddNewLayer("water");
                 foreach (MultiPolygon multipolygon in multiPolygons)
-                    //layer.DrawLines(multipolygon, 1.2, Color.Navy, LineCap.Round, LineJoin.Round);
                     foreach (Coord[] polygon in multipolygon)
                         layer.DrawPolygon(polygon, 1.2, Color.Navy, LineJoin.Round);
             });
@@ -105,7 +126,6 @@ public class CanvasFixture : BaseFixture
             600, 600, Color.AntiqueWhite, (canvas, multiPolygons) => {
                 CanvasLayer layer = canvas.AddNewLayer("water");
                 foreach (var multipolygon in multiPolygons)
-                    //layer.DrawFilledPolygons(multipolygon, Color.CornflowerBlue);
                     layer.DrawFilledMultiPolygon(multipolygon, Color.CornflowerBlue);
             });
     }
@@ -187,19 +207,18 @@ public class CanvasFixture : BaseFixture
         multiPolygons.AddRange(transformedData.MultiPolygons);
         multiPolygons.AddRange(transformedData.Polygons.Select(p => p.AsMultiPolygon()));
 
-        drawingFunc(bitmapCanvas, multiPolygons);
-        drawingFunc(svgCanvas, multiPolygons);
+        foreach (Canvas canvas in new Canvas[] { bitmapCanvas, svgCanvas}) {
+            drawingFunc(canvas, multiPolygons);
+            SaveCanvas(canvas, false);
+        }
+    }
 
-        // Write bitmap
-        Bitmap bitmap = bitmapCanvas.GetBitmap();
-        string pngFilename = GetTempFileName(".png");
-        bitmap.Save(pngFilename);
-        ShowFile(pngFilename);
-
-        // Write SVG
-        string svg = svgCanvas.GetSvg();
-        string svgFilename = GetTempFileName(".svg");
-        File.WriteAllText(svgFilename, svg);
+    private string SaveCanvas(Canvas canvas, bool show)
+    {
+        string filename = GetTempFileName(canvas.DefaultFileExtension);
+        canvas.SaveToFile(filename);
+        if (show) ShowFile(filename);
+        return filename;
     }
 
     // TODO: If this is useful elsewhere, it should be moved
@@ -214,3 +233,4 @@ public class CanvasFixture : BaseFixture
         return source.Transform(scale, offsetX, offsetY);
     }
 }
+

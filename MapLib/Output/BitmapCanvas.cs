@@ -54,6 +54,14 @@ public class BitmapCanvas : Canvas
         }
         return canvasBitmap;
     }
+
+    public override string DefaultFileExtension => ".png";
+
+    public override void SaveToFile(string filename)
+    {
+        using Bitmap bitmap = GetBitmap();
+        bitmap.Save(filename);
+    }
 }
 
 /// <remarks>

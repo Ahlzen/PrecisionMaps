@@ -70,6 +70,14 @@ public class SvgCanvas : Canvas
             new XAttribute("height", "100%"),
             new XAttribute("fill", color.ToHexCode()));
     }
+
+    public override string DefaultFileExtension => ".svg";
+
+    public override void SaveToFile(string filename)
+    {
+        string svg = GetSvg();
+        File.WriteAllText(filename, svg);
+    }
 }
 
 /// <remarks>
@@ -334,7 +342,7 @@ public class SvgCanvasLayer : CanvasLayer
             isFirst = false;
         }
         if (isClosedPath)
-          sb.Append(" X");
+          sb.Append(" Z");
     }
 
 

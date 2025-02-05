@@ -16,4 +16,7 @@ public abstract class Canvas
 
     public abstract IEnumerable<CanvasLayer> Layers { get; }
     public abstract int LayerCount { get; }
+
+    public abstract string DefaultFileExtension { get; }
+    public abstract void SaveToFile(string filename);
 }
