@@ -68,4 +68,7 @@ public class MultiLine : Shape, IEnumerable<Coord[]>
         PathsD result = Clipper.InflatePaths(paths, radius, JoinType.Round, EndType.Round);
         return result.ToMultiPolygon(Tags);
     }
+
+    public new MultiLine Smooth_Chaikin(int iterations)
+        => throw new NotImplementedException();
 }

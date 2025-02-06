@@ -71,6 +71,9 @@ public class MultiPolygon : Shape, IEnumerable<Coord[]>
     public override MultiPolygon Buffer(double radius)
         => Offset(radius);
 
+    public new MultiPolygon Smooth_Chaikin(int iterations)
+        => throw new NotImplementedException();
+
     /// <summary>
     /// Merges any overlapping areas (self-union).
     /// </summary>

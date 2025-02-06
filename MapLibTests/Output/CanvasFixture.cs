@@ -27,7 +27,7 @@ public class CanvasFixture : BaseFixture
         VectorData reservoirData = reader.ReadFile(Path.Join(TestDataPath, "Aaron River Reservoir.geojson"));
         Assert.That(reservoirData.Polygons.Count, Is.EqualTo(0));
         Assert.That(reservoirData.MultiPolygons.Count, Is.EqualTo(1));
-        VectorData scaledReservoirData = TransformToFit(reservoirData, 180, 180);
+        VectorData scaledReservoirData = Visualizer.TransformToFit(reservoirData, 180, 180);
         MultiPolygon reservoirPolygon = scaledReservoirData.MultiPolygons[0];
 
         Assert.That(reservoirPolygon.Count(cs => cs.IsCounterClockwise()), Is.EqualTo(1)); // outer ring (perimeter)
@@ -64,7 +64,7 @@ public class CanvasFixture : BaseFixture
             layer.DrawLines(reservoirPolygon.Transform(1.0, 810, 10).Offset(-18).Coords, 1, Color.DarkOliveGreen,
                 LineCap.Butt, LineJoin.Miter, [10, 10]);
 
-            SaveCanvas(canvas, false);
+            Visualizer.SaveCanvas(canvas, false);
         }
     }
 
@@ -101,14 +101,14 @@ public class CanvasFixture : BaseFixture
             layer.DrawFilledMultiPolygon(multipolygon, Color.CadetBlue);
             layer.DrawPolygon(outerRing, 5.0, Color.DarkRed);
             layer.DrawPolygon(innerRing, 5.0, Color.DarkGreen);
-            SaveCanvas(canvas, false);
+            Visualizer.SaveCanvas(canvas, false);
         }
     }
 
     [Test]
     public void TestRenderMultipolygon()
     {
-        LoadOgrDataAndDrawPolygons(
+        Visualizer.LoadOgrDataAndDrawPolygons(
             Path.Join(TestDataPath, "Aaron River Reservoir.geojson"),
             600, 600, Color.AntiqueWhite, (canvas, multiPolygons) => {
                 CanvasLayer layer = canvas.AddNewLayer("water");
@@ -121,7 +121,7 @@ public class CanvasFixture : BaseFixture
     [Test]
     public void TestRenderFilledMultipolygon()
     {
-        LoadOgrDataAndDrawPolygons(
+        Visualizer.LoadOgrDataAndDrawPolygons(
             Path.Join(TestDataPath, "Aaron River Reservoir.geojson"),
             600, 600, Color.AntiqueWhite, (canvas, multiPolygons) => {
                 CanvasLayer layer = canvas.AddNewLayer("water");
@@ -133,7 +133,7 @@ public class CanvasFixture : BaseFixture
     [Test]
     public void TestRenderShorelinePolygons_AaronRiver()
     {
-        LoadOgrDataAndDrawPolygons(
+        Visualizer.LoadOgrDataAndDrawPolygons(
             Path.Join(TestDataPath, "Aaron River Reservoir.geojson"),
             600, 600, Color.AntiqueWhite, (canvas, multiPolygons) => {
                 CanvasLayer layer = canvas.AddNewLayer("water");
@@ -148,7 +148,7 @@ public class CanvasFixture : BaseFixture
     [Test]
     public void TestRenderShorelinePolygons_World()
     {
-        LoadOgrDataAndDrawPolygons(
+        Visualizer.LoadOgrDataAndDrawPolygons(
             Path.Join(TestDataPath, "Natural Earth/ne_110m_land.shp"),
             1200, 600, Color.AntiqueWhite, (canvas, multiPolygons) => {
                 MultiPolygon world = new(multiPolygons, null);
@@ -189,48 +189,6 @@ public class CanvasFixture : BaseFixture
             lineWidth *= lineWidthMultiplier;
             polygon = polygon.Offset(waveDistance);
         }
-    }
-
-    private void LoadOgrDataAndDrawPolygons(string inputFilename, int canvasWidth, int canvasHeight,
-        Color background, Action<Canvas, IEnumerable<MultiPolygon>> drawingFunc)
-    {
-        // Read data
-        OgrDataReader reader = new OgrDataReader();
-        VectorData data = reader.ReadFile(inputFilename);
-        Console.WriteLine(FormatVectorDataSummary(data));
-        VectorData transformedData = TransformToFit(data, canvasWidth, canvasHeight);
-        BitmapCanvas bitmapCanvas = new BitmapCanvas(canvasWidth, canvasHeight, background);
-        SvgCanvas svgCanvas = new SvgCanvas(canvasWidth, canvasHeight, background);
-
-        // Use multipolygons for everything
-        List<MultiPolygon> multiPolygons = new();
-        multiPolygons.AddRange(transformedData.MultiPolygons);
-        multiPolygons.AddRange(transformedData.Polygons.Select(p => p.AsMultiPolygon()));
-
-        foreach (Canvas canvas in new Canvas[] { bitmapCanvas, svgCanvas}) {
-            drawingFunc(canvas, multiPolygons);
-            SaveCanvas(canvas, false);
-        }
-    }
-
-    private string SaveCanvas(Canvas canvas, bool show)
-    {
-        string filename = GetTempFileName(canvas.DefaultFileExtension);
-        canvas.SaveToFile(filename);
-        if (show) ShowFile(filename);
-        return filename;
-    }
-
-    // TODO: If this is useful elsewhere, it should be moved
-    private VectorData TransformToFit(VectorData source, double width, double height)
-    {
-        Bounds sourceBounds = source.Bounds;
-        double scale = Math.Min(
-            width / sourceBounds.Width,
-            height / sourceBounds.Height);
-        double offsetX = -(sourceBounds.XMin * scale);
-        double offsetY = -(sourceBounds.YMin * scale);
-        return source.Transform(scale, offsetX, offsetY);
     }
 }
 

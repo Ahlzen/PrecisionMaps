@@ -1,8 +1,12 @@
 ﻿using System.Drawing;
 using System.Diagnostics;
-using MapLibTests;
+using MapLib.FileFormats.Vector;
+using MapLib.Output;
+using System.Text;
+using System.IO;
+using MapLib;
 
-namespace MapLib.Tests.Geometry;
+namespace MapLibTests;
 
 [SupportedOSPlatform("windows")]
 internal class Visualizer
@@ -22,22 +26,25 @@ internal class Visualizer
         _height = height;
     }
 
-    internal void Add(Shape s) {
+    internal void Add(Shape s)
+    {
         _shapes.Add(s);
     }
 
     internal void Show()
     {
-        string filename = BaseFixture.GetTempFileName(".png");
+        string filename = GetTempFileName(".png");
         Save(filename);
-        Process.Start(new ProcessStartInfo {
+        Process.Start(new ProcessStartInfo
+        {
             FileName = filename,
             UseShellExecute = true
         });
         Debug.WriteLine(filename);
     }
 
-    internal void Save(string filename) {
+    internal void Save(string filename)
+    {
         Bitmap bitmap = Render();
         bitmap.Save(filename);
         Debug.WriteLine(filename);
@@ -60,6 +67,86 @@ internal class Visualizer
         v.Show();
     }
 
+    internal static string FormatVectorDataSummary(VectorData data)
+    {
+        StringBuilder sb = new();
+        sb.AppendLine("VectorData");
+        sb.AppendLine("Bounds: " + data.Bounds.ToString());
+        sb.AppendLine($"Points: {data.Points.Length}");
+        sb.AppendLine($"MultiPoints: {data.MultiPoints.Length}");
+        sb.AppendLine($"Lines: {data.Lines.Length}");
+        sb.AppendLine($"MultiLines: {data.MultiLines.Length}");
+        sb.AppendLine($"Polygons: {data.Polygons.Length}");
+        sb.AppendLine($"MultiPolygons: {data.MultiPolygons.Length}");
+        return sb.ToString();
+    }
+
+    internal static void LoadOgrDataAndDrawPolygons(string inputFilename, int canvasWidth, int canvasHeight,
+        Color background, Action<Canvas, IEnumerable<MultiPolygon>> drawingFunc)
+    {
+        // Read data
+        OgrDataReader reader = new OgrDataReader();
+        VectorData data = reader.ReadFile(inputFilename);
+        Console.WriteLine(FormatVectorDataSummary(data));
+        VectorData transformedData = TransformToFit(data, canvasWidth, canvasHeight);
+        BitmapCanvas bitmapCanvas = new BitmapCanvas(canvasWidth, canvasHeight, background);
+        SvgCanvas svgCanvas = new SvgCanvas(canvasWidth, canvasHeight, background);
+
+        // Use multipolygons for everything
+        List<MultiPolygon> multiPolygons = new();
+        multiPolygons.AddRange(transformedData.MultiPolygons);
+        multiPolygons.AddRange(transformedData.Polygons.Select(p => p.AsMultiPolygon()));
+
+        foreach (Canvas canvas in new Canvas[] { bitmapCanvas, svgCanvas })
+        {
+            drawingFunc(canvas, multiPolygons);
+            SaveCanvas(canvas, false);
+        }
+    }
+
+    public static string SaveCanvas(Canvas canvas, bool show)
+    {
+        string filename = GetTempFileName(canvas.DefaultFileExtension);
+        canvas.SaveToFile(filename);
+        Console.WriteLine("Saved image to: " + filename);
+        if (show) ShowFile(filename);
+        return filename;
+    }
+
+    // TODO: If this is useful elsewhere, it should be moved
+    public static VectorData TransformToFit(VectorData source, double width, double height)
+    {
+        Bounds sourceBounds = source.Bounds;
+        double scale = Math.Min(
+            width / sourceBounds.Width,
+            height / sourceBounds.Height);
+        double offsetX = -(sourceBounds.XMin * scale);
+        double offsetY = -(sourceBounds.YMin * scale);
+        return source.Transform(scale, offsetX, offsetY);
+    }
+
+    internal static string GetTempFileName(string extension)
+    {
+        return TrimEnd(Path.GetTempFileName(), ".tmp") + extension;
+    }
+
+    internal static string TrimEnd(string source, string value)
+    {
+        if (!source.EndsWith(value))
+            return source;
+        return source.Remove(source.LastIndexOf(value));
+    }
+
+    internal static void ShowFile(string filename)
+    {
+        Process.Start(new ProcessStartInfo
+        {
+            FileName = filename,
+            UseShellExecute = true
+        });
+        Debug.WriteLine(filename);
+    }
+
     #region Helpers
 
     // Draw using these colors, in turn:
@@ -74,7 +161,8 @@ internal class Visualizer
         Color.Brown
     };
 
-    private Bitmap Render() {
+    private Bitmap Render()
+    {
         var bitmap = new Bitmap(_width, _height);
         var g = Graphics.FromImage(bitmap);
         g.Clear(Color.White);
@@ -83,8 +171,8 @@ internal class Visualizer
         // TODO: set up coordinate system
         var bounds = Bounds.FromBounds(_shapes.Select(s => s.GetBounds()));
 
-        _scale = (float)(Math.Min(_width / bounds.Width, _height / bounds.Height));
-        _scale *= (1f / (1f + 2f * Margin)); // add margins
+        _scale = (float)Math.Min(_width / bounds.Width, _height / bounds.Height);
+        _scale *= 1f / (1f + 2f * Margin); // add margins
 
         // GDI+ back end has positive Y down, so invert Y and move offset
         g.ScaleTransform(_scale, -_scale); // uniform scale
@@ -96,19 +184,21 @@ internal class Visualizer
         // for debugging
         var debugColor = Color.FromArgb(200, 200, 200);
         // bbox
-        Render(g, debugColor, bounds.AsPolygon(), 1.0f); 
+        Render(g, debugColor, bounds.AsPolygon(), 1.0f);
         // x
         Pen pen = new Pen(debugColor, 1.0f / _scale);
-        pen.DashPattern = [5/_scale, 5/_scale];
+        pen.DashPattern = [5 / _scale, 5 / _scale];
         // axes
         g.DrawLine(pen, (float)canvas.Left, 0, (float)canvas.Right, 0);
         g.DrawLine(pen, 0, (float)canvas.Bottom, 0, (float)canvas.Top);
 
         int colorIndex = 0;
-        foreach (Shape shape in _shapes) {
+        foreach (Shape shape in _shapes)
+        {
             Color c = Colors[colorIndex++];
             if (colorIndex >= Colors.Length) colorIndex = 0;
-            switch (shape) {
+            switch (shape)
+            {
                 case Polygon polygon:
                     Render(g, c, polygon);
                     break;
@@ -164,20 +254,23 @@ internal class Visualizer
 
     private void Render(Graphics g, Color c, MapLib.Geometry.Point point, float diameterPixels = 6.0f)
         => RenderCoord(g, c, point.Coord, diameterPixels);
-    
+
     private void Render(Graphics g, Color c, Line line, float diameterPixels = 1.0f)
         => RenderCoordsAsLine(g, c, line.Coords, diameterPixels);
     private void Render(Graphics g, Color c, Polygon polygon, float diameterPixels = 1.0f)
         => RenderCoordsAsLine(g, c, polygon.Coords, diameterPixels);
-    private void Render(Graphics g, Color c, MultiPoint multiPoint, float diameterPixels = 6.0f) {
+    private void Render(Graphics g, Color c, MultiPoint multiPoint, float diameterPixels = 6.0f)
+    {
         foreach (Coord coord in multiPoint.Coords)
             RenderCoord(g, c, coord, diameterPixels);
     }
-    private void Render(Graphics g, Color c, MultiLine multiLine, float diameterPixels = 1.0f) {
+    private void Render(Graphics g, Color c, MultiLine multiLine, float diameterPixels = 1.0f)
+    {
         foreach (Coord[] coords in multiLine.Coords)
             RenderCoordsAsLine(g, c, coords, diameterPixels);
     }
-    private void Render(Graphics g, Color c, MultiPolygon multiPolygon, float diameterPixels = 1.0f) {
+    private void Render(Graphics g, Color c, MultiPolygon multiPolygon, float diameterPixels = 1.0f)
+    {
         foreach (Coord[] coords in multiPolygon.Coords)
             RenderCoordsAsLine(g, c, coords, diameterPixels);
     }

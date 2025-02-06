@@ -1,4 +1,6 @@
-﻿namespace MapLib.Geometry;
+﻿using MapLib.Geometry.Helpers;
+
+namespace MapLib.Geometry;
 
 /// <summary>
 /// 2D (multi-point) line. Immutable.
@@ -70,6 +72,9 @@ public class Line : Shape, IEnumerable<Coord>
         }
         return new Line(coords, Tags);
     }
+
+    public Line Smooth_Chaikin(int iterations)
+        => new Line(Chaikin.Smooth(Coords, false, iterations), Tags);
 
     private Coord ComputeOffset(Coord c1, Coord c2, double distance)
     {

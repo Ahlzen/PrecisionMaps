@@ -1,4 +1,6 @@
-﻿namespace MapLib.Geometry;
+﻿using MapLib.Geometry.Helpers;
+
+namespace MapLib.Geometry;
 
 /// <summary>
 /// 2D polygon. Immutable.
@@ -42,6 +44,9 @@ public class Polygon : Line
 
     public new MultiPolygon Offset(double d)
         => AsMultiPolygon().Offset(d);
+
+    public new Polygon Smooth_Chaikin(int iterations)
+        => new Polygon(Chaikin.Smooth(Coords, true, iterations), Tags);
 
     #region Operations and properties
 
