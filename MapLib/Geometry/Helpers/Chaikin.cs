@@ -27,106 +27,6 @@ public static class Chaikin
             result = Smooth_Iteration(result, isClosed);
         return result;
     }
-
-    /// <summary>
-    /// Returns a version of the source line/ring, with each vertex
-    /// smoothed (subdivided) until no angles exceed the specified threshold.
-    /// </summary>
-    /// <param name="isClosed">
-    /// If true, the first and last points are smoothed as well.
-    /// </param>
-    /// <param name="maxAngleDegrees">
-    /// Max bend angle allowed at each vertex in the final result.
-    /// </param>
-    public static Coord[] Smooth_Adaptive(Coord[] source, bool isClosed,
-        double maxAngleDegrees)
-    {
-        if (source.Length < 3) return source;
-        if (isClosed && source[0] != source[^1])
-            throw new InvalidOperationException(
-                "First and last point must be the same for closed paths.");
-
-        double maxAngleRadians = maxAngleDegrees / (180 / Math.PI);
-
-        // Since we're smoothing both sides, the effective max angle
-        // is double that of the argument
-        maxAngleRadians *= 2;
-
-        // This might not be a very efficient implementation
-
-        List<Coord> dst, src = source.ToList();
-
-        while (true)
-        {
-            bool anyPointsSmoothed = false;
-
-            Debug.WriteLine($"Starting new iteration, {src.Count} source points.");
-
-            dst = new List<Coord>(src.Count);
-            dst.Add(src[0]);
-            for (int p = 1; p < src.Count - 1; p++)
-            {
-                Coord prev = src[p - 1];
-                Coord curr = src[p];
-                Coord next = src[p + 1];
-                
-                Coord d1 = curr - prev;
-                Coord d2 = next - curr;
-                
-                double angleRadians = Math.Acos(
-                    (d1*d2) / (Coord.Length(d1) * Coord.Length(d2)));
-
-                if (angleRadians > maxAngleRadians)
-                {
-                    Coord p1 = Coord.Lerp(prev, curr, 0.75);
-                    Coord p2 = Coord.Lerp(curr, next, 0.25);
-                    dst.Add(p1);
-                    dst.Add(p2);
-                    anyPointsSmoothed = true;
-                }
-                else
-                {
-                    // use coord as is
-                    dst.Add(src[p]);
-                }
-            }
-            dst.Add(src[^1]);
-
-            if (isClosed)
-            {
-                // Smooth start/end of ring
-                Coord prevS = src[^2];
-                Coord currS = src[0];
-                Coord nextS = src[1];
-
-                Coord d1 = currS - prevS;
-                Coord d2 = nextS - currS;
-                double angleRadians = Math.Acos(
-                    (d1 * d2) / (Coord.Length(d1) * Coord.Length(d2)));
-
-                if (angleRadians > maxAngleRadians)
-                {
-                    Coord p1S = Coord.Lerp(prevS, currS, 0.75);
-                    Coord p2S = Coord.Lerp(currS, nextS, 0.25);
-                    dst[0] = p2S;
-                    dst[^1] = p2S;
-                    dst[^2] = p1S;
-                    anyPointsSmoothed = true;
-                }
-            }
-
-            // When we go through a full iteration without
-            // any smoothing, we're done:
-            if (!anyPointsSmoothed) break;
-
-            src = dst;
-        }
-        return dst.ToArray();
-    }
-
-
-    // Helpers
-
     private static Coord[] Smooth_Iteration(Coord[] source, bool isClosed)
     {
         if (source.Length < 3) return source;
@@ -141,11 +41,7 @@ public static class Chaikin
         result[0] = source[0];
         for (int p = 1; p < source.Length - 1; p++)
         {
-            Coord prev = source[p - 1];
-            Coord curr = source[p];
-            Coord next = source[p + 1];
-            Coord p1 = Coord.Lerp(prev, curr, 0.75);
-            Coord p2 = Coord.Lerp(curr, next, 0.25);
+            Subdivide(source[p - 1], source[p], source[p + 1], out Coord p1, out Coord p2);
             result[p * 2 - 1] = p1;
             result[p * 2] = p2;
         }
@@ -154,16 +50,106 @@ public static class Chaikin
         if (isClosed)
         {
             // Smooth start/end of ring
-            Coord prevS = source[^2];
-            Coord currS = source[0];
-            Coord nextS = source[1];
-            Coord p1S = Coord.Lerp(prevS, currS, 0.75);
-            Coord p2S = Coord.Lerp(currS, nextS, 0.25);
-            result[0] = p2S;
-            result[^1] = p2S;
-            result[^2] = p1S;
+            Subdivide(source[^2], source[0], source[1], out Coord p1, out Coord p2);
+            result[0] = p2;
+            result[^1] = p2;
+            result[^2] = p1;
         }
 
         return result;
+    }
+
+
+    /// <summary>
+    /// Returns a version of the source line/ring, with each vertex
+    /// smoothed (subdivided) until no angles exceed the specified threshold.
+    /// </summary>
+    /// <param name="isClosed">
+    /// If true, the first and last points are smoothed as well.
+    /// </param>
+    /// <param name="maxAngleDegrees">
+    /// Max bend angle allowed at each vertex in the final result.
+    /// </param>
+    public static Coord[] Smooth_Adaptive(Coord[] sourceArray, bool isClosed,
+        double maxAngleDegrees)
+    {
+        if (sourceArray.Length < 3) return sourceArray;
+        if (isClosed && sourceArray[0] != sourceArray[^1])
+            throw new InvalidOperationException(
+                "First and last point must be the same for closed paths.");
+
+        double maxAngleRadians = maxAngleDegrees / (180 / Math.PI);
+
+        // Since we're smoothing both sides, the effective max angle
+        // is double that of the argument
+        maxAngleRadians *= 2;
+
+        // NOTE: This allocates a list (that may be extended) for
+        // each iteration. Can probably be made more efficient.
+
+        List<Coord> dst, src = sourceArray.ToList();
+
+        while (true)
+        {
+            bool anyPointsSmoothed = false;
+
+            Debug.WriteLine($"Starting new iteration, {src.Count} source points.");
+
+            dst = new List<Coord>(src.Count);
+            dst.Add(src[0]);
+            for (int p = 1; p < src.Count - 1; p++)
+            {
+                double angleRadians = Angle(src[p-1], src[p], src[p+1]);
+                if (angleRadians > maxAngleRadians)
+                {
+                    Subdivide(src[p-1], src[p], src[p+1], out Coord p1, out Coord p2);
+                    dst.Add(p1);
+                    dst.Add(p2);
+                    anyPointsSmoothed = true;
+                }
+                else
+                {
+                    dst.Add(src[p]); // use coord as is
+                }
+            }
+            dst.Add(src[^1]);
+
+            if (isClosed)
+            {
+                // Smooth start/end of ring
+                double angleRadians = Angle(src[^2], src[0], src[1]);
+                if (angleRadians > maxAngleRadians)
+                {
+                    Subdivide(src[^2], src[0], src[1], out Coord p1, out Coord p2);
+                    dst[0] = p2;
+                    dst[^1] = p2;
+                    dst[^2] = p1;
+                    anyPointsSmoothed = true;
+                }
+            }
+            if (!anyPointsSmoothed) break; // we're done!
+            src = dst;
+        }
+        return dst.ToArray();
+    }
+
+
+    // Helpers
+
+    private static void Subdivide(Coord prev, Coord curr, Coord next, out Coord p1, out Coord p2)
+    {
+        p1 = Coord.Lerp(prev, curr, 0.75);
+        p2 = Coord.Lerp(curr, next, 0.25);
+    }
+
+    /// <returns>
+    /// Angle of deflection in radians at point curr, along a line
+    /// (prev, curr, next).
+    /// </returns>
+    public static double Angle(Coord prev, Coord curr, Coord next)
+    {
+        Coord d1 = curr - prev;
+        Coord d2 = next - curr;
+        return Coord.Angle(d1, d2);
     }
 }

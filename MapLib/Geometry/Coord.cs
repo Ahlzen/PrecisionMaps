@@ -78,7 +78,7 @@ public struct Coord : IEquatable<Coord>
     }
 
     /// <summary>
-    /// Length of the vector from origin to point c.
+    /// Length of the vector c.
     /// </summary>
     public static double Length(Coord c)
     {
@@ -95,6 +95,12 @@ public struct Coord : IEquatable<Coord>
             c1.X + (c2.X - c1.X) * t,
             c1.Y + (c2.Y - c1.Y) * t);
     }
+
+    /// <summary>
+    /// The angle (in radians) between the two vectors c1 and c2.
+    /// </summary>
+    public static double Angle(Coord c1, Coord c2) =>
+        Math.Acos((c1 * c2) / (Length(c1) * Length(c2)));
 
     public static Coord None =
         new Coord(double.MinValue, double.MinValue);
