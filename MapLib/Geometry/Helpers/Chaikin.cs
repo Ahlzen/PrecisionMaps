@@ -1,4 +1,6 @@
-﻿namespace MapLib.Geometry.Helpers;
+﻿using System.Diagnostics;
+
+namespace MapLib.Geometry.Helpers;
 
 /// <summary>
 /// Implements line/polygon smoothing using Chaikin's algorithm.
@@ -17,7 +19,7 @@ public static class Chaikin
     /// <param name="iterations">
     /// Fixed number of iterations of smoothing performed.
     /// </param>
-    public static Coord[] Smooth(Coord[] source, bool isClosed, int iterations)
+    public static Coord[] Smooth_Fixed(Coord[] source, bool isClosed, int iterations)
     {
         Coord[] result = source;
         for (int i= 0; i < iterations; i++)
@@ -25,34 +27,86 @@ public static class Chaikin
         return result;
     }
 
-    private static Coord[] Smooth_Iteration(Coord[] source, bool isClosed)
+    public static Coord[] Smooth_Adaptive(Coord[] source, bool isClosed,
+        double maxAngleDegrees)
     {
         if (source.Length < 3) return source;
-
         if (isClosed && source[0] != source[^1])
             throw new InvalidOperationException(
                 "First and last point must be the same for closed paths.");
 
-        //int sourceCoordCount = source.Length;
-        //if (isClosed && source[0] == source[^1])
-        //    sourceCoordCount--;
+        double maxAngleRadians = maxAngleDegrees / (180 / Math.PI);
 
-        //Coord[] result = isClosed ?
-        //        new Coord[2 + (source.Length - 2) * 2] :
-        //        new Coord[source.Length * 2];
+        // Since we're smoothing both sides, the effective max angle
+        // is double that of the argument
+        maxAngleRadians *= 2;
+
+        // This might not be a very efficient implementation
+
+        List<Coord> dst, src = source.ToList();
+
+        while (true)
+        {
+            bool anyPointsSmoothed = false;
+
+            dst = new List<Coord>(src.Count);
+            dst.Add(src[0]);
+            for (int p = 1; p < src.Count - 1; p++)
+            {
+                Coord prev = src[p - 1];
+                Coord curr = src[p];
+                Coord next = src[p + 1];
+                
+                Coord d1 = curr - prev;
+                Coord d2 = next - curr;
+                
+                double angleRadians = Math.Acos(
+                    (d1*d2) / (Coord.Length(d1) * Coord.Length(d2)));
+
+                //Debug.WriteLine("Angle (deg): " + angleRadians * (180 / Math.PI));
+
+                //Debug.WriteLine($"Angle (rad): {angleRadians} (max {maxAngleRadians})");
+
+                if (angleRadians > maxAngleRadians)
+                {
+                    //Debug.WriteLine("Too great angle, subdividing");
+                    // angle too great: subdivide
+                    Coord p1 = Coord.Lerp(prev, curr, 0.75);
+                    Coord p2 = Coord.Lerp(curr, next, 0.25);
+                    dst.Add(p1);
+                    dst.Add(p2);
+                    anyPointsSmoothed = true;
+                }
+                else
+                {
+                    // use coord as is
+                    dst.Add(src[p]);
+                }
+            }
+            dst.Add(src[^1]);
+
+            // When we go through a full iteration without
+            // any smoothing, we're done:
+            if (!anyPointsSmoothed) break;
+
+            //Debug.WriteLine("Starting new iteration");
+            src = dst;
+        }
+        return dst.ToArray();
+    }
+
+    // Helpers
+
+    private static Coord[] Smooth_Iteration(Coord[] source, bool isClosed)
+    {
+        if (source.Length < 3) return source;
+        if (isClosed && source[0] != source[^1])
+            throw new InvalidOperationException(
+                "First and last point must be the same for closed paths.");
 
         Coord[] result = isClosed ?
             new Coord[source.Length * 2 - 1] :
             new Coord[2 + (source.Length - 2) * 2];
-
-        //if (isClosed)
-        //{
-        //    Coord[] result = new Coord[source.Length * 2 - 1];
-        //}
-        //else
-        //{
-        //    Coord[] result = new Coord[2 + (source.Length - 2) * 2];
-        //}
 
         result[0] = source[0];
         for (int p = 1; p < source.Length - 1; p++)
@@ -60,10 +114,8 @@ public static class Chaikin
             Coord prev = source[p - 1];
             Coord curr = source[p];
             Coord next = source[p + 1];
-
             Coord p1 = Coord.Lerp(prev, curr, 0.75);
             Coord p2 = Coord.Lerp(curr, next, 0.25);
-
             result[p * 2 - 1] = p1;
             result[p * 2] = p2;
         }
@@ -71,7 +123,7 @@ public static class Chaikin
 
         if (isClosed)
         {
-            // start/endpoint
+            // Smooth start/end of ring
             Coord prevS = source[^2];
             Coord currS = source[0];
             Coord nextS = source[1];
@@ -83,33 +135,5 @@ public static class Chaikin
         }
 
         return result;
-        //}
-        //else
-        //{
-            
-
-        //    // TODO: handle closed polys
-
-        //    result[0] = source[0];
-        //    for (int p = 1; p < source.Length - 1; p++)
-        //    {
-        //        Coord prev = source[p - 1];
-        //        Coord curr = source[p];
-        //        Coord next = source[p + 1];
-
-        //        Coord p1 = Coord.Lerp(prev, curr, 0.75);
-        //        Coord p2 = Coord.Lerp(curr, next, 0.25);
-
-        //        result[p * 2 - 1] = p1;
-        //        result[p * 2] = p2;
-        //    }
-        //    result[^1] = source[^1];
-
-        //    return result;
-        //}
-
-
-
-
     }
 }

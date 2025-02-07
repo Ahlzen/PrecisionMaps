@@ -46,7 +46,7 @@ public class Polygon : Line
         => AsMultiPolygon().Offset(d);
 
     public new Polygon Smooth_Chaikin(int iterations)
-        => new Polygon(Chaikin.Smooth(Coords, true, iterations), Tags);
+        => new Polygon(Chaikin.Smooth_Fixed(Coords, true, iterations), Tags);
 
     #region Operations and properties
 

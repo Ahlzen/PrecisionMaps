@@ -43,8 +43,11 @@ internal class PolygonFixture : BaseFixture
     private static readonly Polygon TestPolygon1 =
         new Polygon([(1,1),(8,-2),(7,5),(6,2),(5,3),(1,1)], null);
 
-    private static readonly Line TestLine =
+    private static readonly Line TestLine1 =
         new Line([(1, 1), (8, -2), (7, 5), (6, 2), (5, 3)], null);
+
+    private static readonly Line TestLine2 =
+        new Line([(1, 1), (5, 1), (7, 5)], null);
 
     [Test]
     public void TestOffset_Outward()
@@ -72,23 +75,37 @@ internal class PolygonFixture : BaseFixture
     }
 
     [Test]
-    public void TestSmooth_FixedChaikin_TestPolygon()
+    public void TestSmooth_ChaikinFixed_Polygon()
     {
         Polygon chaikin1 = TestPolygon1.Smooth_Chaikin(1).Transform(1, 10, 0);
         Polygon chaikin2 = TestPolygon1.Smooth_Chaikin(2).Transform(1, 20, 0);
         Polygon chaikin3 = TestPolygon1.Smooth_Chaikin(3).Transform(1, 30, 0);
+        Assert.That(chaikin1.Count(), Is.GreaterThan(TestPolygon1.Count()));
+        Assert.That(chaikin2.Count(), Is.GreaterThan(chaikin1.Count()));
+
+        // TODO: show vertices
         Visualizer.RenderAndShow(1600, 400,
             TestPolygon1, chaikin1, chaikin2, chaikin3);
     }
 
     [Test]
-    public void TestSmooth_FixedChaikin_TestLine()
+    public void TestSmooth_ChaikinFixed_Line()
     {
-        Line chaikin1 = TestLine.Smooth_Chaikin(1).Transform(1, 10, 0);
-        Line chaikin2 = TestLine.Smooth_Chaikin(2).Transform(1, 20, 0);
-        Line chaikin3 = TestLine.Smooth_Chaikin(3).Transform(1, 30, 0);
+        Line chaikin1 = TestLine1.Smooth_Chaikin(1).Transform(1, 10, 0);
+        Line chaikin2 = TestLine1.Smooth_Chaikin(2).Transform(1, 20, 0);
+        Line chaikin3 = TestLine1.Smooth_Chaikin(3).Transform(1, 30, 0);
         Visualizer.RenderAndShow(1600, 400,
-            TestLine, chaikin1, chaikin2, chaikin3);
+            TestLine1, chaikin1, chaikin2, chaikin3);
+    }
+
+    [Test]
+    public void TestSmooth_ChaikinAdaptive_Line()
+    {
+        Line chaikin1 = TestLine1.Smooth_ChaikinAdaptive(40).Transform(1, 10, 0);
+        Line chaikin2 = TestLine1.Smooth_ChaikinAdaptive(10).Transform(1, 20, 0);
+        Line chaikin3 = TestLine1.Smooth_ChaikinAdaptive(2).Transform(1, 30, 0);
+        Visualizer.RenderAndShow(1600, 400,
+            TestLine1, chaikin1, chaikin2, chaikin3);
     }
 
     [Test]
@@ -105,12 +122,12 @@ internal class PolygonFixture : BaseFixture
                         layer.DrawPolygon(polygon, 1.2, Color.Navy, LineJoin.Round);
 
                         // translate and smooth 1 iteration
-                        Coord[] chaikin1 = Chaikin.Smooth(
+                        Coord[] chaikin1 = Chaikin.Smooth_Fixed(
                             polygon.Transform(1, 400, 0), true, 1);
                         layer.DrawPolygon(chaikin1, 1.2, Color.DarkRed, LineJoin.Round);
 
                         // translate and smooth 2 iterations
-                        Coord[] chaikin2 = Chaikin.Smooth(
+                        Coord[] chaikin2 = Chaikin.Smooth_Fixed(
                             polygon.Transform(1, 800, 0), true, 2);
                         layer.DrawPolygon(chaikin2, 1.2, Color.DarkGreen, LineJoin.Round);
                     }

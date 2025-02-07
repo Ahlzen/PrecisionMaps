@@ -58,6 +58,7 @@ public struct Coord : IEquatable<Coord>
     public static double operator * (Coord c1, Coord c2) // dot product
         => c1.X * c2.X + c1.Y * c2.Y;
 
+    
     // Math utilities
 
     public static double Distance(Coord c1, Coord c2)
@@ -65,6 +66,11 @@ public struct Coord : IEquatable<Coord>
         double width = c1.X - c2.X;
         double height = c1.Y - c2.Y;
         return Math.Sqrt(width * width + height * height);
+    }
+
+    public static double Length(Coord c)
+    {
+        return Math.Sqrt(c.X * c.X + c.Y * c.Y);
     }
 
     public static Coord Lerp(Coord c1, Coord c2, double t)

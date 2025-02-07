@@ -74,7 +74,10 @@ public class Line : Shape, IEnumerable<Coord>
     }
 
     public Line Smooth_Chaikin(int iterations)
-        => new Line(Chaikin.Smooth(Coords, false, iterations), Tags);
+        => new Line(Chaikin.Smooth_Fixed(Coords, false, iterations), Tags);
+
+    public Line Smooth_ChaikinAdaptive(double maxAngleDegrees)
+        => new Line(Chaikin.Smooth_Adaptive(Coords, false, maxAngleDegrees), Tags);
 
     private Coord ComputeOffset(Coord c1, Coord c2, double distance)
     {
