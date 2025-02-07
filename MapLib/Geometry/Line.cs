@@ -33,6 +33,8 @@ public class Line : Shape, IEnumerable<Coord>
     public override Coord GetCenter()
         => GetBounds().Center;
 
+    public int Count => Coords.Length;
+
     #region Modifiers
 
     public virtual MultiLine AsMultiLine()
@@ -159,7 +161,10 @@ public class Line : Shape, IEnumerable<Coord>
 
     #endregion
 
-    public IEnumerator<Coord> GetEnumerator() => (IEnumerator<Coord>) Coords.GetEnumerator();
+    public IEnumerator<Coord> GetEnumerator() =>
+        (IEnumerator<Coord>) Coords.GetEnumerator();
+        //Coords.GetEnumerator();
 
-    IEnumerator IEnumerable.GetEnumerator() => Coords.GetEnumerator();
+    IEnumerator IEnumerable.GetEnumerator() =>
+        Coords.GetEnumerator();
 }

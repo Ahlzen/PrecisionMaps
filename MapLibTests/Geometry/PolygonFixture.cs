@@ -84,11 +84,18 @@ internal class PolygonFixture : BaseFixture
         Line chaikin1 = TestLine1.Smooth_Chaikin(1).Transform(1, 10, 0);
         Line chaikin2 = TestLine1.Smooth_Chaikin(2).Transform(1, 20, 0);
         Line chaikin3 = TestLine1.Smooth_Chaikin(3).Transform(1, 30, 0);
-        Assert.That(chaikin1.Count(), Is.GreaterThan(TestPolygon1.Count()));
-        Assert.That(chaikin2.Count(), Is.GreaterThan(chaikin1.Count()));
-        Assert.That(chaikin3.Count(), Is.GreaterThan(chaikin2.Count()));
+
+        Assert.That(chaikin1.Count, Is.GreaterThan(TestLine1.Count));
+        Assert.That(chaikin2.Count, Is.GreaterThan(chaikin1.Count));
+        Assert.That(chaikin3.Count, Is.GreaterThan(chaikin2.Count));
+        
         Visualizer.RenderAndShow(1600, 400,
-            TestLine1, chaikin1, chaikin2, chaikin3);
+            TestLine1, chaikin1, chaikin2, chaikin3,
+            // highlight vertices
+            new MultiPoint(TestLine1.Coords, null),
+            new MultiPoint(chaikin1.Coords, null),
+            new MultiPoint(chaikin2.Coords, null),
+            new MultiPoint(chaikin3.Coords, null));
     }
 
     [Test]
@@ -97,13 +104,17 @@ internal class PolygonFixture : BaseFixture
         Polygon chaikin1 = TestPolygon1.Smooth_Chaikin(1).Transform(1, 10, 0);
         Polygon chaikin2 = TestPolygon1.Smooth_Chaikin(2).Transform(1, 20, 0);
         Polygon chaikin3 = TestPolygon1.Smooth_Chaikin(3).Transform(1, 30, 0);
-        Assert.That(chaikin1.Count(), Is.GreaterThan(TestPolygon1.Count()));
-        Assert.That(chaikin2.Count(), Is.GreaterThan(chaikin1.Count()));
-        Assert.That(chaikin3.Count(), Is.GreaterThan(chaikin2.Count()));
+        Assert.That(chaikin1.Count, Is.GreaterThan(TestPolygon1.Count));
+        Assert.That(chaikin2.Count, Is.GreaterThan(chaikin1.Count));
+        Assert.That(chaikin3.Count, Is.GreaterThan(chaikin2.Count));
 
-        // TODO: show vertices
         Visualizer.RenderAndShow(1600, 400,
-            TestPolygon1, chaikin1, chaikin2, chaikin3);
+            TestPolygon1, chaikin1, chaikin2, chaikin3,
+            // highlight vertices
+            new MultiPoint(TestLine1.Coords, null),
+            new MultiPoint(chaikin1.Coords, null),
+            new MultiPoint(chaikin2.Coords, null),
+            new MultiPoint(chaikin3.Coords, null));
     }
 
 
@@ -116,7 +127,13 @@ internal class PolygonFixture : BaseFixture
         Line chaikin2 = TestLine1.Smooth_ChaikinAdaptive(10).Transform(1, 20, 0);
         Line chaikin3 = TestLine1.Smooth_ChaikinAdaptive(2).Transform(1, 30, 0);
         Visualizer.RenderAndShow(1600, 400,
-            TestLine1, chaikin1, chaikin2, chaikin3);
+            TestLine1, chaikin1, chaikin2, chaikin3,
+            // highlight vertices
+            new MultiPoint(TestLine1.Coords, null),
+            new MultiPoint(chaikin1.Coords, null),
+            new MultiPoint(chaikin2.Coords, null),
+            new MultiPoint(chaikin3.Coords, null)
+            );
     }
 
     [Test]
@@ -126,7 +143,12 @@ internal class PolygonFixture : BaseFixture
         Line chaikin2 = TestPolygon1.Smooth_ChaikinAdaptive(10).Transform(1, 20, 0);
         Line chaikin3 = TestPolygon1.Smooth_ChaikinAdaptive(2).Transform(1, 30, 0);
         Visualizer.RenderAndShow(1600, 400,
-            TestPolygon1, chaikin1, chaikin2, chaikin3);
+            TestPolygon1, chaikin1, chaikin2, chaikin3,
+            // highlight vertices
+            new MultiPoint(TestLine1.Coords, null),
+            new MultiPoint(chaikin1.Coords, null),
+            new MultiPoint(chaikin2.Coords, null),
+            new MultiPoint(chaikin3.Coords, null));
     }
 
 

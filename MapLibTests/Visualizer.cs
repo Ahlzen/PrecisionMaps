@@ -157,7 +157,7 @@ internal class Visualizer
         Color.Blue,
         Color.Cyan,
         Color.Magenta,
-        Color.Yellow,
+        Color.DarkGoldenrod,
         Color.Brown
     };
 
@@ -231,12 +231,26 @@ internal class Visualizer
         return bitmap;
     }
 
-    private void RenderCoord(Graphics g, Color c, Coord coord, float diameterPixels = 6.0f)
+    private void RenderCoord(Graphics g, Color c, Coord coord, float diameterPixels = 6.0f, bool circle = false)
     {
         Pen pen = new Pen(c, 1.0f / _scale);
         float diameter = diameterPixels / _scale;
-        g.DrawEllipse(pen, (float)(coord.X - diameter / 2), (float)(coord.Y - diameter / 2),
-            diameter, diameter);
+        if (circle)
+        {
+            // draw "O"
+            g.DrawEllipse(pen, (float)(coord.X - diameter / 2), (float)(coord.Y - diameter / 2),
+                diameter, diameter);
+        }
+        else
+        {
+            // draw "X"
+            g.DrawLine(pen,
+                (float)(coord.X - diameter / 2), (float)(coord.Y - diameter / 2),
+                (float)(coord.X + diameter / 2), (float)(coord.Y + diameter / 2));
+            g.DrawLine(pen,
+                (float)(coord.X - diameter / 2), (float)(coord.Y + diameter / 2),
+                (float)(coord.X + diameter / 2), (float)(coord.Y - diameter / 2));
+        }
         pen.Dispose();
     }
 
@@ -252,17 +266,17 @@ internal class Visualizer
         pen.Dispose();
     }
 
-    private void Render(Graphics g, Color c, MapLib.Geometry.Point point, float diameterPixels = 6.0f)
-        => RenderCoord(g, c, point.Coord, diameterPixels);
+    private void Render(Graphics g, Color c, MapLib.Geometry.Point point, float diameterPixels = 6.0f, bool circle = false)
+        => RenderCoord(g, c, point.Coord, diameterPixels, circle);
 
     private void Render(Graphics g, Color c, Line line, float diameterPixels = 1.0f)
         => RenderCoordsAsLine(g, c, line.Coords, diameterPixels);
     private void Render(Graphics g, Color c, Polygon polygon, float diameterPixels = 1.0f)
         => RenderCoordsAsLine(g, c, polygon.Coords, diameterPixels);
-    private void Render(Graphics g, Color c, MultiPoint multiPoint, float diameterPixels = 6.0f)
+    private void Render(Graphics g, Color c, MultiPoint multiPoint, float diameterPixels = 6.0f, bool circle = false)
     {
         foreach (Coord coord in multiPoint.Coords)
-            RenderCoord(g, c, coord, diameterPixels);
+            RenderCoord(g, c, coord, diameterPixels, circle);
     }
     private void Render(Graphics g, Color c, MultiLine multiLine, float diameterPixels = 1.0f)
     {
