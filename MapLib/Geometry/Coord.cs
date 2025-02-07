@@ -52,15 +52,24 @@ public struct Coord : IEquatable<Coord>
     public static Coord operator * (double d, Coord c)
         => new Coord(c.X * d, c.Y * d);
 
-    public static double operator ^ (Coord c1, Coord c2) // cross/vector product magnitude
+    /// <summary>
+    /// Cross/vector product (magnitude) of c1 and c2.
+    /// </summary>
+    public static double operator ^ (Coord c1, Coord c2)
         => c1.X * c2.Y - c1.Y * c2.X;
 
-    public static double operator * (Coord c1, Coord c2) // dot product
+    /// <summary>
+    /// Dot product of vectors c1 and c2.
+    /// </summary>
+    public static double operator * (Coord c1, Coord c2)
         => c1.X * c2.X + c1.Y * c2.Y;
 
     
     // Math utilities
 
+    /// <summary>
+    /// Distance between two points.
+    /// </summary>
     public static double Distance(Coord c1, Coord c2)
     {
         double width = c1.X - c2.X;
@@ -68,11 +77,18 @@ public struct Coord : IEquatable<Coord>
         return Math.Sqrt(width * width + height * height);
     }
 
+    /// <summary>
+    /// Length of the vector from origin to point c.
+    /// </summary>
     public static double Length(Coord c)
     {
         return Math.Sqrt(c.X * c.X + c.Y * c.Y);
     }
 
+    /// <summary>
+    /// Linear interpolation (or extrapolation) between
+    /// points c1 and c2.
+    /// </summary>
     public static Coord Lerp(Coord c1, Coord c2, double t)
     {
         return new Coord(

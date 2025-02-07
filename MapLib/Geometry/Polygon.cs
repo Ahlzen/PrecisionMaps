@@ -48,6 +48,9 @@ public class Polygon : Line
     public new Polygon Smooth_Chaikin(int iterations)
         => new Polygon(Chaikin.Smooth_Fixed(Coords, true, iterations), Tags);
 
+    public new Polygon Smooth_ChaikinAdaptive(double maxAngleDegrees)
+        => new Polygon(Chaikin.Smooth_Adaptive(Coords, true, maxAngleDegrees), Tags);
+
     #region Operations and properties
 
     public double Area {

@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace MapLib.Geometry.Helpers;
 
@@ -49,6 +50,8 @@ public static class Chaikin
         {
             bool anyPointsSmoothed = false;
 
+            Debug.WriteLine($"Starting new iteration, {src.Count} source points.");
+
             dst = new List<Coord>(src.Count);
             dst.Add(src[0]);
             for (int p = 1; p < src.Count - 1; p++)
@@ -63,14 +66,8 @@ public static class Chaikin
                 double angleRadians = Math.Acos(
                     (d1*d2) / (Coord.Length(d1) * Coord.Length(d2)));
 
-                //Debug.WriteLine("Angle (deg): " + angleRadians * (180 / Math.PI));
-
-                //Debug.WriteLine($"Angle (rad): {angleRadians} (max {maxAngleRadians})");
-
                 if (angleRadians > maxAngleRadians)
                 {
-                    //Debug.WriteLine("Too great angle, subdividing");
-                    // angle too great: subdivide
                     Coord p1 = Coord.Lerp(prev, curr, 0.75);
                     Coord p2 = Coord.Lerp(curr, next, 0.25);
                     dst.Add(p1);
@@ -85,11 +82,33 @@ public static class Chaikin
             }
             dst.Add(src[^1]);
 
+            if (isClosed)
+            {
+                // Smooth start/end of ring
+                Coord prevS = src[^2];
+                Coord currS = src[0];
+                Coord nextS = src[1];
+
+                Coord d1 = currS - prevS;
+                Coord d2 = nextS - currS;
+                double angleRadians = Math.Acos(
+                    (d1 * d2) / (Coord.Length(d1) * Coord.Length(d2)));
+
+                if (angleRadians > maxAngleRadians)
+                {
+                    Coord p1S = Coord.Lerp(prevS, currS, 0.75);
+                    Coord p2S = Coord.Lerp(currS, nextS, 0.25);
+                    dst[0] = p2S;
+                    dst[^1] = p2S;
+                    dst[^2] = p1S;
+                    anyPointsSmoothed = true;
+                }
+            }
+
             // When we go through a full iteration without
             // any smoothing, we're done:
             if (!anyPointsSmoothed) break;
 
-            //Debug.WriteLine("Starting new iteration");
             src = dst;
         }
         return dst.ToArray();

@@ -74,6 +74,23 @@ internal class PolygonFixture : BaseFixture
             offset1, offset2, offset3);
     }
 
+    #region Line smoothing
+
+    // Chaiking's algorithm, Fixed iteration-count. Open and closed paths.
+
+    [Test]
+    public void TestSmooth_ChaikinFixed_Line()
+    {
+        Line chaikin1 = TestLine1.Smooth_Chaikin(1).Transform(1, 10, 0);
+        Line chaikin2 = TestLine1.Smooth_Chaikin(2).Transform(1, 20, 0);
+        Line chaikin3 = TestLine1.Smooth_Chaikin(3).Transform(1, 30, 0);
+        Assert.That(chaikin1.Count(), Is.GreaterThan(TestPolygon1.Count()));
+        Assert.That(chaikin2.Count(), Is.GreaterThan(chaikin1.Count()));
+        Assert.That(chaikin3.Count(), Is.GreaterThan(chaikin2.Count()));
+        Visualizer.RenderAndShow(1600, 400,
+            TestLine1, chaikin1, chaikin2, chaikin3);
+    }
+
     [Test]
     public void TestSmooth_ChaikinFixed_Polygon()
     {
@@ -82,21 +99,15 @@ internal class PolygonFixture : BaseFixture
         Polygon chaikin3 = TestPolygon1.Smooth_Chaikin(3).Transform(1, 30, 0);
         Assert.That(chaikin1.Count(), Is.GreaterThan(TestPolygon1.Count()));
         Assert.That(chaikin2.Count(), Is.GreaterThan(chaikin1.Count()));
+        Assert.That(chaikin3.Count(), Is.GreaterThan(chaikin2.Count()));
 
         // TODO: show vertices
         Visualizer.RenderAndShow(1600, 400,
             TestPolygon1, chaikin1, chaikin2, chaikin3);
     }
 
-    [Test]
-    public void TestSmooth_ChaikinFixed_Line()
-    {
-        Line chaikin1 = TestLine1.Smooth_Chaikin(1).Transform(1, 10, 0);
-        Line chaikin2 = TestLine1.Smooth_Chaikin(2).Transform(1, 20, 0);
-        Line chaikin3 = TestLine1.Smooth_Chaikin(3).Transform(1, 30, 0);
-        Visualizer.RenderAndShow(1600, 400,
-            TestLine1, chaikin1, chaikin2, chaikin3);
-    }
+
+    // Chaikin's algorithm, angle-based adaptive. Open and closed paths.
 
     [Test]
     public void TestSmooth_ChaikinAdaptive_Line()
@@ -107,6 +118,19 @@ internal class PolygonFixture : BaseFixture
         Visualizer.RenderAndShow(1600, 400,
             TestLine1, chaikin1, chaikin2, chaikin3);
     }
+
+    [Test]
+    public void TestSmooth_ChaikinAdaptive_Polygon()
+    {
+        Line chaikin1 = TestPolygon1.Smooth_ChaikinAdaptive(40).Transform(1, 10, 0);
+        Line chaikin2 = TestPolygon1.Smooth_ChaikinAdaptive(10).Transform(1, 20, 0);
+        Line chaikin3 = TestPolygon1.Smooth_ChaikinAdaptive(2).Transform(1, 30, 0);
+        Visualizer.RenderAndShow(1600, 400,
+            TestPolygon1, chaikin1, chaikin2, chaikin3);
+    }
+
+
+    // Examples with some real data
 
     [Test]
     public void TestSmooth_FixedChaikin_RealData()
@@ -133,4 +157,6 @@ internal class PolygonFixture : BaseFixture
                     }
             });
     }
+
+    #endregion
 }
