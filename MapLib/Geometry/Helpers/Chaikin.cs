@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace MapLib.Geometry.Helpers;
 
@@ -12,7 +11,8 @@ namespace MapLib.Geometry.Helpers;
 public static class Chaikin
 {
     /// <summary>
-    /// Returns a smoothed version of the source geometry.
+    /// Returns a version of the source line/ring, with each vertex
+    /// smoothed (subdivided) a fixed number of times.
     /// </summary>
     /// <param name="isClosed">
     /// If true, the first and last points are smoothed as well.
@@ -28,6 +28,16 @@ public static class Chaikin
         return result;
     }
 
+    /// <summary>
+    /// Returns a version of the source line/ring, with each vertex
+    /// smoothed (subdivided) until no angles exceed the specified threshold.
+    /// </summary>
+    /// <param name="isClosed">
+    /// If true, the first and last points are smoothed as well.
+    /// </param>
+    /// <param name="maxAngleDegrees">
+    /// Max bend angle allowed at each vertex in the final result.
+    /// </param>
     public static Coord[] Smooth_Adaptive(Coord[] source, bool isClosed,
         double maxAngleDegrees)
     {
@@ -113,6 +123,7 @@ public static class Chaikin
         }
         return dst.ToArray();
     }
+
 
     // Helpers
 
