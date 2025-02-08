@@ -108,4 +108,18 @@ internal static class Clipper2Utils
         double scale = long.MaxValue / extent;
         return scale;
     }
+
+    /// <summary>
+    /// Returns a reasonable epsilon value (smallest distance from
+    /// line through adjacent points) to use as an argument in Clipper's
+    /// SimplifyPath.
+    /// </summary>
+    /// <param name="bounds">Feature's bounds</param>
+    /// <remarks>
+    /// We aim for something that's meaningful, but shouldn't visibly
+    /// affect the result. Here we use 1/1,000,000 of the feature's scale:
+    /// See http://www.angusj.com/clipper2/Docs/Units/Clipper/Functions/SimplifyPaths.htm
+    /// </remarks>
+    public static double GetSimplifyEpsilon(Bounds bounds)
+        => Math.Max(bounds.Width, bounds.Height) * 0.000001;
 }

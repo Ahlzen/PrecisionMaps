@@ -1,5 +1,6 @@
 ﻿using Clipper2Lib;
 using MapLib.Geometry.Helpers;
+using System.Drawing;
 
 namespace MapLib.Geometry;
 
@@ -64,11 +65,18 @@ public class MultiLine : Shape, IEnumerable<Coord[]>
 
     public override MultiPolygon Buffer(double radius)
     {
-        PathsD paths = this.ToPathsD();
-        PathsD result = Clipper.InflatePaths(paths, radius, JoinType.Round, EndType.Round);
+        PathsD result, paths = this.ToPathsD();
+        // Should call SimplifyPaths before InflatePaths,
+        // see http://www.angusj.com/clipper2/Docs/Units/Clipper/Functions/SimplifyPaths.htm
+        paths = Clipper.SimplifyPaths(paths,
+            Clipper2Utils.GetSimplifyEpsilon(GetBounds()), true);
+        result = Clipper.InflatePaths(paths, radius, JoinType.Round, EndType.Round);
         return result.ToMultiPolygon(Tags);
     }
 
-    public new MultiLine Smooth_Chaikin(int iterations)
-        => throw new NotImplementedException();
+    public MultiLine Smooth_Chaikin(int iterations)
+        => new MultiLine(Coords.Select(c => Chaikin.Smooth_Fixed(c, true, iterations)).ToArray(), Tags);
+
+    public MultiLine Smooth_ChaikinAdaptive(double maxAngleDegrees)
+        => new MultiLine(Coords.Select(c => Chaikin.Smooth_Adaptive(c, true, maxAngleDegrees)).ToArray(), Tags);
 }

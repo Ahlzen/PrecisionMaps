@@ -1,4 +1,5 @@
-﻿using System.Drawing;
+﻿using System.Diagnostics;
+using System.Drawing;
 using System.IO;
 using MapLib;
 using MapLib.FileFormats.Vector;
@@ -176,6 +177,8 @@ public class CanvasFixture : BaseFixture
         double lineWidth = secondLineWidth;
         for (int i = 0; i < waveCount; i++)
         {
+            Debug.WriteLine($"Drawing polygon with {polygon.Sum(p => p.Length)} points");
+
             Color color = Color.FromArgb((int)(255 * opacity), baseColor);
             layer.DrawLines(polygon.Coords, lineWidth, color,
                 LineCap.Round, LineJoin.Round);

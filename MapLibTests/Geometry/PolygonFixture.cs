@@ -1,6 +1,7 @@
 ﻿using MapLib.Geometry.Helpers;
 using MapLib.Output;
 using MapLibTests;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 
@@ -49,6 +50,8 @@ internal class PolygonFixture : BaseFixture
     private static readonly Line TestLine2 =
         new Line([(1, 1), (5, 1), (7, 5)], null);
 
+    #region Offset/Inflate/Buffer
+
     [Test]
     public void TestOffset_Outward()
     {
@@ -57,6 +60,12 @@ internal class PolygonFixture : BaseFixture
         MultiPolygon offset3 = offset2.Offset(0.8);
         Visualizer.RenderAndShow(800, 500, TestPolygon1,
             offset1, offset2, offset3);
+
+        Debug.WriteLine($"Point counts");
+        Debug.WriteLine($"TestPolygon1: {TestPolygon1.Count}");
+        Debug.WriteLine($"offset1: {offset1.Sum(p => p.Length)}");
+        Debug.WriteLine($"offset2: {offset2.Sum(p => p.Length)}");
+        Debug.WriteLine($"offset3: {offset3.Sum(p => p.Length)}");
     }
 
     [Test]
@@ -72,7 +81,15 @@ internal class PolygonFixture : BaseFixture
 
         Visualizer.RenderAndShow(800, 500, TestPolygon1,
             offset1, offset2, offset3);
+
+        Debug.WriteLine($"Point counts");
+        Debug.WriteLine($"TestPolygon1: {TestPolygon1.Count}");
+        Debug.WriteLine($"offset1: {offset1.Sum(p => p.Length)}");
+        Debug.WriteLine($"offset2: {offset2.Sum(p => p.Length)}");
+        Debug.WriteLine($"offset3: {offset3.Sum(p => p.Length)}");
     }
+
+    #endregion
 
     #region Line smoothing
 

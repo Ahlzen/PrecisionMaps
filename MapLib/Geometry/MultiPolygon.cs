@@ -63,16 +63,24 @@ public class MultiPolygon : Shape, IEnumerable<Coord[]>
         => GetEnumerator();
 
     public MultiPolygon Offset(double d) {
-        PathsD paths = this.ToPathsD();
-        PathsD result = Clipper.InflatePaths(paths, d, JoinType.Round, EndType.Polygon);
+        PathsD result, paths = this.ToPathsD();
+        // Should call SimplifyPaths before InflatePaths,
+        // see http://www.angusj.com/clipper2/Docs/Units/Clipper/Functions/SimplifyPaths.htm
+        paths = Clipper.SimplifyPaths(paths,
+            Clipper2Utils.GetSimplifyEpsilon(GetBounds()), true);
+        result = Clipper.InflatePaths(paths, d, JoinType.Round, EndType.Polygon);
         return result.ToMultiPolygon(Tags);
     }
 
     public override MultiPolygon Buffer(double radius)
         => Offset(radius);
 
-    public new MultiPolygon Smooth_Chaikin(int iterations)
-        => throw new NotImplementedException();
+    public MultiPolygon Smooth_Chaikin(int iterations)
+        => new MultiPolygon(Coords.Select(c => Chaikin.Smooth_Fixed(c, true, iterations)).ToArray(), Tags);
+
+    public MultiPolygon Smooth_ChaikinAdaptive(double maxAngleDegrees)
+        => new MultiPolygon(Coords.Select(c => Chaikin.Smooth_Adaptive(c, true, maxAngleDegrees)).ToArray(), Tags);
+
 
     /// <summary>
     /// Merges any overlapping areas (self-union).
