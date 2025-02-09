@@ -72,6 +72,16 @@ public struct Bounds
         return b1.Value + b2.Value;
     }
 
+    /// <summary>
+    /// Returns the size, defined as the maximum of width and height.
+    /// </summary>
+    /// <remarks>
+    /// Useful to get a rough idea of an feature's size, especially since
+    /// many algorithms require some threshold that's relative to the
+    /// feature's dimensions.
+    /// </remarks>
+    public double Size => Math.Max(Width, Height);
+
     public override string ToString() =>
         $"X: ({XMin}, {XMax}) Y: ({YMin}, {YMax})";
 }
