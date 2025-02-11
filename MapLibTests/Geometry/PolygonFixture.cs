@@ -265,5 +265,39 @@ internal class PolygonFixture : BaseFixture
                 }
             });
     }
+
+    [Test]
+    public void TestSimplify_VisvalingamWhyatt_ByPointCount()
+    {
+        Visualizer.LoadOgrDataAndDrawPolygons(
+            Path.Join(TestDataPath, "Aaron River Reservoir.geojson"),
+            1600, 400, Color.AntiqueWhite, (canvas, multiPolygons) =>
+            {
+                CanvasLayer layer = canvas.AddNewLayer("water");
+                foreach (MultiPolygon multipolygon in multiPolygons)
+                {
+                    double size = multipolygon.GetBounds().Size; // overall size of feature
+
+                    foreach (Coord[] polygon in multipolygon)
+                    {
+                        layer.DrawPolygon(polygon, 1.2, Color.Navy, LineJoin.Round);
+                        int pointCount = polygon.Length;
+
+                        Coord[] visval1 = VisvalingamWhyatt.Simplify(
+                            polygon.Transform(1, 400, 0), maxPointCount: pointCount / 2);
+                        layer.DrawPolygon(visval1, 1.2, Color.DarkRed, LineJoin.Round);
+
+                        Coord[] visval2 = VisvalingamWhyatt.Simplify(
+                            polygon.Transform(1, 800, 0), maxPointCount: pointCount / 4);
+                        layer.DrawPolygon(visval2, 1.2, Color.DarkGreen, LineJoin.Round);
+
+                        Coord[] visval3 = VisvalingamWhyatt.Simplify(
+                            polygon.Transform(1, 1200, 0), maxPointCount: pointCount / 8);
+                        layer.DrawPolygon(visval3, 1.2, Color.DarkBlue, LineJoin.Round);
+                    }
+                }
+            });
+    }
+
     #endregion
 }

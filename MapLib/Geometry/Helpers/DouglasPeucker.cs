@@ -12,7 +12,7 @@ namespace MapLib.Geometry.Helpers;
 /// Probably not the most efficient implementation, but this
 /// will do for now.
 /// </remarks>
-public class DouglasPeucker
+public static class DouglasPeucker
 {
     /// <summary>
     /// Interpolates the sepcified points by reducing until the sepcified
