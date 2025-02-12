@@ -81,14 +81,16 @@ internal class Visualizer
         return sb.ToString();
     }
 
-    internal static void LoadOgrDataAndDrawPolygons(string inputFilename, int canvasWidth, int canvasHeight,
+    internal static void LoadOgrDataAndDrawPolygons(string inputFilename,
+        double geometryWidth, double geometryHeight,
+        int canvasWidth, int canvasHeight,
         Color background, Action<Canvas, IEnumerable<MultiPolygon>> drawingFunc)
     {
         // Read data
         OgrDataReader reader = new OgrDataReader();
         VectorData data = reader.ReadFile(inputFilename);
         Console.WriteLine(FormatVectorDataSummary(data));
-        VectorData transformedData = TransformToFit(data, canvasWidth, canvasHeight);
+        VectorData transformedData = TransformToFit(data, geometryWidth, geometryHeight);
         BitmapCanvas bitmapCanvas = new BitmapCanvas(canvasWidth, canvasHeight, background);
         SvgCanvas svgCanvas = new SvgCanvas(canvasWidth, canvasHeight, background);
 

@@ -111,7 +111,7 @@ public class CanvasFixture : BaseFixture
     {
         Visualizer.LoadOgrDataAndDrawPolygons(
             Path.Join(TestDataPath, "Aaron River Reservoir.geojson"),
-            600, 600, Color.AntiqueWhite, (canvas, multiPolygons) => {
+            600, 600, 600, 600, Color.AntiqueWhite, (canvas, multiPolygons) => {
                 CanvasLayer layer = canvas.AddNewLayer("water");
                 foreach (MultiPolygon multipolygon in multiPolygons)
                     foreach (Coord[] polygon in multipolygon)
@@ -124,7 +124,7 @@ public class CanvasFixture : BaseFixture
     {
         Visualizer.LoadOgrDataAndDrawPolygons(
             Path.Join(TestDataPath, "Aaron River Reservoir.geojson"),
-            600, 600, Color.AntiqueWhite, (canvas, multiPolygons) => {
+            600, 600, 600, 600, Color.AntiqueWhite, (canvas, multiPolygons) => {
                 CanvasLayer layer = canvas.AddNewLayer("water");
                 foreach (var multipolygon in multiPolygons)
                     layer.DrawFilledMultiPolygon(multipolygon, Color.CornflowerBlue);
@@ -136,7 +136,7 @@ public class CanvasFixture : BaseFixture
     {
         Visualizer.LoadOgrDataAndDrawPolygons(
             Path.Join(TestDataPath, "Aaron River Reservoir.geojson"),
-            600, 600, Color.AntiqueWhite, (canvas, multiPolygons) => {
+            600, 600, 600, 600, Color.AntiqueWhite, (canvas, multiPolygons) => {
                 CanvasLayer layer = canvas.AddNewLayer("water");
                 foreach (var multipolygon in multiPolygons)
                 {
@@ -151,7 +151,7 @@ public class CanvasFixture : BaseFixture
     {
         Visualizer.LoadOgrDataAndDrawPolygons(
             Path.Join(TestDataPath, "Natural Earth/ne_110m_land.shp"),
-            1200, 600, Color.AntiqueWhite, (canvas, multiPolygons) => {
+            600, 600, 1200, 600, Color.AntiqueWhite, (canvas, multiPolygons) => {
                 MultiPolygon world = new(multiPolygons, null);
                 CanvasLayer layer = canvas.AddNewLayer("shore");
                 DrawShorelineFromPolygon(layer, world,
