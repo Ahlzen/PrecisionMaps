@@ -13,6 +13,7 @@ public static class VisvalingamWhyatt
         double toleranceMaxArea = double.MaxValue)
     {
         if (points.Length <= 3) return points;
+        if (maxPointCount < 3) maxPointCount = 3;
 
         // Build list of items and priority queue
         

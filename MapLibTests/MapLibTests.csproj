@@ -4,6 +4,7 @@
     <TargetFramework>net8.0-windows</TargetFramework>
     <ImplicitUsings>false</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <RootNamespace>MapLib.Tests</RootNamespace>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -15,7 +16,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="BenchmarkDotNet" Version="0.14.0" />
     <PackageReference Include="GDAL" Version="3.10.0" />
     <PackageReference Include="GDAL.Native" Version="3.10.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />

@@ -5,34 +5,22 @@ namespace MapLibTests;
 [TestFixture]
 public abstract class BaseFixture
 {
+    protected static readonly Polygon TestPolygon1 =
+        new Polygon([(1, 1), (8, -2), (7, 5), (6, 2), (5, 3), (1, 1)], null);
+
+    protected static readonly Line TestLine1 =
+        new Line([(1, 1), (8, -2), (7, 5), (6, 2), (5, 3)], null);
+
+    private static readonly Line TestLine2 =
+        new Line([(1, 1), (5, 1), (7, 5)], null);
+
+
     public string TestDataPath =>
-        "../../../data";
+        "../../../../TestData";
 
     [OneTimeSetUp]
     public void OneTimeSetUp()
     {
         GdalUtils.Initialize();
     }
-
-    //internal static string GetTempFileName(string extension)
-    //{
-    //    return TrimEnd(Path.GetTempFileName(), ".tmp") + extension;
-    //}
-
-    //internal static string TrimEnd(string source, string value)
-    //{
-    //    if (!source.EndsWith(value))
-    //        return source;
-    //    return source.Remove(source.LastIndexOf(value));
-    //}
-
-    //internal static void ShowFile(string filename)
-    //{
-    //    Process.Start(new ProcessStartInfo
-    //    {
-    //        FileName = filename,
-    //        UseShellExecute = true
-    //    });
-    //    Debug.WriteLine(filename);
-    //}
 }
