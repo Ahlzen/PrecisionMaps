@@ -9,12 +9,12 @@ using MapLib.Geometry.Helpers;
 
 namespace MapLib.Benchmarks.Geometry;
 
-public class VisvalingamWhyattBenchmarks
+public class LineSimplificationBenchmarks
 {
     public Coord[] SmallPolygon { get; }
     public Coord[] LargePolygon { get; }
 
-    public VisvalingamWhyattBenchmarks()
+    public LineSimplificationBenchmarks()
     {
         GdalUtils.Initialize();
 
@@ -25,14 +25,20 @@ public class VisvalingamWhyattBenchmarks
         Debug.Assert(LargePolygon.Length > 1000); // ensure we have the right polygon
     }
 
+
     [Benchmark]
-    public Coord[] SimplifySmallMultipolygon_VisvalingamWhyatt_Naive()
+    public Coord[] SimplifySmallMultipolygon_VisvalingamWhyatt_Naive_ByPointCount()
         => VisvalingamWhyatt_Naive.Simplify(
             SmallPolygon, SmallPolygon.Length / 6);
 
     [Benchmark]
-    public Coord[] SimplifySmallMultipolygon_VisvalingamWhyatt()
+    public Coord[] SimplifySmallMultipolygon_VisvalingamWhyatt_ByPointCount()
         => VisvalingamWhyatt.Simplify(
+            SmallPolygon, SmallPolygon.Length / 6);
+
+    [Benchmark]
+    public Coord[] SimplifySmallMultipolygon_DouglasPeucker_ByPointCount()
+        => DouglasPeucker.Simplify(
             SmallPolygon, SmallPolygon.Length / 6);
 
 
@@ -46,5 +52,9 @@ public class VisvalingamWhyattBenchmarks
         => VisvalingamWhyatt.Simplify(
             LargePolygon, LargePolygon.Length / 6);
 
+    [Benchmark]
+    public Coord[] SimplifyLargeMultipolygon_DouglasPeucker_ByPointCount()
+        => DouglasPeucker.Simplify(
+            LargePolygon, LargePolygon.Length / 6);
 }
 
