@@ -1,60 +1,32 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-
-using BenchmarkDotNet.Attributes;
-using MapLib.GdalSupport;
+﻿using BenchmarkDotNet.Attributes;
 using MapLib.Geometry;
 using MapLib.Geometry.Helpers;
 
 namespace MapLib.Benchmarks.Geometry;
 
-public class LineSimplificationBenchmarks
+/// <summary>
+/// Different line simplification algorithms on a "small" polygon.
+/// </summary>
+public class LineSimplificationBenchmarks_Polygons : BaseGeometryBenchmarks
 {
-    public Coord[] SmallPolygon { get; }
-    public Coord[] LargePolygon { get; }
+    [Params(false, true)]
+    public bool UseLargePolygon;
 
-    public LineSimplificationBenchmarks()
-    {
-        GdalUtils.Initialize();
+    [Params(0.5, 0.2, 0.1)]
+    public double PointReductionFactor;
 
-        SmallPolygon = DataHelpers.LoadFistPolygonCoordsFromTestData("Aaron River Reservoir.geojson");
-        Debug.Assert(SmallPolygon.Length > 10); // ensure we have the right polygon
-
-        LargePolygon = DataHelpers.LoadFistPolygonCoordsFromTestData("Natural Earth/ne_110m_land.shp");
-        Debug.Assert(LargePolygon.Length > 1000); // ensure we have the right polygon
-    }
-
+    public Coord[] Data => UseLargePolygon ? LargePolygonData : SmallPolygonData;
+    public int TargetPointCount => (int)(Data.Length * PointReductionFactor);
 
     [Benchmark]
-    public Coord[] SimplifySmallMultipolygon_VisvalingamWhyatt_Naive_ByPointCount()
-        => VisvalingamWhyatt_Naive.Simplify(
-            SmallPolygon, SmallPolygon.Length / 6);
+    public Coord[] SimplifySmallPolygon_VisvalingamWhyatt_Naive_ByPointCount()
+        => VisvalingamWhyatt_Naive.Simplify(Data, TargetPointCount);
 
     [Benchmark]
-    public Coord[] SimplifySmallMultipolygon_VisvalingamWhyatt_ByPointCount()
-        => VisvalingamWhyatt.Simplify(
-            SmallPolygon, SmallPolygon.Length / 6);
+    public Coord[] SimplifySmallPolygon_VisvalingamWhyatt_ByPointCount()
+        => VisvalingamWhyatt.Simplify(Data, TargetPointCount);
 
     [Benchmark]
-    public Coord[] SimplifySmallMultipolygon_DouglasPeucker_ByPointCount()
-        => DouglasPeucker.Simplify(
-            SmallPolygon, SmallPolygon.Length / 6);
-
-
-    [Benchmark]
-    public Coord[] SimplifyLargeMultipolygon_VisvalingamWhyatt_Naive()
-        => VisvalingamWhyatt_Naive.Simplify(
-            LargePolygon, LargePolygon.Length / 6);
-
-    [Benchmark]
-    public Coord[] SimplifyLargeMultipolygon_VisvalingamWhyatt()
-        => VisvalingamWhyatt.Simplify(
-            LargePolygon, LargePolygon.Length / 6);
-
-    [Benchmark]
-    public Coord[] SimplifyLargeMultipolygon_DouglasPeucker_ByPointCount()
-        => DouglasPeucker.Simplify(
-            LargePolygon, LargePolygon.Length / 6);
+    public Coord[] SimplifySmallPolygon_DouglasPeucker_ByPointCount()
+        => DouglasPeucker.Simplify(Data, TargetPointCount);
 }
-

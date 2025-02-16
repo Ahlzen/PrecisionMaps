@@ -30,8 +30,13 @@ public static class DataHelpers
         return multiPolygons;
     }
 
-    public static Coord[] LoadFistPolygonCoordsFromTestData(
-        string filename)
+    public static Polygon LoadFirstPolygonFromTestData(string filename)
+    {
+        List<MultiPolygon> MultiPolygons = LoadMultiPolygonsFromTestData(filename);
+        return new Polygon(MultiPolygons[0].Coords[0], MultiPolygons[0].Tags);
+    }
+
+    public static Coord[] LoadFirstPolygonCoordsFromTestData(string filename)
     {
         List<MultiPolygon> MultiPolygons = LoadMultiPolygonsFromTestData(filename);
         return MultiPolygons[0].Coords[0];
