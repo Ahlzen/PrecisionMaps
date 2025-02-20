@@ -1,6 +1,6 @@
 ﻿using MapLib.GdalSupport;
 
-namespace MapLibTests;
+namespace MapLib.Tests;
 
 [TestFixture]
 public abstract class BaseFixture

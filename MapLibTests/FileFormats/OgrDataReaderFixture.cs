@@ -1,7 +1,7 @@
 ﻿using MapLib.FileFormats.Vector;
 using System.IO;
 
-namespace MapLibTests.FileFormats;
+namespace MapLib.Tests.FileFormats;
 
 [TestFixture]
 public class OgrDataReaderFixture : BaseFixture

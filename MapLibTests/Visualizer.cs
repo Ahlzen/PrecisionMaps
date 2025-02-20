@@ -4,9 +4,8 @@ using MapLib.FileFormats.Vector;
 using MapLib.Output;
 using System.Text;
 using System.IO;
-using MapLib;
 
-namespace MapLibTests;
+namespace MapLib.Tests;
 
 [SupportedOSPlatform("windows")]
 internal class Visualizer

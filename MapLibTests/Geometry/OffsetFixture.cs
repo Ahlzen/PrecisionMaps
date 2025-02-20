@@ -1,5 +1,4 @@
-﻿using MapLibTests;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 
 namespace MapLib.Tests.Geometry;
 

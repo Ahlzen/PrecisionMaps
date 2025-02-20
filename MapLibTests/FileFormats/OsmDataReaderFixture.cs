@@ -1,8 +1,7 @@
-﻿using MapLib;
-using MapLib.FileFormats.Vector;
+﻿using MapLib.FileFormats.Vector;
 using System.IO;
 
-namespace MapLibTests.FileFormats;
+namespace MapLib.Tests.FileFormats;
 
 [TestFixture]
 internal class OsmDataReaderFixture : BaseFixture

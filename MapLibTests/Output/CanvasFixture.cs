@@ -1,11 +1,10 @@
 ﻿using System.Diagnostics;
 using System.Drawing;
 using System.IO;
-using MapLib;
 using MapLib.FileFormats.Vector;
 using MapLib.Output;
 
-namespace MapLibTests.Output;
+namespace MapLib.Tests.Output;
 
 [TestFixture]
 public class CanvasFixture : BaseFixture

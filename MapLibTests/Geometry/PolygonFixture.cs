@@ -1,11 +1,4 @@
-﻿using MapLib.Geometry.Helpers;
-using MapLib.Output;
-using MapLibTests;
-using System.Diagnostics;
-using System.Drawing;
-using System.IO;
-
-namespace MapLib.Tests.Geometry;
+﻿namespace MapLib.Tests.Geometry;
 
 [TestFixture]
 [SupportedOSPlatform("windows")]

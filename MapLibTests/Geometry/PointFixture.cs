@@ -1,6 +1,4 @@
-﻿using MapLibTests;
-
-namespace MapLib.Tests.Geometry;
+﻿namespace MapLib.Tests.Geometry;
 
 [TestFixture]
 [SupportedOSPlatform("windows")]

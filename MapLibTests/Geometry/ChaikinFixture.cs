@@ -1,6 +1,5 @@
 ﻿using MapLib.Geometry.Helpers;
 using MapLib.Output;
-using MapLibTests;
 using System.Drawing;
 using System.IO;
 
