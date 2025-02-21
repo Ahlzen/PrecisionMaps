@@ -22,7 +22,7 @@ public class OgrDataReaderFixture : BaseFixture
         // GeoJSON file with single object from OSM
         OgrDataReader reader = new OgrDataReader();
         MapLib.VectorData data = reader.ReadFile(
-            Path.Join(TestDataPath, "Aaron River Reservoir.geojson"));
+            Path.Join(TestDataPath, "GeoJSON/Aaron River Reservoir.geojson"));
         Console.WriteLine(Visualizer.FormatVectorDataSummary(data));
     }
 

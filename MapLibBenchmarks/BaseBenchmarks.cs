@@ -25,9 +25,9 @@ public class BaseGeometryBenchmarks : BaseBenchmarks
     public BaseGeometryBenchmarks()
     {
         // Prepare test geometry
-        SmallPolygon = DataHelpers.LoadFirstPolygonFromTestData("Aaron River Reservoir.geojson");
+        SmallPolygon = DataHelpers.LoadFirstPolygonFromTestData("GeoJSON/Aaron River Reservoir.geojson");
         SmallMultiPolygon = SmallPolygon.AsMultiPolygon();
-        SmallPolygonData = DataHelpers.LoadFirstPolygonCoordsFromTestData("Aaron River Reservoir.geojson");
+        SmallPolygonData = DataHelpers.LoadFirstPolygonCoordsFromTestData("GeoJSON/Aaron River Reservoir.geojson");
         Debug.Assert(SmallPolygonData.Length > 10); // ensure we have the right polygon
 
         LargePolygon = DataHelpers.LoadFirstPolygonFromTestData("Natural Earth/ne_110m_land.shp");

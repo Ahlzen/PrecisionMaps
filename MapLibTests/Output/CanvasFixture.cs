@@ -24,7 +24,7 @@ public class CanvasFixture : BaseFixture
         var svgCanvas = new SvgCanvas(width, height, Color.Transparent);
 
         OgrDataReader reader = new();
-        VectorData reservoirData = reader.ReadFile(Path.Join(TestDataPath, "Aaron River Reservoir.geojson"));
+        VectorData reservoirData = reader.ReadFile(Path.Join(TestDataPath, "GeoJSON/Aaron River Reservoir.geojson"));
         Assert.That(reservoirData.Polygons.Count, Is.EqualTo(0));
         Assert.That(reservoirData.MultiPolygons.Count, Is.EqualTo(1));
         VectorData scaledReservoirData = Visualizer.TransformToFit(reservoirData, 180, 180);
@@ -109,7 +109,7 @@ public class CanvasFixture : BaseFixture
     public void TestRenderMultipolygon()
     {
         Visualizer.LoadOgrDataAndDrawPolygons(
-            Path.Join(TestDataPath, "Aaron River Reservoir.geojson"),
+            Path.Join(TestDataPath, "GeoJSON/Aaron River Reservoir.geojson"),
             600, 600, 600, 600, Color.AntiqueWhite, (canvas, multiPolygons) => {
                 CanvasLayer layer = canvas.AddNewLayer("water");
                 foreach (MultiPolygon multipolygon in multiPolygons)
@@ -122,7 +122,7 @@ public class CanvasFixture : BaseFixture
     public void TestRenderFilledMultipolygon()
     {
         Visualizer.LoadOgrDataAndDrawPolygons(
-            Path.Join(TestDataPath, "Aaron River Reservoir.geojson"),
+            Path.Join(TestDataPath, "GeoJSON/Aaron River Reservoir.geojson"),
             600, 600, 600, 600, Color.AntiqueWhite, (canvas, multiPolygons) => {
                 CanvasLayer layer = canvas.AddNewLayer("water");
                 foreach (var multipolygon in multiPolygons)
@@ -134,7 +134,7 @@ public class CanvasFixture : BaseFixture
     public void TestRenderShorelinePolygons_AaronRiver()
     {
         Visualizer.LoadOgrDataAndDrawPolygons(
-            Path.Join(TestDataPath, "Aaron River Reservoir.geojson"),
+            Path.Join(TestDataPath, "GeoJSON/Aaron River Reservoir.geojson"),
             600, 600, 600, 600, Color.AntiqueWhite, (canvas, multiPolygons) => {
                 CanvasLayer layer = canvas.AddNewLayer("water");
                 foreach (var multipolygon in multiPolygons)

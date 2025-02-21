@@ -1,4 +1,5 @@
-﻿using MapLib.Geometry;
+﻿using System.Runtime.InteropServices.ComTypes;
+using MapLib.Geometry;
 
 namespace MapLib;
 
@@ -41,6 +42,11 @@ public class VectorData : GeoData
     public MultiPolygon[] MultiPolygons { get; }
 
     public override Bounds Bounds { get; }
+
+    public int Count =>
+        Points.Length + MultiPoints.Length +
+        Lines.Length + MultiLines.Length +
+        Polygons.Length + MultiPolygons.Length;
 
     private Bounds ComputeBounds()
     {

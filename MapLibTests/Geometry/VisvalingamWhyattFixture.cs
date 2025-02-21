@@ -12,7 +12,7 @@ public class VisvalingamWhyattFixture : BaseFixture
     public void TestSimplify_VisvalingamWhyatt_ByPointCount()
     {
         Visualizer.LoadOgrDataAndDrawPolygons(
-            Path.Join(TestDataPath, "Aaron River Reservoir.geojson"),
+            Path.Join(TestDataPath, "GeoJSON/Aaron River Reservoir.geojson"),
             400, 400, 1600, 800, Color.AntiqueWhite, (canvas, multiPolygons) =>
             {
                 CanvasLayer layer = canvas.AddNewLayer("water");

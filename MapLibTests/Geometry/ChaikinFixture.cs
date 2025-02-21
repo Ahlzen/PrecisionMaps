@@ -90,7 +90,7 @@ internal class ChaikinFixture : BaseFixture
     public void TestSmooth_FixedChaikin_RealData()
     {
         Visualizer.LoadOgrDataAndDrawPolygons(
-            Path.Join(TestDataPath, "Aaron River Reservoir.geojson"),
+            Path.Join(TestDataPath, "GeoJSON/Aaron River Reservoir.geojson"),
             400, 400, 1200, 400, Color.AntiqueWhite, (canvas, multiPolygons) =>
             {
                 CanvasLayer layer = canvas.AddNewLayer("water");
