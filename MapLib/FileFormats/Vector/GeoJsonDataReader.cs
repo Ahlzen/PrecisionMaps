@@ -128,7 +128,7 @@ public class GeoJsonDataReader : IVectorFormatReader
         JsonElement propertyObject = GetProperty(parent, "properties", JsonValueKind.Object, "Feature");
         List<KeyValuePair<string, string>> tags = new();
         foreach (JsonProperty property in propertyObject.EnumerateObject())
-            tags.Add(new KeyValuePair<string, string>(property.Name, property.Value.GetString() ?? ""));
+            tags.Add(new KeyValuePair<string, string>(property.Name, property.Value.ToString() ?? ""));
         return tags.ToArray();
     }
 
