@@ -232,7 +232,6 @@ public class OgrDataReader : IVectorFormatReader
                 default:
                     throw new InvalidOperationException(
                         "Unsupported field type: " + ft);
-                    // Note this is only a sub-set of the possible field types
             }
             tags[i] = new KeyValuePair<string, string>(key, value);
         }
