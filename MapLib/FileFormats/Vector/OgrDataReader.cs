@@ -189,6 +189,7 @@ public class OgrDataReader : IVectorFormatReader
             switch (ft)
             {
                 case FieldType.OFTString:
+                case FieldType.OFTWideString:
                     value = feature.GetFieldAsString(i);
                     break;
                 case FieldType.OFTReal:
@@ -200,7 +201,34 @@ public class OgrDataReader : IVectorFormatReader
                 case FieldType.OFTInteger64:
                     value = feature.GetFieldAsInteger64(i).ToString();
                     break;
-                // TODO: Add support for more field types
+                case FieldType.OFTIntegerList:
+                case FieldType.OFTInteger64List:
+                    {
+                        int[] ints = feature.GetFieldAsIntegerList(i, out int count);
+                        value = "[" + string.Join(", ", ints.Select(d => d.ToString())) + "]";
+                        break;
+                    }
+                case FieldType.OFTRealList:
+                    {
+                        double[] doubles = feature.GetFieldAsDoubleList(i, out int count);
+                        value = "[" + string.Join(", ", doubles.Select(d => d.ToString())) + "]";
+                        break;
+                    }
+                case FieldType.OFTStringList:
+                case FieldType.OFTWideStringList:
+                    {
+                        string[] strings = feature.GetFieldAsStringList(i);
+                        value = "[" + string.Join(", ", strings) + "]";
+                        break;
+                    }
+                case FieldType.OFTDate:
+                case FieldType.OFTTime:
+                case FieldType.OFTDateTime:
+                    value = feature.GetFieldAsISO8601DateTime(i, new string[] {});
+                    break;
+                case FieldType.OFTBinary:
+                    value = "<binary>"; // we don't support this
+                    break;
                 default:
                     throw new InvalidOperationException(
                         "Unsupported field type: " + ft);
