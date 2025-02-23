@@ -21,4 +21,8 @@
     <PackageReference Include="System.Drawing.Common" Version="9.0.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="DataSources\Raster\" />
+  </ItemGroup>
+
 </Project>
