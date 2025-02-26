@@ -1,7 +1,10 @@
-﻿using MapLib.Geometry;
+﻿using MapLib.GdalSupport;
+using MapLib.Geometry;
 using OSGeo.OGR;
+using System.Data;
 using System.Diagnostics;
 using System.IO;
+using OSGeo.GDAL;
 
 namespace MapLib.FileFormats.Vector;
 
@@ -10,7 +13,13 @@ public class OgrDataReader : IVectorFormatReader
     public VectorData ReadFile(string filename)
     {
         VectorDataBuilder builder = new();
-        
+
+        // Get SRS
+        Dataset vectorDataSet = OgrUtils.GetVectorDataset(filename);
+        string srs = OgrUtils.GetSrsAsWkt(vectorDataSet);
+        vectorDataSet.Close();
+        vectorDataSet.Dispose();
+
         // Open data source
         using DataSource ds = Ogr.Open(filename, 0);
         if (ds == null)
@@ -97,7 +106,7 @@ public class OgrDataReader : IVectorFormatReader
             while (feature != null);
         }
 
-        return builder.ToVectorData();
+        return builder.ToVectorData(srs);
     }
 
     private void ReadAndAddPoint(

@@ -95,7 +95,10 @@ public class OsmDataReader : IVectorFormatReader
             }
         }
 
-        VectorData data = new(
+        // OSM data is stored as plain lon/lat WGS84:
+        string srs = "EPSG:4326";
+
+        VectorData data = new(srs,
             nodes.Values.ToArray(),
             null,
             ways.Values.ToArray(),

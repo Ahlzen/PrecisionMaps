@@ -1,5 +1,4 @@
-﻿using System.Runtime.InteropServices.ComTypes;
-using MapLib.Geometry;
+﻿using MapLib.Geometry;
 
 namespace MapLib;
 
@@ -16,9 +15,11 @@ public class VectorData : GeoData
     /// At least one of the geometry parameters must be non-empty.
     /// </remarks>
     public VectorData(
+        string srs,
         Point[]? points, MultiPoint[]? multiPoints,
         Line[]? lines, MultiLine[]? multiLines,
         Polygon[]? polygons, MultiPolygon[]? multiPolygons)
+        : base(srs)
     {
         Points = points ?? [];
         MultiPoints = multiPoints ?? [];
@@ -71,7 +72,7 @@ public class VectorData : GeoData
     /// Returns all geometry transformed as (X*scale+offsetX, Y*scale+offsetY)
     /// </returns>
     public virtual VectorData Transform(double scale, double offsetX, double offsetY)
-        => new(
+        => new(this.Srs,
             Points.Select(feature => feature.Transform(scale, offsetX, offsetY)).ToArray(),
             MultiPoints.Select(feature => feature.Transform(scale, offsetX, offsetY)).ToArray(),
             Lines.Select(feature => feature.Transform(scale, offsetX, offsetY)).ToArray(),

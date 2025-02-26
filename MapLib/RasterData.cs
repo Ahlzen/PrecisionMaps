@@ -6,7 +6,8 @@ namespace MapLib;
 public class RasterData : GeoData
 {
     // TODO: implement properly
-    public RasterData(Bounds bounds, Bitmap bitmap)
+    public RasterData(string srs, Bounds bounds, Bitmap bitmap)
+        : base(srs)
     {
         Bounds = bounds;
         Bitmap = bitmap;

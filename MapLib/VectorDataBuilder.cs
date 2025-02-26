@@ -17,9 +17,9 @@ public class VectorDataBuilder
     public List<Polygon> Polygons { get; set; } = new();
     public List<MultiPolygon> MultiPolygons { get; set; } = new();
 
-    public VectorData ToVectorData()
+    public VectorData ToVectorData(string srs)
     {
-        return new VectorData(
+        return new VectorData(srs,
             Points.ToArray(),
             MultiPoints.ToArray(),
             Lines.ToArray(),

@@ -32,7 +32,9 @@ public class GeoJsonDataReader : IVectorFormatReader
                 throw new NotSupportedException(
                     $"GeoJson: Unsupported root type value: \"{type}\".");
         }
-        return builder.ToVectorData();
+
+        // With a few rare exceptions, GeoJSON is plain lon/lat WGS84:
+        return builder.ToVectorData("EPSG:4326");
     }
 
     private void ParseFeatureCollection(JsonElement parent, VectorDataBuilder builder)

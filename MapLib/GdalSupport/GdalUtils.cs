@@ -1,4 +1,5 @@
-﻿using System.Drawing.Imaging;
+﻿using System.Data;
+using System.Drawing.Imaging;
 using System.Drawing;
 using System.Text;
 using OSGeo.GDAL;
@@ -51,11 +52,13 @@ public static class GdalUtils
 
     public static string GetRasterInfo(string filename)
     {
-        var sb = new StringBuilder();
-
-        Dataset ds = Gdal.Open(filename, Access.GA_ReadOnly);
+        using Dataset ds = Gdal.Open(filename, Access.GA_ReadOnly);
         if (ds == null) throw new ApplicationException("Failed to open " + filename);
-
+        return GetRasterInfo(ds);
+    }
+    public static string GetRasterInfo(Dataset ds)
+    {
+        var sb = new StringBuilder();
         sb.AppendLine("Raster dataset parameters:");
         sb.AppendLine("  Projection: " + ds.GetProjectionRef());
         sb.AppendLine("  RasterCount: " + ds.RasterCount);
@@ -128,10 +131,28 @@ public static class GdalUtils
                 sb.AppendLine(projection);
             }
         }
-
-        ds.Dispose();
         return sb.ToString();
     }
+
+    public static string GetSrsAsWkt(Dataset rasterDataset)
+    {
+        string projection = rasterDataset.GetProjectionRef();
+        if (projection == null)
+            throw new ApplicationException("Could not determine projection from GDAL Dataset.");
+
+        SpatialReference srs = new SpatialReference(null);
+        if (srs.ImportFromWkt(ref projection) == 0)
+        {
+            string wkt;
+            srs.ExportToPrettyWkt(out wkt, 0);
+            return wkt;
+        }
+        else
+        {
+            return projection;
+        }
+    }
+
 
     /// <summary>
     /// Returns the transformed coordinates of the specified raster position
@@ -157,22 +178,24 @@ public static class GdalUtils
     public static Bitmap GetBitmap(string filename, Bounds areaProjected,
         int? imageWidth = null, int? imageHeight = null)
     {
-        using (Dataset ds = Gdal.Open(filename, Access.GA_ReadOnly))
-        {
-            if (ds == null) throw new ApplicationException("Failed to open " + filename);
+        using Dataset ds = Gdal.Open(filename, Access.GA_ReadOnly);
+        if (ds == null) throw new ApplicationException("Failed to open " + filename);
+        return GetBitmap(ds, areaProjected, imageWidth, imageHeight);
+    }
+    public static Bitmap GetBitmap(Dataset ds, Bounds areaProjected,
+        int? imageWidth = null, int? imageHeight = null)
+    {
+        Coord bottomLeft = GeoToPixel(ds, areaProjected.BottomLeft);
+        Coord topRight = GeoToPixel(ds, areaProjected.TopRight);
 
-            Coord bottomLeft = GeoToPixel(ds, areaProjected.BottomLeft);
-            Coord topRight = GeoToPixel(ds, areaProjected.TopRight);
+        int xOffset = (int)Math.Min(bottomLeft.X, topRight.X);
+        int yOffset = (int)Math.Min(bottomLeft.Y, topRight.Y);
+        int width = (int)Math.Abs(topRight.X - bottomLeft.X);
+        int height = (int)Math.Abs(topRight.Y - bottomLeft.Y);
 
-            int xOffset = (int)Math.Min(bottomLeft.X, topRight.X);
-            int yOffset = (int)Math.Min(bottomLeft.Y, topRight.Y);
-            int width = (int)Math.Abs(topRight.X - bottomLeft.X);
-            int height = (int)Math.Abs(topRight.Y - bottomLeft.Y);
-
-            // Use native resolution from raster data if not specified
-            return GetBitmap(ds, xOffset, yOffset, width, height,
-                imageWidth ?? width, imageHeight ?? height);
-        }
+        // Use native resolution from raster data if not specified
+        return GetBitmap(ds, xOffset, yOffset, width, height,
+            imageWidth ?? width, imageHeight ?? height);
     }
 
     public static Bitmap GetBitmap(string filename, int xOffset, int yOffset,
