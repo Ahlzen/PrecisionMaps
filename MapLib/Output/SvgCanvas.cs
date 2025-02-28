@@ -18,9 +18,9 @@ public class SvgCanvas : Canvas
     private readonly List<SvgCanvasLayer> _layers = new List<SvgCanvasLayer>();
     internal string SvgCoordFormat { get; }
 
-    public SvgCanvas(double width, double height,
+    public SvgCanvas(CanvasUnit unit, double width, double height,
         Color? backgroundColor, int decimals = 3) :
-        base(width, height)
+        base(unit, width, height)
     {
         _width = width;
         _height = height;

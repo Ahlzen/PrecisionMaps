@@ -1,4 +1,5 @@
 ﻿using Clipper2Lib;
+using MapLib.GdalSupport;
 using MapLib.Geometry.Helpers;
 
 namespace MapLib.Geometry;
@@ -29,15 +30,28 @@ public class MultiPolygon : Shape, IEnumerable<Coord[]>
         Coords = multiPolygons.SelectMany(mp =>  mp.Coords).ToArray();
     }
 
+    #region Transformations
+
     /// <returns>
     /// Returns the polygons transformed as (X*scale+offsetX, Y*scale+offsetY)
     /// </returns>
     public virtual MultiPolygon Transform(double scale, double offsetX, double offsetY)
-        => new(Coords.Select(c => c.Transform(scale, offsetX, offsetY)).ToArray(), Tags);
+        => Transform(scale, scale, offsetX, offsetY);
+
+    /// <returns>
+    /// Returns the polygons transformed as (X*scaleX+offsetX, Y*scaleY+offsetY)
+    /// </returns>
+    public virtual MultiPolygon Transform(double scaleX, double scaleY, double offsetX, double offsetY)
+        => new(Coords.Select(c => c.Transform(scaleX, scaleY, offsetX, offsetY)).ToArray(), Tags);
 
     public virtual MultiPolygon Transform(Func<Coord, Coord> transformation)
         => new MultiPolygon(
             Coords.Select(l => l.Select(c => transformation(c)).ToArray()).ToArray(), Tags);
+
+    public MultiPolygon Transform(Transformer transformer)
+        => new MultiPolygon(transformer.Transform(Coords), Tags);
+
+    #endregion
 
     public override Coord GetCenter()
         => GetBounds().Center;

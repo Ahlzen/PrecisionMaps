@@ -1,4 +1,5 @@
-﻿using OSGeo.GDAL;
+﻿using MapLib.Geometry;
+using OSGeo.GDAL;
 
 namespace MapLib.GdalSupport;
 
@@ -12,6 +13,12 @@ public static class OgrUtils
         string wkt;
         vectorDataset.GetLayer(0).GetSpatialRef().ExportToPrettyWkt(out wkt, 0);
         return wkt;
+    }
+
+    public static Bounds GetDatasetBounds(Dataset vectorDataset)
+    {
+        // TODO
+        throw new NotImplementedException();
     }
 
     //public static string? GetSrsAsWkt(DataSource dataSource)

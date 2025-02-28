@@ -1,4 +1,5 @@
-﻿using MapLib.Geometry.Helpers;
+﻿using MapLib.GdalSupport;
+using MapLib.Geometry.Helpers;
 
 namespace MapLib.Geometry;
 
@@ -35,19 +36,33 @@ public class Line : Shape, IEnumerable<Coord>
 
     public int Count => Coords.Length;
 
-    #region Modifiers
+    #region Transformations
 
-    public virtual MultiLine AsMultiLine()
-        => new MultiLine(new Coord[][]{Coords}, Tags);
+    public Line Transform(Transformer transformer)
+        => new Line(transformer.Transform(Coords), Tags);
 
     /// <returns>
     /// Returns the line transformed as (X*scale+offsetX, Y*scale+offsetY)
     /// </returns>
     public virtual Line Transform(double scale, double offsetX, double offsetY)
         => new(Coords.Transform(scale, offsetX, offsetY), Tags);
+    
+    /// <returns>
+    /// Returns the line transformed as (X*scaleX+offsetX, Y*scaleY+offsetY)
+    /// </returns>
+    public virtual Line Transform(double scaleX, double scaleY, double offsetX, double offsetY)
+        => new(Coords.Transform(scaleX, scaleY, offsetX, offsetY), Tags);
 
     public virtual Line Transform(Func<Coord, Coord> transformation)
         => new Line(Coords.Select(transformation), Tags);
+
+
+    #endregion
+
+    #region Modifiers
+
+    public virtual MultiLine AsMultiLine()
+        => new MultiLine(new Coord[][]{Coords}, Tags);
 
     public virtual Line Reverse()
         => new Line(Coords.Reverse(), Tags);

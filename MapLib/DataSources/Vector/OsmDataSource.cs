@@ -9,7 +9,9 @@ public class OsmDataSource : BaseCachingDataSource, IVectorDataSource
     public string Name => "OpenStreetMap";
 
     public static Bounds _bounds = new Bounds(-180, 180, -90, 90);
-    public Bounds Bounds => _bounds;
+    public Bounds? Bounds => _bounds;
+
+    public string Srs => "EPSG:4326"; // WGS84 lon/lat
 
     // Cache OSM data for up to a week by default. Set the CacheDuration
     // property in the data source to override.

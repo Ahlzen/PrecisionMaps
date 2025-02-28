@@ -1,4 +1,5 @@
-﻿using MapLib.Geometry;
+﻿using MapLib.GdalSupport;
+using MapLib.Geometry;
 
 namespace MapLib;
 
@@ -68,15 +69,36 @@ public class VectorData : GeoData
     private Bounds ComputeBounds(IEnumerable<Shape> shapes)
         => Bounds.FromBounds(shapes.Select(s => s.GetBounds()));
 
+    #region Transformations
+
     /// <returns>
     /// Returns all geometry transformed as (X*scale+offsetX, Y*scale+offsetY)
     /// </returns>
     public virtual VectorData Transform(double scale, double offsetX, double offsetY)
+        => Transform(scale, scale, offsetX, offsetY);
+
+    /// <returns>
+    /// Returns all geometry transformed as (X*scaleX+offsetX, Y*scaleY+offsetY)
+    /// </returns>
+    public virtual VectorData Transform(double scaleX, double scaleY, double offsetX, double offsetY)
         => new(this.Srs,
-            Points.Select(feature => feature.Transform(scale, offsetX, offsetY)).ToArray(),
-            MultiPoints.Select(feature => feature.Transform(scale, offsetX, offsetY)).ToArray(),
-            Lines.Select(feature => feature.Transform(scale, offsetX, offsetY)).ToArray(),
-            MultiLines.Select(feature => feature.Transform(scale, offsetX, offsetY)).ToArray(),
-            Polygons.Select(feature => feature.Transform(scale, offsetX, offsetY)).ToArray(),
-            MultiPolygons.Select(feature => feature.Transform(scale, offsetX, offsetY)).ToArray());
+            Points.Select(feature => feature.Transform(scaleX, scaleY, offsetX, offsetY)).ToArray(),
+            MultiPoints.Select(feature => feature.Transform(scaleX, scaleY, offsetX, offsetY)).ToArray(),
+            Lines.Select(feature => feature.Transform(scaleX, scaleY, offsetX, offsetY)).ToArray(),
+            MultiLines.Select(feature => feature.Transform(scaleX, scaleY, offsetX, offsetY)).ToArray(),
+            Polygons.Select(feature => feature.Transform(scaleX, scaleY, offsetX, offsetY)).ToArray(),
+            MultiPolygons.Select(feature => feature.Transform(scaleX, scaleY, offsetX, offsetY)).ToArray());
+
+
+
+    public VectorData Transform(Transformer transformer)
+        => new VectorData(transformer.DestSrs,
+            Points.Select(p => p.Transform(transformer)).ToArray(),
+            MultiPoints.Select(mp => mp.Transform(transformer)).ToArray(),
+            Lines.Select(l => l.Transform(transformer)).ToArray(),
+            MultiLines.Select(ml => ml.Transform(transformer)).ToArray(),
+            Polygons.Select(p => p.Transform(transformer)).ToArray(),
+            MultiPolygons.Select(mp => mp.Transform(transformer)).ToArray());
+
+    #endregion
 }

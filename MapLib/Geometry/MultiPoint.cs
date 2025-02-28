@@ -1,4 +1,6 @@
-﻿namespace MapLib.Geometry;
+﻿using MapLib.GdalSupport;
+
+namespace MapLib.Geometry;
 
 /// <summary>
 /// Collection of points. Immutable.
@@ -36,14 +38,27 @@ public class MultiPoint : Shape, IEnumerable<Coord>
         Coords = multiPoints.SelectMany(mp => mp.Coords).ToArray();
     }
 
+    #region Transformations
+
     /// <returns>
     /// Returns the points transformed as (X*scale+offsetX, Y*scale+offsetY)
     /// </returns>
     public virtual MultiPoint Transform(double scale, double offsetX, double offsetY)
-        => new (Coords.Transform(scale, offsetX, offsetY), Tags);
+        => Transform(scale, scale, offsetX, offsetY);
+
+    /// <returns>
+    /// Returns the points transformed as (X*scaleX+offsetX, Y*scaleY+offsetY)
+    /// </returns>
+    public virtual MultiPoint Transform(double scaleX, double scaleY, double offsetX, double offsetY)
+        => new(Coords.Transform(scaleX, scaleY, offsetX, offsetY), Tags);
 
     public virtual MultiPoint Transform(Func<Coord, Coord> transformation)
         => new MultiPoint(Coords.Select(c => transformation(c)), Tags);
+
+    public MultiPoint Transform(Transformer transformer)
+        => new MultiPoint(transformer.Transform(Coords), Tags);
+
+    #endregion
 
     public override Coord GetCenter()
         => GetBounds().Center;

@@ -5,15 +5,21 @@ public static class CoordExtensions
     #region Transformations
 
     public static Coord Transform(this Coord source, double scale, double offsetX, double offsetY)
+        => Transform(source, scale, scale, offsetX, offsetY);
+    public static Coord Transform(this Coord source, double scaleX, double scaleY,
+        double offsetX, double offsetY)
         => new(
-            source.X * scale + offsetX,
-            source.Y * scale + offsetY);
+            source.X * scaleX + offsetX,
+            source.Y * scaleY + offsetY);
 
     public static Coord[] Transform(this Coord[] source, double scale, double offsetX, double offsetY)
+        => Transform(source, scale, scale, offsetX, offsetY);
+    public static Coord[] Transform(this Coord[] source,
+        double scaleX, double scaleY, double offsetX, double offsetY)
     {
         var dest = new Coord[source.Length];
         for (int i = 0; i < source.Length; i++)
-            dest[i] = Transform(source[i], scale, offsetX, offsetY);
+            dest[i] = Transform(source[i], scaleX, scaleY, offsetX, offsetY);
         return dest;
     }
 

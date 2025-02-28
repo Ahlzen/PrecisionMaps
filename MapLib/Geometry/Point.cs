@@ -1,4 +1,6 @@
-﻿namespace MapLib.Geometry;
+﻿using MapLib.GdalSupport;
+
+namespace MapLib.Geometry;
 
 /// <summary>
 /// A 2D point. Immutable.
@@ -39,7 +41,16 @@ public class Point : Shape
     /// Returns the transformed point at (X*scale+offsetX, Y*scale+offsetY)
     /// </returns>
     public Point Transform(double scale, double offsetX, double offsetY)
-        => new(Coord.X * scale + offsetX, Coord.Y * scale + offsetY, Tags);
+        => Transform(scale, scale, offsetX, offsetY);
+
+    /// <returns>
+    /// Returns the transformed point at (X*scaleX+offsetX, Y*scaleY+offsetY)
+    /// </returns>
+    public Point Transform(double scaleX, double scaleY, double offsetX, double offsetY)
+        => new(Coord.X * scaleX + offsetX, Coord.Y * scaleY + offsetY, Tags);
+
+    public Point Transform(Transformer transformer)
+        => new Point(transformer.Transform(Coord), Tags);
 
     #endregion
 

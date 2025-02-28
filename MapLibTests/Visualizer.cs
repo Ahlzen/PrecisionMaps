@@ -90,8 +90,8 @@ internal class Visualizer
         VectorData data = reader.ReadFile(inputFilename);
         Console.WriteLine(FormatVectorDataSummary(data));
         VectorData transformedData = TransformToFit(data, geometryWidth, geometryHeight);
-        BitmapCanvas bitmapCanvas = new BitmapCanvas(canvasWidth, canvasHeight, background);
-        SvgCanvas svgCanvas = new SvgCanvas(canvasWidth, canvasHeight, background);
+        BitmapCanvas bitmapCanvas = new BitmapCanvas(CanvasUnit.Pixel, canvasWidth, canvasHeight, background);
+        SvgCanvas svgCanvas = new SvgCanvas(CanvasUnit.Pixel, canvasWidth, canvasHeight, background);
 
         // Use multipolygons for everything
         List<MultiPolygon> multiPolygons = new();

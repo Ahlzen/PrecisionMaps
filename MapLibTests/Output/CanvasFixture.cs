@@ -20,8 +20,8 @@ public class CanvasFixture : BaseFixture
     {
         int width = 1600;
         int height = 800;
-        var bitmapCanvas = new BitmapCanvas(width, height, Color.Transparent);
-        var svgCanvas = new SvgCanvas(width, height, Color.Transparent);
+        var bitmapCanvas = new BitmapCanvas(CanvasUnit.Pixel, width, height, Color.Transparent);
+        var svgCanvas = new SvgCanvas(CanvasUnit.Pixel, width, height, Color.Transparent);
 
         OgrDataReader reader = new();
         VectorData reservoirData = reader.ReadFile(Path.Join(TestDataPath, "GeoJSON/Aaron River Reservoir.geojson"));
@@ -92,8 +92,8 @@ public class CanvasFixture : BaseFixture
         };
         MultiPolygon multipolygon = new([outerRing, innerRing], null);
 
-        BitmapCanvas bitmapCanvas = new BitmapCanvas(500, 500, Color.White);
-        SvgCanvas svgCanvas = new SvgCanvas(500, 500, Color.White);
+        BitmapCanvas bitmapCanvas = new BitmapCanvas(CanvasUnit.Pixel, 500, 500, Color.White);
+        SvgCanvas svgCanvas = new SvgCanvas(CanvasUnit.Pixel, 500, 500, Color.White);
 
         foreach (Canvas canvas in new Canvas[] { bitmapCanvas, svgCanvas })
         {

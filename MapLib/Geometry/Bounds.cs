@@ -18,6 +18,13 @@ public struct Bounds
     {
         XMin = b.XMin; XMax = b.XMax; YMin = b.YMin; YMax = b.YMax;
     }
+    public Bounds(Coord c1, Coord c2)
+    {
+        XMin = Math.Min(c1.X, c2.X);
+        XMax = Math.Max(c1.X, c2.X);
+        YMin = Math.Min(c1.Y, c2.Y);
+        YMax = Math.Max(c1.Y, c2.Y);
+    }
 
     public double Width => XMax - XMin;
     public double Height => YMax - YMin;

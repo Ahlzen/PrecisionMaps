@@ -1,4 +1,5 @@
 ﻿using Clipper2Lib;
+using MapLib.GdalSupport;
 using MapLib.Geometry.Helpers;
 using System.Drawing;
 
@@ -29,16 +30,29 @@ public class MultiLine : Shape, IEnumerable<Coord[]>
         Coords = multiLines.SelectMany(ml => ml.Coords).ToArray();
     }
 
+    #region Transformations
+
     /// <returns>
     /// Returns the lines transformed as (X*scale+offsetX, Y*scale+offsetY)
     /// </returns>
     public virtual MultiLine Transform(double scale, double offsetX, double offsetY)
-        => new(Coords.Select(c => c.Transform(scale, offsetX, offsetY)).ToArray(), Tags);
+        => Transform(scale, scale, offsetX, offsetY);
+
+    /// <returns>
+    /// Returns the lines transformed as (X*scaleX+offsetX, Y*scaleY+offsetY)
+    /// </returns>
+    public virtual MultiLine Transform(double scaleX, double scaleY, double offsetX, double offsetY)
+        => new(Coords.Select(c => c.Transform(scaleX, scaleY, offsetX, offsetY)).ToArray(), Tags);
 
 
     public virtual MultiLine Transform(Func<Coord, Coord> transformation)
         => new MultiLine(
             Coords.Select(l => l.Select(c => transformation(c)).ToArray()).ToArray(), Tags);
+
+    public MultiLine Transform(Transformer transformer)
+        => new MultiLine(transformer.Transform(Coords), Tags);
+
+    #endregion
 
     public override Coord GetCenter()
         => GetBounds().Center;

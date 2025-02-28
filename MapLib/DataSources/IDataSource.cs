@@ -8,7 +8,13 @@ namespace MapLib.DataSources;
 public interface IDataSource
 {
     public string Name { get; }
-    public Bounds Bounds { get; }
+
+    public string Srs { get; }
+
+    /// <summary>
+    /// Bounds of full data set, if known.
+    /// </summary>
+    public Bounds? Bounds { get; } // WGS84
 }
 
 public interface IRasterDataSource : IDataSource
@@ -18,8 +24,8 @@ public interface IRasterDataSource : IDataSource
     /// this source.
     /// </summary>
     /// <remarks>
-    /// May return less if specified bounds are beyond those of
-    /// this data source.
+    /// May return less if the requested area extends outside the bounds
+    /// of this data source.
     /// May return more if needed (e.g. may not crop/trim a file data source).
     /// </remarks>
     public RasterData GetData(Bounds bounds);

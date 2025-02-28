@@ -1,4 +1,5 @@
-﻿using MapLib.Geometry.Helpers;
+﻿using MapLib.GdalSupport;
+using MapLib.Geometry.Helpers;
 
 namespace MapLib.Geometry;
 
@@ -30,6 +31,8 @@ public class Polygon : Line
     public MultiPolygon AsMultiPolygon()
         => new MultiPolygon(this, Tags);
 
+    #region Transformations
+
     public override Polygon Transform(Func<Coord, Coord> transformation)
         => new Polygon(Coords.Select(transformation), Tags);
 
@@ -37,7 +40,18 @@ public class Polygon : Line
     /// Returns the polygon transformed as (X*scale+offsetX, Y*scale+offsetY)
     /// </returns>
     public override Polygon Transform(double scale, double offsetX, double offsetY)
-        => new(Coords.Transform(scale, offsetX, offsetY), Tags);
+        => Transform(scale, scale, offsetX, offsetY);
+
+    /// <returns>
+    /// Returns the polygon transformed as (X*scaleX+offsetX, Y*scaleY+offsetY)
+    /// </returns>
+    public override Polygon Transform(double scaleX, double scaleY, double offsetX, double offsetY)
+        => new(Coords.Transform(scaleX, scaleY, offsetX, offsetY), Tags);
+
+    public new Polygon Transform(Transformer transformer)
+        => new Polygon(transformer.Transform(Coords), Tags);
+
+    #endregion
 
     public override Polygon Reverse()
         => new Polygon(Coords.Reverse(), Tags);

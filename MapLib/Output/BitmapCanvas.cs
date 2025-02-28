@@ -14,8 +14,8 @@ public class BitmapCanvas : Canvas
     private readonly Color _backgroundColor;
     private readonly List<BitmapCanvasLayer> _layers = new List<BitmapCanvasLayer>();
 
-    public BitmapCanvas(double width, double height, Color? backgroundColor)
-        : base(width, height)
+    public BitmapCanvas(CanvasUnit unit, double width, double height, Color? backgroundColor)
+        : base(unit, width, height)
     {
         _width = (int)width;
         _height = (int)height;

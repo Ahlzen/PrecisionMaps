@@ -2,11 +2,13 @@
 
 public abstract class Canvas
 {
-    public double Width { get; set; }
-    public double Height { get; set; }
+    public CanvasUnit Unit { get; }
+    public double Width { get; }
+    public double Height { get; }
 
-    public Canvas(double width, double height)
+    public Canvas(CanvasUnit unit, double width, double height)
     {
+        Unit = unit;
         Width = width;
         Height = height;
     }
@@ -19,4 +21,23 @@ public abstract class Canvas
 
     public abstract string DefaultFileExtension { get; }
     public abstract void SaveToFile(string filename);
+
+    /// <summary>
+    /// Translate mm to canvas unit.
+    /// </summary>
+    public double FromMm(double mm)
+    {
+        switch (Unit)
+        {
+            case CanvasUnit.Mm:
+                return mm;
+            case CanvasUnit.In:
+                return mm / 25.4;
+            case CanvasUnit.Pixel:
+                return mm * (72 / 25.4); // 72 ppi = (72/25.4) pixels per mm
+            default:
+                throw new NotSupportedException(
+                    "Unsupported canvas unit type");
+        }
+    }
 }
