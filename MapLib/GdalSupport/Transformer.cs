@@ -27,10 +27,16 @@ public class Transformer : IDisposable
 
     public Transformer(string sourceWkt, string destWkt)
     {
+        // NOTE: AxisMappingStrategy.OAMS_TRADITIONAL_GIS_ORDER
+        // ensures that coordinate systems stick to [x,y,z] order
+        // rather than e.g. lat/lon.
+
         SourceSrs = sourceWkt;
         SourceSpatialRef = CreateSpatialReference(sourceWkt);
+        SourceSpatialRef.SetAxisMappingStrategy(AxisMappingStrategy.OAMS_TRADITIONAL_GIS_ORDER);
         DestSrs = destWkt;
         DestSpatialRef = CreateSpatialReference(destWkt);
+        DestSpatialRef.SetAxisMappingStrategy(AxisMappingStrategy.OAMS_TRADITIONAL_GIS_ORDER);
         _transform = new CoordinateTransformation(SourceSpatialRef, DestSpatialRef,
             new CoordinateTransformationOptions());
     }
@@ -61,8 +67,8 @@ public class Transformer : IDisposable
     
     public Coord Transform(Coord coord)
     {
-        double[] result = new double[3];
-        _transform.TransformPoint(result, coord.X, coord.Y, 0);
+        double[] result = [coord.X, coord.Y, 0];
+        _transform.TransformPoint(result);
         return new Coord(result[0], result[1]);
     }
 
