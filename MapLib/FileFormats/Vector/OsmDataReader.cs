@@ -1,4 +1,5 @@
-﻿using MapLib.Geometry;
+﻿using MapLib.GdalSupport;
+using MapLib.Geometry;
 using System.Diagnostics;
 using System.IO;
 using System.Xml;
@@ -66,9 +67,16 @@ public class OsmDataReader : IVectorFormatReader
         var doc = new XmlDocument();
         doc.LoadXml(xmlData);
 
+        // These dicts hold all nodes/ways/multipolys, since
+        // they may be references by other objects.
         var nodes = new Dictionary<long, Point>();
         var ways = new Dictionary<long, Line>();
         var multiPolygons = new Dictionary<long, MultiPolygon>();
+
+        // The builde holds only objects that are to be included
+        // in the final data (for example, not nodes with no tags,
+        // that only make up coordinates in lines).
+        VectorDataBuilder builder = new();
 
         XmlNode? rootNode = doc.ChildNodes[1];
         if (rootNode == null)
@@ -79,13 +87,13 @@ public class OsmDataReader : IVectorFormatReader
             switch (xmlNode.Name)
             {
                 case "node":
-                    ParseNode(xmlNode, nodes);
+                    ParseNode(xmlNode, nodes, builder);
                     break;
                 case "way":
-                    ParseWay(xmlNode, nodes, ways);
+                    ParseWay(xmlNode, nodes, ways, builder);
                     break;
                 case "relation":
-                    ParseRelation(xmlNode, ways, multiPolygons);
+                    ParseRelation(xmlNode, ways, multiPolygons, builder);
                     break;
                 case "bounds":
                     break; // don't care. we calculate our own
@@ -95,32 +103,8 @@ public class OsmDataReader : IVectorFormatReader
             }
         }
 
-        // Remove nodes and ways with no tags
-        // (these were only referenced by ways and relations, and
-        // have no inherent meaning on their own)
-
-        // TODO: We could do this more efficiently by keeping a separate
-        // dict with all nodes/ways, and a list of nodes/ways to become
-        // their own objects.
-
-        foreach (long nodeId in nodes.Keys)
-            if (nodes[nodeId].Tags.Length == 0)
-                nodes.Remove(nodeId);
-        foreach (long wayId in ways.Keys)
-            if (ways[wayId].Tags.Length == 0)
-                ways.Remove(wayId);
-
-        // OSM data is stored as plain lon/lat WGS84:
-        string srs = "EPSG:4326";
-
-        VectorData data = new(srs,
-            nodes.Values.ToArray(),
-            null,
-            ways.Values.ToArray(),
-            null,
-            null,
-            multiPolygons.Values.ToArray());
-        return data;
+        // OSM data is plain lon/lat WGS84
+        return builder.ToVectorData(Transformer.WktWgs84);
     }
 
     // Example:
@@ -130,14 +114,19 @@ public class OsmDataReader : IVectorFormatReader
     // </node>
 
     private void ParseNode(XmlNode xmlNode,
-        Dictionary<long, Point> nodes)
+        Dictionary<long, Point> nodes,
+        VectorDataBuilder builder)
     {
         long id = long.Parse(xmlNode.Attributes?["id"]?.Value ?? "");
         var coord = new Coord(
             double.Parse(xmlNode.Attributes?["lon"]?.Value ?? ""),
             double.Parse(xmlNode.Attributes?["lat"]?.Value ?? ""));
         TagList tags = ParseTags(xmlNode);
-        nodes.Add(id, new Point(coord, tags));
+        Point point = new(coord, tags);
+        nodes.Add(id, point);
+        if (tags.Length > 0)
+            builder.Points.Add(point);
+
     }
 
     // Example:
@@ -153,8 +142,12 @@ public class OsmDataReader : IVectorFormatReader
 
     private void ParseWay(XmlNode xmlNode,
         Dictionary<long, Point> nodes,
-        Dictionary<long, Line> ways)
+        Dictionary<long, Line> ways,
+        VectorDataBuilder builder)
     {
+        // TODO: Add a mechanism to determine whether an OSM line should
+        // be a way or a polygon.
+
         long id = long.Parse(xmlNode.Attributes?["id"]?.Value ?? "");
         Coord[] coords = xmlNode.ChildNodes
                 .Cast<XmlNode>()
@@ -163,7 +156,11 @@ public class OsmDataReader : IVectorFormatReader
                 .Select(pointId => nodes[pointId].Coord)
                 .ToArray();
         TagList tags = ParseTags(xmlNode);
-        ways.Add(id, new Line(coords, tags));
+        Line line = new(coords, tags);
+        ways.Add(id, line);
+        if (tags.Length > 0)
+            builder.Lines.Add(line);
+
     }
 
     // Example:
@@ -183,7 +180,8 @@ public class OsmDataReader : IVectorFormatReader
     // </relation>
     private void ParseRelation(XmlNode xmlNode,
         Dictionary<long, Line> ways,
-        Dictionary<long, MultiPolygon> multiPolygons)
+        Dictionary<long, MultiPolygon> multiPolygons,
+        VectorDataBuilder builder)
     {
         long id = long.Parse(xmlNode.Attributes?["id"]?.Value ?? "");
         TagList tags = ParseTags(xmlNode);
@@ -193,7 +191,7 @@ public class OsmDataReader : IVectorFormatReader
         if (typeTag == null || typeTag.Value.Value != "multipolygon")
             return;
 
-        // TODO: Parse routes?
+        // TODO: Parse routes and other types of relations?
 
         Coord[][] polygons = xmlNode.ChildNodes
             .Cast<XmlNode>()
@@ -203,7 +201,10 @@ public class OsmDataReader : IVectorFormatReader
             .Where(ways.ContainsKey) // no guarantee we have all relation members
             .Select(wayId => ways[wayId].Coords.ToArray())
             .ToArray();
-        multiPolygons.Add(id, new MultiPolygon(polygons, tags));
+        MultiPolygon multiPolygon = new(polygons, tags);
+        multiPolygons.Add(id, multiPolygon);
+        if (tags.Length > 0)
+            builder.MultiPolygons.Add(multiPolygon);
     }
 
     protected TagList ParseTags(XmlNode node)
