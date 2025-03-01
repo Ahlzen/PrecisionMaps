@@ -95,6 +95,21 @@ public class OsmDataReader : IVectorFormatReader
             }
         }
 
+        // Remove nodes and ways with no tags
+        // (these were only referenced by ways and relations, and
+        // have no inherent meaning on their own)
+
+        // TODO: We could do this more efficiently by keeping a separate
+        // dict with all nodes/ways, and a list of nodes/ways to become
+        // their own objects.
+
+        foreach (long nodeId in nodes.Keys)
+            if (nodes[nodeId].Tags.Length == 0)
+                nodes.Remove(nodeId);
+        foreach (long wayId in ways.Keys)
+            if (ways[wayId].Tags.Length == 0)
+                ways.Remove(wayId);
+
         // OSM data is stored as plain lon/lat WGS84:
         string srs = "EPSG:4326";
 
