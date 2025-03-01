@@ -23,24 +23,34 @@ public class Transformer : IDisposable
     public Transformer(int sourceEpsg, int destEpsg)
         : this("EPSG:" + sourceEpsg, "EPSG:" + destEpsg)
     {
-        //SourceSpatialRef = new SpatialReference(null);
-        //SourceSpatialRef.ImportFromEPSG(sourceEpsg);
-        //SourceSrs = "EPSG:" + sourceEpsg;
-        //DestSpatialRef = new SpatialReference(null);
-        //DestSpatialRef.ImportFromEPSG(destEpsg);
-        //DestSrs = "EPSG:" + destEpsg;
-        //_transform = new CoordinateTransformation(SourceSpatialRef, DestSpatialRef,
-        //    new CoordinateTransformationOptions());
     }
 
     public Transformer(string sourceWkt, string destWkt)
     {
         SourceSrs = sourceWkt;
-        SourceSpatialRef = new SpatialReference(sourceWkt);
+        SourceSpatialRef = CreateSpatialReference(sourceWkt);
         DestSrs = destWkt;
-        DestSpatialRef = new SpatialReference(destWkt);
+        DestSpatialRef = CreateSpatialReference(destWkt);
         _transform = new CoordinateTransformation(SourceSpatialRef, DestSpatialRef,
             new CoordinateTransformationOptions());
+    }
+
+    private SpatialReference CreateSpatialReference(string wkt)
+    {
+        // HACK: Apparently SpatialReference's constructor won't
+        // accept the shorthand SRS definitions directly, so
+        // we parse it out... :(
+        if (wkt.StartsWith("EPSG:"))
+        {
+            SpatialReference sr = new(null);
+            int epsgNumber = int.Parse(wkt.Substring(5));
+            sr.ImportFromEPSG(epsgNumber);
+            return sr;
+        }
+        else
+        {
+            return new SpatialReference(wkt);
+        }
     }
 
     public void Dispose()

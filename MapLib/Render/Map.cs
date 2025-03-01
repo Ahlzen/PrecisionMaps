@@ -75,7 +75,7 @@ public class Map
             Bounds dataSourceBounds = wgs84ToSourceTransformer.Transform(BoundsWGS84);
 
             // Get data
-            if (layerDataSource is MapVectorDataSource vectorDataSource)
+            if (layerDataSource is VectorMapDataSource vectorDataSource)
             {
                 VectorData layerDataSourceSrs = vectorDataSource.DataSource.GetData(dataSourceBounds);
 
@@ -88,7 +88,7 @@ public class Map
                 // Render data onto canvas
                 DrawLines(canvas, layer.Name, layerDataCanvasSpace);
             }
-            else if (layerDataSource is MapRasterDataSource rasterDataSource)
+            else if (layerDataSource is RasterMapDataSource rasterDataSource)
             {
                 throw new NotImplementedException();
             }
@@ -127,24 +127,24 @@ public abstract class MapDataSource
     }
 }
 
-public class MapVectorDataSource : MapDataSource
+public class VectorMapDataSource : MapDataSource
 {
     public IVectorDataSource DataSource { get; }
     public override string Srs => DataSource.Srs;
 
-    public MapVectorDataSource(string name,
+    public VectorMapDataSource(string name,
         IVectorDataSource dataSource) : base(name)
     {
         DataSource = dataSource;
     }
 }
 
-public class MapRasterDataSource : MapDataSource
+public class RasterMapDataSource : MapDataSource
 {
     public IRasterDataSource DataSource { get; }
     public override string Srs => DataSource.Srs;
 
-    public MapRasterDataSource(string name,
+    public RasterMapDataSource(string name,
         IRasterDataSource dataSource) : base(name) 
     {
         DataSource = dataSource;

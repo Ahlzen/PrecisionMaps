@@ -2,7 +2,7 @@
 
 namespace MapLib.Util;
 
-internal static class FileSystemHelpers
+public static class FileSystemHelpers
 {
     public static string GetTempFilename(string extension)
     {
