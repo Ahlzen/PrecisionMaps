@@ -23,7 +23,7 @@ public class MapRenderFixture : BaseFixture
         map.Layers.Add(
             new VectorMapLayer("Osm Data", "osmdata"));
         
-        Canvas canvas = new SvgCanvas(CanvasUnit.In, 11.0, 8.5, System.Drawing.Color.Transparent);
+        Canvas canvas = new SvgCanvas(CanvasUnit.In, 11.0, 8.5, System.Drawing.Color.White);
         map.Render(canvas);
         string filename = FileSystemHelpers.GetTempFilename(".svg");
         canvas.SaveToFile(filename);

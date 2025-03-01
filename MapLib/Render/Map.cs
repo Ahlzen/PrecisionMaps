@@ -56,10 +56,11 @@ public class Map
         // map SRS to canvas space
         double offsetX, offsetY;
         double scaleX, scaleY;
-        offsetX = -BoundsMapSrs.XMin;
-        offsetY = -BoundsMapSrs.YMin;
+
         scaleX = canvas.Width / BoundsMapSrs.Width;
         scaleY = canvas.Height / BoundsMapSrs.Height;
+        offsetX = -BoundsMapSrs.XMin * scaleX;
+        offsetY = -BoundsMapSrs.YMin * scaleY;
 
 
         foreach (MapLayer layer in Layers)
@@ -99,22 +100,33 @@ public class Map
     {
         // TEST CODE (placeholder for real rendering)
 
+        double pointRadius = canvas.FromMm(0.5);
+        double lineWidth = canvas.FromMm(0.5);
+
         CanvasLayer layer = canvas.AddNewLayer(layerName);
-        Color color = Color.Black;
-        layer.DrawFilledCircles(data.Points.Select(p => p.Coord), canvas.FromMm(3), color);
+        Color lineColor = Color.Black;
+        Color fillColor = Color.CornflowerBlue;
+
+
+        layer.DrawFilledCircles(data.Points.Select(p => p.Coord), pointRadius, lineColor);
         foreach (MultiPoint mp in data.MultiPoints)
-            layer.DrawFilledCircles(mp.Coords, canvas.FromMm(3), color);
+            layer.DrawFilledCircles(mp.Coords, pointRadius, lineColor);
         foreach (Line l in data.Lines)
-            layer.DrawLine(l.Coords, canvas.FromMm(1), color);
+            layer.DrawLine(l.Coords, lineWidth, lineColor);
         foreach (MultiLine ml in data.MultiLines)
-            layer.DrawLines(ml.Coords, canvas.FromMm(1), color);
+            layer.DrawLines(ml.Coords, lineWidth, lineColor);
         foreach (Polygon p in data.Polygons)
-            layer.DrawLine(p.Coords, canvas.FromMm(1), color);
+        {
+            layer.DrawFilledPolygon(p.Coords, fillColor);
+            layer.DrawLine(p.Coords, lineWidth, lineColor);
+        }
         foreach (MultiPolygon mp in data.MultiPolygons)
-            layer.DrawLines(mp.Coords, canvas.FromMm(1), color);
+        {
+            layer.DrawFilledPolygons(mp.Coords, fillColor);
+            layer.DrawLines(mp.Coords, lineWidth, lineColor);
+        }
     }
 }
-
 
 public abstract class MapDataSource
 {
