@@ -316,7 +316,7 @@ public class SvgCanvasLayer : CanvasLayer
         var sb = new StringBuilder();
         foreach (Coord[] path in paths)
         {
-            AddSvgPathCoords(sb, path, areClosedPaths);
+            AddSvgPathCoords(sb, path);
             sb.Append(" ");
         }
         return sb.ToString().TrimEnd();
@@ -325,12 +325,11 @@ public class SvgCanvasLayer : CanvasLayer
     private string GetSvgPathCoords(Coord[] coords, bool isClosedPath)
     {
         var sb = new StringBuilder();
-        AddSvgPathCoords(sb, coords, isClosedPath);
+        AddSvgPathCoords(sb, coords);
         return sb.ToString();
     }
 
-    private void AddSvgPathCoords(StringBuilder sb, Coord[] coords,
-        bool isClosedPath)
+    private void AddSvgPathCoords(StringBuilder sb, Coord[] coords)
     {
         bool isFirst = true;
         foreach (Coord coord in coords)
@@ -341,6 +340,8 @@ public class SvgCanvasLayer : CanvasLayer
             sb.Append((_layerHeight - coord.Y).ToString(_canvas.SvgCoordFormat));
             isFirst = false;
         }
+
+        bool isClosedPath = coords[0] == coords[^1];
         if (isClosedPath)
           sb.Append(" Z");
     }
