@@ -15,6 +15,39 @@ public class OsmDataReader : IVectorFormatReader
             "nhd:*", "gnis:*", "massgis:*"
         };
 
+    /// <summary>
+    /// Tags for which closed ways should be considered polygons rather
+    /// than lines.
+    /// </summary>
+    /// <remarks>
+    /// Adapted from osm2pgsql default.style
+    /// https://github.com/osm2pgsql-dev/osm2pgsql/blob/master/default.style
+    /// </remarks>
+    private static HashSet<string> PolygonTags = new HashSet<string>
+    {
+        "aeroway",
+        "amenity",
+        "area",
+        "building",
+        "harbour",
+        "historic",
+        "landuse",
+        "leisure",
+        "man_made",
+        "military",
+        "natural",
+        "office",
+        "place",
+        "power",
+        "public_transport",
+        "shop",
+        "sport",
+        "tourism",
+        "water",
+        "waterway",
+        "wetland",
+    };
+
     public OsmDataReader()
     {
     }
@@ -22,7 +55,6 @@ public class OsmDataReader : IVectorFormatReader
     public VectorData ReadFile(string filename)
     {
         Debug.Assert(!string.IsNullOrEmpty(filename));
-        //_filename = filename;
 
         string xmlData = File.ReadAllText(filename);
         VectorData data = ParseOsmXml(xmlData);
@@ -69,9 +101,8 @@ public class OsmDataReader : IVectorFormatReader
 
         // These dicts hold all nodes/ways/multipolys, since
         // they may be references by other objects.
-        var nodes = new Dictionary<long, Point>();
-        var ways = new Dictionary<long, Line>();
-        var multiPolygons = new Dictionary<long, MultiPolygon>();
+        var nodes = new Dictionary<long, Coord>();
+        var ways = new Dictionary<long, Coord[]>();
 
         // The builde holds only objects that are to be included
         // in the final data (for example, not nodes with no tags,
@@ -93,7 +124,7 @@ public class OsmDataReader : IVectorFormatReader
                     ParseWay(xmlNode, nodes, ways, builder);
                     break;
                 case "relation":
-                    ParseRelation(xmlNode, ways, multiPolygons, builder);
+                    ParseRelation(xmlNode, ways, builder);
                     break;
                 case "bounds":
                     break; // don't care. we calculate our own
@@ -114,7 +145,7 @@ public class OsmDataReader : IVectorFormatReader
     // </node>
 
     private void ParseNode(XmlNode xmlNode,
-        Dictionary<long, Point> nodes,
+        Dictionary<long, Coord> nodes,
         VectorDataBuilder builder)
     {
         long id = long.Parse(xmlNode.Attributes?["id"]?.Value ?? "");
@@ -123,10 +154,9 @@ public class OsmDataReader : IVectorFormatReader
             double.Parse(xmlNode.Attributes?["lat"]?.Value ?? ""));
         TagList tags = ParseTags(xmlNode);
         Point point = new(coord, tags);
-        nodes.Add(id, point);
+        nodes.Add(id, coord);
         if (tags.Length > 0)
             builder.Points.Add(point);
-
     }
 
     // Example:
@@ -141,26 +171,53 @@ public class OsmDataReader : IVectorFormatReader
     // </way>
 
     private void ParseWay(XmlNode xmlNode,
-        Dictionary<long, Point> nodes,
-        Dictionary<long, Line> ways,
+        Dictionary<long, Coord> nodes,
+        Dictionary<long, Coord[]> ways,
         VectorDataBuilder builder)
     {
-        // TODO: Add a mechanism to determine whether an OSM line should
-        // be a way or a polygon.
-
         long id = long.Parse(xmlNode.Attributes?["id"]?.Value ?? "");
         Coord[] coords = xmlNode.ChildNodes
                 .Cast<XmlNode>()
                 .Where(child => child.Name == "nd")
                 .Select(child => long.Parse(child.Attributes?["ref"]?.Value ?? ""))
-                .Select(pointId => nodes[pointId].Coord)
+                .Select(pointId => nodes[pointId])
                 .ToArray();
         TagList tags = ParseTags(xmlNode);
-        Line line = new(coords, tags);
-        ways.Add(id, line);
-        if (tags.Length > 0)
-            builder.Lines.Add(line);
 
+        ways.Add(id, coords);
+        if (tags.Length > 0)
+        {
+            if (IsPolygon(coords, tags))
+                builder.Polygons.Add(new Polygon(coords, tags));
+            else
+                builder.Lines.Add(new Line(coords, tags));
+        }
+    }
+
+    /// <summary>
+    /// Try to determine whether an OSM way is a line or a polygon.
+    /// </summary>
+    /// <remarks>
+    /// NOTE: The OSM data model does not distinguish between a closed linestring
+    /// and a polygon, other than by their associated tags. There's no definitive
+    /// way to differentiate. We use a list of tags that would typically imply
+    /// polygon rather than line.
+    /// 
+    /// This is not perfect, but good enough for now.
+    /// </remarks>
+    private bool IsPolygon(Coord[] coords, TagList tags)
+    {
+        // This cannot be a polygon if not closed
+        if (coords[0] != coords[^1])
+            return false;
+
+        // If it has a key that's a "polygon" tag then
+        // we assume it's a polygon.
+        foreach (KeyValuePair<string, string> tag in tags)
+            if (PolygonTags.Contains(tag.Key))
+                return true;
+
+        return false;
     }
 
     // Example:
@@ -179,8 +236,9 @@ public class OsmDataReader : IVectorFormatReader
     //   <tag k="type" v="route"/>
     // </relation>
     private void ParseRelation(XmlNode xmlNode,
-        Dictionary<long, Line> ways,
-        Dictionary<long, MultiPolygon> multiPolygons,
+        //Dictionary<long, Line> ways,
+        Dictionary<long, Coord[]> ways,
+        //Dictionary<long, MultiPolygon> multiPolygons,
         VectorDataBuilder builder)
     {
         long id = long.Parse(xmlNode.Attributes?["id"]?.Value ?? "");
@@ -199,10 +257,10 @@ public class OsmDataReader : IVectorFormatReader
             .Where(child => child.Attributes?["type"]?.Value == "way")
             .Select(child => long.Parse(child.Attributes?["ref"]?.Value ?? ""))
             .Where(ways.ContainsKey) // no guarantee we have all relation members
-            .Select(wayId => ways[wayId].Coords.ToArray())
+            .Select(wayId => ways[wayId].ToArray())
             .ToArray();
         MultiPolygon multiPolygon = new(polygons, tags);
-        multiPolygons.Add(id, multiPolygon);
+        //multiPolygons.Add(id, multiPolygon);
         if (tags.Length > 0)
             builder.MultiPolygons.Add(multiPolygon);
     }

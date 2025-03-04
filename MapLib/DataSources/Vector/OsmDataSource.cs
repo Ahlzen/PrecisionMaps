@@ -39,7 +39,7 @@ public class OsmDataSource : BaseCachingDataSource, IVectorDataSource
             $"bbox={bounds.XMin},{bounds.YMin},{bounds.XMax},{bounds.YMax}";
 
         // Download data
-        string destFilename = FileSystemHelpers.GetTempFilename(".osm");
+        string destFilename = FileSystemHelpers.GetTempFileName(".osm");
         UrlHelper.DownloadUrl(overpassUrl, destFilename);
         return destFilename;
     }

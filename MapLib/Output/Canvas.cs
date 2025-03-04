@@ -34,7 +34,7 @@ public abstract class Canvas
             case CanvasUnit.In:
                 return mm / 25.4;
             case CanvasUnit.Pixel:
-                return mm * (72 / 25.4); // 72 ppi = (72/25.4) pixels per mm
+                return mm * (25.4 / 72); // 72 ppi = (25.4/72) mm / pixel
             default:
                 throw new NotSupportedException(
                     "Unsupported canvas unit type");

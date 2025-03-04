@@ -25,7 +25,7 @@ public class MapRenderFixture : BaseFixture
         
         Canvas canvas = new SvgCanvas(CanvasUnit.In, 11.0, 8.5, System.Drawing.Color.White);
         map.Render(canvas);
-        string filename = FileSystemHelpers.GetTempFilename(".svg");
+        string filename = FileSystemHelpers.GetTempFileName(".svg");
         canvas.SaveToFile(filename);
         Console.WriteLine(filename);
     }

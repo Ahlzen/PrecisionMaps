@@ -4,6 +4,7 @@ using MapLib.FileFormats.Vector;
 using MapLib.Output;
 using System.Text;
 using System.IO;
+using MapLib.Util;
 
 namespace MapLib.Tests;
 
@@ -32,7 +33,7 @@ internal class Visualizer
 
     internal void Show()
     {
-        string filename = GetTempFileName(".png");
+        string filename = FileSystemHelpers.GetTempFileName(".png");
         Save(filename);
         Process.Start(new ProcessStartInfo
         {
@@ -107,7 +108,7 @@ internal class Visualizer
 
     public static string SaveCanvas(Canvas canvas, bool show)
     {
-        string filename = GetTempFileName(canvas.DefaultFileExtension);
+        string filename = FileSystemHelpers.GetTempFileName(canvas.DefaultFileExtension);
         canvas.SaveToFile(filename);
         Console.WriteLine("Saved image to: " + filename);
         if (show) ShowFile(filename);
@@ -124,18 +125,6 @@ internal class Visualizer
         double offsetX = -(sourceBounds.XMin * scale);
         double offsetY = -(sourceBounds.YMin * scale);
         return source.Transform(scale, offsetX, offsetY);
-    }
-
-    internal static string GetTempFileName(string extension)
-    {
-        return TrimEnd(Path.GetTempFileName(), ".tmp") + extension;
-    }
-
-    internal static string TrimEnd(string source, string value)
-    {
-        if (!source.EndsWith(value))
-            return source;
-        return source.Remove(source.LastIndexOf(value));
     }
 
     internal static void ShowFile(string filename)
