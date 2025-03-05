@@ -78,7 +78,15 @@ public class Map
             // Get data
             if (layerDataSource is VectorMapDataSource vectorDataSource)
             {
+                if (!(layer is VectorMapLayer))
+                    throw new InvalidOperationException("Vector data source must use vector layer");
+                var vectorLayer = (VectorMapLayer)layer;
+
                 VectorData layerDataSourceSrs = vectorDataSource.DataSource.GetData(dataSourceBounds);
+
+                // Filter features?
+                if (vectorLayer.Filter != null)
+                    layerDataSourceSrs = vectorLayer.Filter.Filter(layerDataSourceSrs);
 
                 // Transform layer data to map SRS/Projection
                 VectorData layerDataMapSrs = layerDataSourceSrs.Transform(sourceToMapTransformer);
@@ -87,7 +95,7 @@ public class Map
                 VectorData layerDataCanvasSpace = layerDataMapSrs.Transform(scaleX, scaleY, offsetX, offsetY);
 
                 // Render data onto canvas
-                DrawLines(canvas, layer.Name, layerDataCanvasSpace);
+                DrawVectors(canvas, vectorLayer, layerDataCanvasSpace);
             }
             else if (layerDataSource is RasterMapDataSource rasterDataSource)
             {
@@ -96,34 +104,45 @@ public class Map
         }
     }
 
-    private void DrawLines(Canvas canvas, string layerName, VectorData data)
+    private void DrawVectors(Canvas canvas, VectorMapLayer mapLayer, VectorData data)
     {
         // TEST CODE (placeholder for real rendering)
 
-        double pointRadius = canvas.FromMm(0.5);
-        double lineWidth = canvas.FromMm(0.5);
+        CanvasLayer layer = canvas.AddNewLayer(mapLayer.Name);
+        Color? strokeColor = mapLayer.StrokeColor;
+        Color? fillColor = mapLayer.FillColor;
+        double? strokeWidth = mapLayer.StrokeWidth;
 
-        CanvasLayer layer = canvas.AddNewLayer(layerName);
-        Color lineColor = Color.Black;
-        Color fillColor = Color.CornflowerBlue;
-
-
-        layer.DrawFilledCircles(data.Points.Select(p => p.Coord), pointRadius, lineColor);
-        foreach (MultiPoint mp in data.MultiPoints)
-            layer.DrawFilledCircles(mp.Coords, pointRadius, lineColor);
-        foreach (Line l in data.Lines)
-            layer.DrawLine(l.Coords, lineWidth, lineColor);
-        foreach (MultiLine ml in data.MultiLines)
-            layer.DrawLines(ml.Coords, lineWidth, lineColor);
-        foreach (Polygon p in data.Polygons)
+        // Fill
+        if (fillColor != null)
         {
-            layer.DrawFilledPolygon(p.Coords, fillColor);
-            layer.DrawLine(p.Coords, lineWidth, lineColor);
+            foreach (Polygon p in data.Polygons)
+                layer.DrawFilledPolygon(p.Coords, fillColor.Value);
+            foreach (MultiPolygon mp in data.MultiPolygons)
+                layer.DrawFilledPolygons(mp.Coords, fillColor.Value);
         }
-        foreach (MultiPolygon mp in data.MultiPolygons)
+
+        // Stroke
+        if (strokeColor != null && strokeWidth != null)
         {
-            layer.DrawFilledPolygons(mp.Coords, fillColor);
-            layer.DrawLines(mp.Coords, lineWidth, lineColor);
+            // Points
+            layer.DrawFilledCircles(data.Points.Select(p => p.Coord),
+                strokeWidth.Value, strokeColor.Value);
+            foreach (MultiPoint mp in data.MultiPoints)
+                layer.DrawFilledCircles(mp.Coords,
+                    strokeWidth.Value, strokeColor.Value);
+
+            // Lines
+            foreach (Line l in data.Lines)
+                layer.DrawLine(l.Coords, strokeWidth.Value, strokeColor.Value);
+            foreach (MultiLine ml in data.MultiLines)
+                layer.DrawLines(ml.Coords, strokeWidth.Value, strokeColor.Value);
+
+            // Polygons
+            foreach (Polygon p in data.Polygons)
+                layer.DrawLine(p.Coords, strokeWidth.Value, strokeColor.Value);
+            foreach (MultiPolygon mp in data.MultiPolygons)
+                layer.DrawLines(mp.Coords, strokeWidth.Value, strokeColor.Value);
         }
     }
 }
@@ -179,8 +198,69 @@ public abstract class MapLayer
 
 public class VectorMapLayer : MapLayer
 {
-    public VectorMapLayer(string name, string dataSourceName)
+    public TagFilter? Filter { get; }
+
+    // TODO: break out and expand
+    public Color? FillColor { get; }
+    public Color? StrokeColor { get; }
+    public double? StrokeWidth { get; }
+
+    public VectorMapLayer(string name, string dataSourceName,
+        TagFilter? filter = null,
+        Color? fillColor = null,
+        Color? strokeColor = null,
+        double? strokeWidth = null)
         : base(name, dataSourceName)
     {
+        Filter = filter;
+        FillColor = fillColor;
+        StrokeColor = strokeColor;
+        StrokeWidth = strokeWidth;
+    }
+}
+
+
+
+// TODO: support more than just single name/value
+public class TagFilter
+{
+    /// <param name="tagName">Name. Case sensitive.</param>
+    /// <param name="tagValue">Value. Case sensitive.
+    /// Null is wildcard (name must match, but can be any value)
+    /// </param>
+    public TagFilter(string tagName, string? tagValue = null)
+    {
+        TagName = tagName;
+        TagValue = tagValue;
+    }   
+
+    string TagName { get; }
+    string? TagValue { get; }
+
+    public bool Matches(TagList tags)
+    {
+        // Find key
+        foreach (KeyValuePair<string, string> keyValue in tags)
+        {
+            if (keyValue.Key == TagName)
+            {
+                if (TagValue == null)
+                    return true;
+                else
+                    return keyValue.Value == TagValue;
+            }
+        }
+        return false;
+    }
+
+    public VectorData Filter(VectorData source)
+    {
+        return new VectorData(source.Srs,
+            source.Points.Where(p => Matches(p.Tags)).ToArray(),
+            source.MultiPoints.Where(mp => Matches(mp.Tags)).ToArray(),
+            source.Lines.Where(l => Matches(l.Tags)).ToArray(),
+            source.MultiLines.Where(ml => Matches(ml.Tags)).ToArray(),
+            source.Polygons.Where(p => Matches(p.Tags)).ToArray(),
+            source.MultiPolygons.Where(mp => Matches(mp.Tags)).ToArray());
     }
 }
