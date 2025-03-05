@@ -119,7 +119,7 @@ public class Map
             foreach (Polygon p in data.Polygons)
                 layer.DrawFilledPolygon(p.Coords, fillColor.Value);
             foreach (MultiPolygon mp in data.MultiPolygons)
-                layer.DrawFilledPolygons(mp.Coords, fillColor.Value);
+                layer.DrawFilledMultiPolygon(mp.Coords, fillColor.Value);
         }
 
         // Stroke
