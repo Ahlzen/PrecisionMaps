@@ -199,6 +199,7 @@ public abstract class MapLayer
 public class VectorMapLayer : MapLayer
 {
     public TagFilter? Filter { get; }
+    //public List<TagFilter> Filters { get; } = new();
 
     // TODO: break out and expand
     public Color? FillColor { get; }
@@ -210,44 +211,54 @@ public class VectorMapLayer : MapLayer
         Color? fillColor = null,
         Color? strokeColor = null,
         double? strokeWidth = null)
+        //IEnumerable<TagFilter>? filters = null)
         : base(name, dataSourceName)
     {
         Filter = filter;
         FillColor = fillColor;
         StrokeColor = strokeColor;
         StrokeWidth = strokeWidth;
+
+        //if (filters != null)
+        //    Filters.AddRange(filters);
     }
 }
 
-
-
-// TODO: support more than just single name/value
 public class TagFilter
 {
+    private List<(string, string?)> Tags { get; } = new();
+
     /// <param name="tagName">Name. Case sensitive.</param>
     /// <param name="tagValue">Value. Case sensitive.
     /// Null is wildcard (name must match, but can be any value)
     /// </param>
     public TagFilter(string tagName, string? tagValue = null)
     {
-        TagName = tagName;
-        TagValue = tagValue;
-    }   
+        Tags.Add((tagName, tagValue));
+    }
 
-    string TagName { get; }
-    string? TagValue { get; }
+    public TagFilter(IEnumerable<(string, string?)> tags)
+    {
+        Tags.AddRange(tags);
+    }
 
-    public bool Matches(TagList tags)
+    public TagFilter(params (string, string?)[] tags)
+    {
+        Tags.AddRange(tags);
+    }
+
+    public bool Matches(TagList featureTags)
     {
         // Find key
-        foreach (KeyValuePair<string, string> keyValue in tags)
+        foreach (KeyValuePair<string, string> featureTag in featureTags)
         {
-            if (keyValue.Key == TagName)
+            foreach ((string filterKey, string? filterValue) in Tags)
+            if (featureTag.Key == filterKey)
             {
-                if (TagValue == null)
+                if (filterValue == null)
                     return true;
-                else
-                    return keyValue.Value == TagValue;
+                else if (filterValue == featureTag.Value)
+                    return true;
             }
         }
         return false;
