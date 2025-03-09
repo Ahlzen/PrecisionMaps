@@ -199,7 +199,6 @@ public abstract class MapLayer
 public class VectorMapLayer : MapLayer
 {
     public TagFilter? Filter { get; }
-    //public List<TagFilter> Filters { get; } = new();
 
     // TODO: break out and expand
     public Color? FillColor { get; }
@@ -211,16 +210,12 @@ public class VectorMapLayer : MapLayer
         Color? fillColor = null,
         Color? strokeColor = null,
         double? strokeWidth = null)
-        //IEnumerable<TagFilter>? filters = null)
         : base(name, dataSourceName)
     {
         Filter = filter;
         FillColor = fillColor;
         StrokeColor = strokeColor;
         StrokeWidth = strokeWidth;
-
-        //if (filters != null)
-        //    Filters.AddRange(filters);
     }
 }
 

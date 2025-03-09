@@ -62,20 +62,36 @@ public class MapRenderFixture : BaseFixture
                 strokeWidth: 0.005));
         
         map.Layers.Add(
-            new VectorMapLayer("Highway", "osmdata",
+            new VectorMapLayer("Highway-1", "osmdata",
                 filter: new TagFilter(("highway", "motorway"), ("highway", "trunk"), ("highway", "primary")),
                 strokeColor: Color.Black,
                 strokeWidth: 0.04));
         map.Layers.Add(
-            new VectorMapLayer("Highway", "osmdata",
+            new VectorMapLayer("Highway-2", "osmdata",
                 filter: new TagFilter(("highway", "secondary"), ("highway", "tertiary")),
                 strokeColor: Color.Black,
                 strokeWidth: 0.03));
         map.Layers.Add(
-            new VectorMapLayer("Highway", "osmdata",
+            new VectorMapLayer("Highway-3", "osmdata",
                 filter: new TagFilter(("highway", "residential"), ("highway", "unclassified")),
                 strokeColor: Color.Black,
                 strokeWidth: 0.02));
+
+        map.Layers.Add(
+            new VectorMapLayer("Highway-1-case", "osmdata",
+                filter: new TagFilter(("highway", "motorway"), ("highway", "trunk"), ("highway", "primary")),
+                strokeColor: ColorUtil.FromHex("#fe9"),
+                strokeWidth: 0.02));
+        map.Layers.Add(
+            new VectorMapLayer("Highway-2-case", "osmdata",
+                filter: new TagFilter(("highway", "secondary"), ("highway", "tertiary")),
+                strokeColor: ColorUtil.FromHex("#fb9"),
+                strokeWidth: 0.015));
+        map.Layers.Add(
+            new VectorMapLayer("Highway-3-case", "osmdata",
+                filter: new TagFilter(("highway", "residential"), ("highway", "unclassified")),
+                strokeColor: ColorUtil.FromHex("#fee"),
+                strokeWidth: 0.01));
 
         map.Layers.Add(
             new VectorMapLayer("Building", "osmdata",
