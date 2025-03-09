@@ -69,5 +69,5 @@ public static class ColorUtil
     }
 
     private static Regex HexColorRegex = new(
-        "#([1-9a-fA-F]{3,8})", RegexOptions.Compiled);
+        "#([0-9a-fA-F]{3,8})", RegexOptions.Compiled);
 }
