@@ -20,6 +20,7 @@ internal class GdalDataReader : IRasterFormatReader
         Bitmap bitmap = GdalUtils.GetBitmap(dataset, projectedBounds);
         string srs = GdalUtils.GetSrsAsWkt(dataset);
         RasterData raster = new RasterData(srs, projectedBounds, bitmap);
+        dataset.Dispose();
         return raster;
     }
 }

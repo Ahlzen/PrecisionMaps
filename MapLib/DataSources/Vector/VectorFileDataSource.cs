@@ -12,7 +12,7 @@ public class VectorFileDataSource : IVectorDataSource
 {
     public string Name => "Vector file";
     public string Srs { get; }
-    public Bounds? Bounds { get; }
+    public Bounds? BoundsWgs84 { get; }
     public string Filename { get; }
 
     private IVectorFormatReader _reader;
@@ -35,7 +35,7 @@ public class VectorFileDataSource : IVectorDataSource
                 {
                     using Dataset dataset = OgrUtils.GetVectorDataset(filename);
                     Srs = OgrUtils.GetSrsAsWkt(dataset);
-                    Bounds = OgrUtils.GetDatasetBounds(dataset);
+                    BoundsWgs84 = OgrUtils.GetDatasetBounds(dataset);
                     _reader = new OgrDataReader();
                 }
                 break;

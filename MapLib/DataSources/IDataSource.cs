@@ -14,7 +14,7 @@ public interface IDataSource
     /// <summary>
     /// Bounds of full data set, if known.
     /// </summary>
-    public Bounds? Bounds { get; } // WGS84
+    public Bounds? BoundsWgs84 { get; } // WGS84
 }
 
 public interface IRasterDataSource : IDataSource
@@ -28,7 +28,7 @@ public interface IRasterDataSource : IDataSource
     /// of this data source.
     /// May return more if needed (e.g. may not crop/trim a file data source).
     /// </remarks>
-    public RasterData GetData(Bounds bounds);
+    public RasterData GetData(Bounds boundsWgs84);
 }
 
 public interface IVectorDataSource : IDataSource
@@ -42,5 +42,5 @@ public interface IVectorDataSource : IDataSource
     /// this data source.
     /// May return more if needed (e.g. may not crop/trim a file data source).
     /// </remarks>
-    public VectorData GetData(Bounds bounds);
+    public VectorData GetData(Bounds boundsWgs84);
 }

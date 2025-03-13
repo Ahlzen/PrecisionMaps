@@ -98,7 +98,12 @@ public class Map
             }
             else if (layerDataSource is RasterMapDataSource rasterDataSource)
             {
-                throw new NotImplementedException();
+                if (!(layer is RasterMapLayer))
+                    throw new InvalidOperationException("Raster data source must use raster layer");
+                var rasterLayer = (RasterMapLayer)layer;
+
+                RasterData rasterData = rasterDataSource.DataSource.GetData(BoundsWGS84);
+                DrawRaster(canvas, rasterLayer, rasterData);
             }
         }
     }
@@ -143,5 +148,13 @@ public class Map
             foreach (MultiPolygon mp in data.MultiPolygons)
                 layer.DrawLines(mp.Coords, strokeWidth.Value, strokeColor.Value);
         }
+    }
+
+    private void DrawRaster(Canvas canvas, RasterMapLayer mapLayer, RasterData data)
+    {
+        CanvasLayer layer = canvas.AddNewLayer(mapLayer.Name);
+        
+        // The requested bounds should exactly cover the full canvas
+        layer.DrawBitmap(data.Bitmap, 0, canvas.Height, canvas.Width, canvas.Height, 1.0);
     }
 }

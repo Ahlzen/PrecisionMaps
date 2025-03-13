@@ -9,7 +9,7 @@ public class OsmDataSource : BaseCachingDataSource, IVectorDataSource
     public string Name => "OpenStreetMap";
 
     public static Bounds _bounds = new Bounds(-180, 180, -90, 90);
-    public Bounds? Bounds => _bounds;
+    public Bounds? BoundsWgs84 => _bounds;
 
     public string Srs => "EPSG:4326"; // WGS84 lon/lat
 

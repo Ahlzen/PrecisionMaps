@@ -1,5 +1,6 @@
 ﻿using System.Drawing;
 using System.IO;
+using MapLib.DataSources.Raster;
 using MapLib.DataSources.Vector;
 using MapLib.GdalSupport;
 using MapLib.Output;
@@ -54,6 +55,13 @@ public class MapRenderFixture : BaseFixture
         map.DataSources.Add(
             new VectorMapDataSource("osmdata",
             new VectorFileDataSource(Path.Join(TestDataPath, "map.osm"))));
+        map.DataSources.Add(
+            new RasterMapDataSource("hillshading",
+            new GdalDataSource(Path.Join(TestDataPath, "MA Shaded Relief 5k 3857 enhanced.tif"))));
+
+        map.Layers.Add(
+            new RasterMapLayer("Hillshading", "hillshading"));
+
         map.Layers.Add(
             new VectorMapLayer("Water", "osmdata",
                 filter: new TagFilter("natural", "water"),
