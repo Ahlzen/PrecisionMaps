@@ -12,8 +12,15 @@ namespace MapLib.Tests.Render;
 [TestFixture]
 public class MapRenderFixture : BaseFixture
 {
+    public static IEnumerable<Canvas> LetterSizeCanvases()
+    {
+        yield return new BitmapCanvas(CanvasUnit.In, 11.0, 8.5, Color.White);
+        yield return new SvgCanvas(CanvasUnit.In, 11.0, 8.5, Color.White);
+    }
+
     [Test]
-    public void RenderSimpleOsmData()
+    [TestCaseSource("LetterSizeCanvases")]
+    public void RenderSimpleOsmData(Canvas canvas)
     {
         Map map = new Map(
             new Bounds(-70.944, -70.915, 42.187, 42.207),
@@ -38,9 +45,8 @@ public class MapRenderFixture : BaseFixture
                 filter: new TagFilter("building"),
                 fillColor: Color.Tan));
 
-        Canvas canvas = new SvgCanvas(CanvasUnit.In, 11.0, 8.5, System.Drawing.Color.White);
         map.Render(canvas);
-        string filename = FileSystemHelpers.GetTempFileName(".svg");
+        string filename = FileSystemHelpers.GetTempFileName(canvas.DefaultFileExtension);
         canvas.SaveToFile(filename);
         Console.WriteLine(filename);
     }

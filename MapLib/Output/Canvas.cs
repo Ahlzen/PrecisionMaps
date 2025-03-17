@@ -2,6 +2,9 @@
 
 public abstract class Canvas
 {
+    public const double PixelsPerInch = 90; // may make this non-const
+    public const double MmPerInch = 25.4;
+
     public CanvasUnit Unit { get; }
     public double Width { get; }
     public double Height { get; }
@@ -32,9 +35,28 @@ public abstract class Canvas
             case CanvasUnit.Mm:
                 return mm;
             case CanvasUnit.In:
-                return mm / 25.4;
+                return mm / MmPerInch;
             case CanvasUnit.Pixel:
-                return mm * (25.4 / 72); // 72 ppi = (25.4/72) mm / pixel
+                return mm * (MmPerInch / PixelsPerInch);
+            default:
+                throw new NotSupportedException(
+                    "Unsupported canvas unit type");
+        }
+    }
+
+    public double ToPixels(double units) =>
+        units * ToPixelsFactor();
+
+    public double ToPixelsFactor()
+    {
+        switch (Unit)
+        {
+            case CanvasUnit.Mm:
+                return PixelsPerInch / MmPerInch;
+            case CanvasUnit.In:
+                return PixelsPerInch;
+            case CanvasUnit.Pixel:
+                return 1;
             default:
                 throw new NotSupportedException(
                     "Unsupported canvas unit type");

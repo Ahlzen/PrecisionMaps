@@ -83,6 +83,6 @@ public abstract class CanvasLayer
         IEnumerable<Coord> points, double radius, Color color);
 
     public abstract void DrawText(string s, Coord coord,
-        Color color, string font, double size,
+        Color color, string font, double emSizePt,
         TextHAlign hAlign);
 }
