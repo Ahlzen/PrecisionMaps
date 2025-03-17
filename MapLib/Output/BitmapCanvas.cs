@@ -13,19 +13,40 @@ public class BitmapCanvas : Canvas
     private readonly double _height; // canvas height in canvas units
     private readonly int _pixelsX; // canvas width in pixels
     private readonly int _pixelsY; // canvas height in pixels
-    private readonly double _scaleFactor;
+    
+    /// <summary>
+    /// Scale to convert canvas units to pixels.
+    /// </summary>
+    private readonly double _pixelScaleFactor;
+
+    /// <summary>
+    /// User scale (under/oversampling).
+    /// </summary>
+    private readonly double _userScaleFactor;
+
+    /// <summary>
+    /// The total scale factor at which the graphics is to be rendered.
+    /// </summary>
+    private double ScaleFactor => _pixelScaleFactor * _userScaleFactor;
 
     private readonly Color _backgroundColor;
     private readonly List<BitmapCanvasLayer> _layers = new List<BitmapCanvasLayer>();
 
-    public BitmapCanvas(CanvasUnit unit, double width, double height, Color? backgroundColor)
+    public BitmapCanvas(CanvasUnit unit, double width,
+        double height, Color? backgroundColor,
+        double? scaleFactor = null)
         : base(unit, width, height)
     {
         _width = width;
         _height = height;
-        _pixelsX = (int)(ToPixels(width));
-        _pixelsY = (int)(ToPixels(height));
-        _scaleFactor = ToPixelsFactor();
+        
+        // Values to final scale factor
+        _pixelScaleFactor = ToPixelsFactor();
+        _userScaleFactor = scaleFactor ?? 1.0;
+
+        _pixelsX = (int)(width * ScaleFactor);
+        _pixelsY = (int)(height * ScaleFactor);
+
         _backgroundColor = backgroundColor ?? Color.Transparent;
     }
 
@@ -34,7 +55,7 @@ public class BitmapCanvas : Canvas
 
     public override CanvasLayer AddNewLayer(string name)
     {
-        var layer = new BitmapCanvasLayer(_pixelsX, _pixelsY, _height, _scaleFactor);
+        var layer = new BitmapCanvasLayer(_pixelsX, _pixelsY, _height, ScaleFactor);
         layer.Name = name;
         _layers.Add(layer);
         return layer;

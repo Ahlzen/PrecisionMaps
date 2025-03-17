@@ -14,7 +14,8 @@ public class MapRenderFixture : BaseFixture
 {
     public static IEnumerable<Canvas> LetterSizeCanvases()
     {
-        yield return new BitmapCanvas(CanvasUnit.In, 11.0, 8.5, Color.White);
+        yield return new BitmapCanvas(CanvasUnit.In, 11.0, 8.5, Color.White, 1.0);
+        yield return new BitmapCanvas(CanvasUnit.In, 11.0, 8.5, Color.White, 4.0);
         yield return new SvgCanvas(CanvasUnit.In, 11.0, 8.5, Color.White);
     }
 
