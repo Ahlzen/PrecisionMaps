@@ -1,6 +1,6 @@
 ﻿namespace MapLib.Output;
 
-public abstract class Canvas
+public abstract class Canvas : IDisposable
 {
     public const double PixelsPerInch = 90; // may make this non-const
     public const double MmPerInch = 25.4;
@@ -15,6 +15,8 @@ public abstract class Canvas
         Width = width;
         Height = height;
     }
+
+    public abstract void Dispose();
 
     public abstract CanvasLayer AddNewLayer(string name);
     public abstract void RemoveLayer(CanvasLayer layer);

@@ -3,8 +3,10 @@ using System.Drawing;
 
 namespace MapLib.Output;
 
-public abstract class CanvasLayer
+public abstract class CanvasLayer : IDisposable
 {
+    public abstract void Dispose();
+
     public string? Name { get; set; }
 
     // TODO: layer opacity, blending modes, mask

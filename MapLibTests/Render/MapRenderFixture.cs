@@ -50,6 +50,7 @@ public class MapRenderFixture : BaseFixture
         string filename = FileSystemHelpers.GetTempFileName(canvas.DefaultFileExtension);
         canvas.SaveToFile(filename);
         Console.WriteLine(filename);
+        canvas.Dispose();
     }
 
     [Test]
@@ -118,5 +119,6 @@ public class MapRenderFixture : BaseFixture
         string filename = FileSystemHelpers.GetTempFileName(".svg");
         canvas.SaveToFile(filename);
         Console.WriteLine(filename);
+        canvas.Dispose();
     }
 }

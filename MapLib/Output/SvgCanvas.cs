@@ -28,6 +28,13 @@ public class SvgCanvas : Canvas
         SvgCoordFormat = "F" + decimals;
     }
 
+    public override void Dispose()
+    {
+        foreach (SvgCanvasLayer layer in _layers)
+            layer.Dispose();
+        _layers.Clear();
+    }
+
     public override IEnumerable<CanvasLayer> Layers => _layers;
     public override int LayerCount => _layers.Count;
 
@@ -85,7 +92,7 @@ public class SvgCanvas : Canvas
 /// and our coordinates are positive Y up, drawing operations have to
 /// flip (offset and negate) the Y coordinate.
 /// </remarks>
-public class SvgCanvasLayer : CanvasLayer
+public class SvgCanvasLayer : CanvasLayer, IDisposable
 {
     private SvgCanvas _canvas;
     private List<XObject> _objects = new List<XObject>();
@@ -99,6 +106,8 @@ public class SvgCanvasLayer : CanvasLayer
         _layerWidth = canvas.Width;
         _layerHeight = canvas.Height;
     }
+
+    public override void Dispose() {}
 
     internal XElement GetSvgData()
     {

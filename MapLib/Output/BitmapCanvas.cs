@@ -7,7 +7,7 @@ using System.Drawing;
 
 namespace MapLib.Output;
 
-public class BitmapCanvas : Canvas
+public class BitmapCanvas : Canvas, IDisposable
 {
     private readonly double _width; // canvas width in canvas units
     private readonly double _height; // canvas height in canvas units
@@ -50,6 +50,13 @@ public class BitmapCanvas : Canvas
         _backgroundColor = backgroundColor ?? Color.Transparent;
     }
 
+    public override void Dispose()
+    {
+        foreach (BitmapCanvasLayer layer in _layers)
+            layer.Dispose();
+        _layers.Clear();
+    }
+
     public override IEnumerable<CanvasLayer> Layers => _layers;
     public override int LayerCount => _layers.Count;
 
@@ -66,6 +73,7 @@ public class BitmapCanvas : Canvas
         var bitmapCanvasLayer = layer as BitmapCanvasLayer;
         if (bitmapCanvasLayer == null) return;
         _layers.Remove(bitmapCanvasLayer);
+        bitmapCanvasLayer.Dispose();
     }
 
     public Bitmap GetBitmap()
@@ -97,7 +105,7 @@ public class BitmapCanvas : Canvas
 /// and our coordinates are positive Y up, the Y-coordinate needs
 /// top be flipped (offset and negate).
 /// </remarks>
-internal class BitmapCanvasLayer : CanvasLayer
+internal class BitmapCanvasLayer : CanvasLayer, IDisposable
 {
     private static readonly Color DebugColor = Color.Red;
 
@@ -120,6 +128,12 @@ internal class BitmapCanvasLayer : CanvasLayer
         // Offset and invert Y, and scale drawing ops. (see remarks)
         _graphics.TranslateTransform(0, (float)(height*scaleFactor));
         _graphics.ScaleTransform((float)scaleFactor, -(float)scaleFactor);
+    }
+
+    public override void Dispose()
+    {
+        _graphics.Dispose();
+        Bitmap.Dispose();
     }
 
     internal Bitmap Bitmap { get; }

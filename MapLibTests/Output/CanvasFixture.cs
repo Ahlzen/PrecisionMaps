@@ -20,11 +20,15 @@ public class CanvasFixture : BaseFixture
     {
         int width = 1600;
         int height = 800;
-        var bitmapCanvas = new BitmapCanvas(CanvasUnit.Pixel, width, height, Color.Transparent);
-        var svgCanvas = new SvgCanvas(CanvasUnit.Pixel, width, height, Color.Transparent);
+        using BitmapCanvas bitmapCanvas = new(CanvasUnit.Pixel, width, height, Color.Transparent);
+        using SvgCanvas svgCanvas = new(CanvasUnit.Pixel, width, height, Color.Transparent);
 
         OgrDataReader reader = new();
-        VectorData reservoirData = reader.ReadFile(Path.Join(TestDataPath, "GeoJSON/Aaron River Reservoir.geojson"));
+
+        string path = Path.Join(TestDataPath, "GeoJSON/Aaron River Reservoir.geojson");
+        path = Path.GetFullPath(path);
+
+        VectorData reservoirData = reader.ReadFile(path);
         Assert.That(reservoirData.Polygons.Count, Is.EqualTo(0));
         Assert.That(reservoirData.MultiPolygons.Count, Is.EqualTo(1));
         VectorData scaledReservoirData = Visualizer.TransformToFit(reservoirData, 180, 180);
@@ -77,23 +81,23 @@ public class CanvasFixture : BaseFixture
     public void TestRenderSimpleMultipolygon()
     {
         var outerRing = new Coord[]{
-            new Coord(100, 400),
-            new Coord(100, 100),
-            new Coord(400, 100),
-            new Coord(400, 400),
-            new Coord(100, 400)
+            new(100, 400),
+            new(100, 100),
+            new(400, 100),
+            new(400, 400),
+            new(100, 400)
         };
         var innerRing = new Coord[]{
-            new Coord(200, 200),
-            new Coord(300, 200),
-            new Coord(300, 300),
-            new Coord(200, 300),
-            new Coord(200, 200)
+            new(200, 200),
+            new(300, 200),
+            new(300, 300),
+            new(200, 300),
+            new(200, 200)
         };
         MultiPolygon multipolygon = new([outerRing, innerRing], null);
 
-        BitmapCanvas bitmapCanvas = new BitmapCanvas(CanvasUnit.Pixel, 500, 500, Color.White);
-        SvgCanvas svgCanvas = new SvgCanvas(CanvasUnit.Pixel, 500, 500, Color.White);
+        using BitmapCanvas bitmapCanvas = new(CanvasUnit.Pixel, 500, 500, Color.White);
+        using SvgCanvas svgCanvas = new(CanvasUnit.Pixel, 500, 500, Color.White);
 
         foreach (Canvas canvas in new Canvas[] { bitmapCanvas, svgCanvas })
         {
