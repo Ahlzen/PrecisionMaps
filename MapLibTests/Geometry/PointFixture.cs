@@ -2,7 +2,7 @@
 
 [TestFixture]
 [SupportedOSPlatform("windows")]
-public class PointFixture
+public class PointFixture : BaseFixture
 {
     private List<Coord> _testCoords = null!; // initialized in SetUp
     private MultiPoint _testMultiPoint = null!; // initialized in SetUp

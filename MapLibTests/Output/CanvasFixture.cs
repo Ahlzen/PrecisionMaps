@@ -25,7 +25,7 @@ public class CanvasFixture : BaseFixture
 
         OgrDataReader reader = new();
 
-        string path = Path.Join(TestDataPath, "GeoJSON/Aaron River Reservoir.geojson");
+        string path = Path.Join(TestDataPath, "Aaron River/Aaron River Reservoir.geojson");
         path = Path.GetFullPath(path);
 
         VectorData reservoirData = reader.ReadFile(path);
@@ -113,7 +113,7 @@ public class CanvasFixture : BaseFixture
     public void TestRenderMultipolygon()
     {
         Visualizer.LoadOgrDataAndDrawPolygons(
-            Path.Join(TestDataPath, "GeoJSON/Aaron River Reservoir.geojson"),
+            Path.Join(TestDataPath, "Aaron River/Aaron River Reservoir.geojson"),
             600, 600, 600, 600, Color.AntiqueWhite, (canvas, multiPolygons) => {
                 CanvasLayer layer = canvas.AddNewLayer("water");
                 foreach (MultiPolygon multipolygon in multiPolygons)
@@ -126,7 +126,7 @@ public class CanvasFixture : BaseFixture
     public void TestRenderFilledMultipolygon()
     {
         Visualizer.LoadOgrDataAndDrawPolygons(
-            Path.Join(TestDataPath, "GeoJSON/Aaron River Reservoir.geojson"),
+            Path.Join(TestDataPath, "Aaron River/Aaron River Reservoir.geojson"),
             600, 600, 600, 600, Color.AntiqueWhite, (canvas, multiPolygons) => {
                 CanvasLayer layer = canvas.AddNewLayer("water");
                 foreach (var multipolygon in multiPolygons)
@@ -138,7 +138,7 @@ public class CanvasFixture : BaseFixture
     public void TestRenderShorelinePolygons_AaronRiver()
     {
         Visualizer.LoadOgrDataAndDrawPolygons(
-            Path.Join(TestDataPath, "GeoJSON/Aaron River Reservoir.geojson"),
+            Path.Join(TestDataPath, "Aaron River/Aaron River Reservoir.geojson"),
             600, 600, 600, 600, Color.AntiqueWhite, (canvas, multiPolygons) => {
                 CanvasLayer layer = canvas.AddNewLayer("water");
                 foreach (var multipolygon in multiPolygons)

@@ -29,7 +29,7 @@ public class MapRenderFixture : BaseFixture
 
         map.DataSources.Add(
             new VectorMapDataSource("osmdata",
-            new VectorFileDataSource(Path.Join(TestDataPath, "map.osm"))));
+            new VectorFileDataSource(Path.Join(TestDataPath, "osm-xml/Weymouth Detail.osm"))));
         map.Layers.Add(
             new VectorMapLayer("Water", "osmdata",
                 filter: new TagFilter("natural", "water"),

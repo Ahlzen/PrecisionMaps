@@ -2,12 +2,8 @@
 
 [TestFixture]
 [SupportedOSPlatform("windows")]
-internal class LineFixture
+internal class LineFixture : BaseFixture
 {
-    // squiggly line (for testing offsetting)
-    private static readonly Line TestLine1 =
-        new Line([(1,1), (5,3), (6,2), (7,5), (8,-2)], null);
-
     // intersecting lines
     private static readonly Line l1 = new Line([(1, 1), (4, 3)], null);
     private static readonly Line l2 = new Line([(1, 2), (6, 3)], null);
@@ -23,18 +19,18 @@ internal class LineFixture
 
     [Test]
     public void TestOffsetLine() {
-        var right = TestLine1.Offset(0.5);
-        var left = TestLine1.Offset(-1.0);
+        var right = TestLine3.Offset(0.5);
+        var left = TestLine3.Offset(-1.0);
         Visualizer.RenderAndShow(800, 500,
-            TestLine1, right, left);
+            TestLine3, right, left);
     }
 
     [Test]
     public void TestBufferLine() {
-        var buffer1 = TestLine1.Buffer(0.5);
-        var buffer2 = TestLine1.Buffer(2.5);
+        var buffer1 = TestLine3.Buffer(0.5);
+        var buffer2 = TestLine3.Buffer(2.5);
         Visualizer.RenderAndShow(800, 500,
-            TestLine1, buffer1, buffer2);
+            TestLine3, buffer1, buffer2);
     }
 
     [Test]

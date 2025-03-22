@@ -12,7 +12,7 @@ public class OgrDataReaderFixture : BaseFixture
         // Read Natural Earth 10m Lakes
         OgrDataReader reader = new OgrDataReader();
         MapLib.VectorData data = reader.ReadFile(
-            Path.Join(TestDataPath, "Natural Earth/ne_10m_lakes.shp"));
+            Path.Join(TestDataPath, "Natural Earth/ne_10m_land.shp"));
         Console.WriteLine(Visualizer.FormatVectorDataSummary(data));
     }
 
@@ -22,7 +22,7 @@ public class OgrDataReaderFixture : BaseFixture
         // GeoJSON file with single object from OSM
         OgrDataReader reader = new OgrDataReader();
         MapLib.VectorData data = reader.ReadFile(
-            Path.Join(TestDataPath, "GeoJSON/Aaron River Reservoir.geojson"));
+            Path.Join(TestDataPath, "Aaron River/Aaron River Reservoir.geojson"));
         Console.WriteLine(Visualizer.FormatVectorDataSummary(data));
     }
 
@@ -32,7 +32,7 @@ public class OgrDataReaderFixture : BaseFixture
         // KML file with single object from OSM
         OgrDataReader reader = new OgrDataReader();
         MapLib.VectorData data = reader.ReadFile(
-            Path.Join(TestDataPath, "Aaron River Reservoir.kml"));
+            Path.Join(TestDataPath, "Aaron River/Aaron River Reservoir.kml"));
         Console.WriteLine(Visualizer.FormatVectorDataSummary(data));
     }
 

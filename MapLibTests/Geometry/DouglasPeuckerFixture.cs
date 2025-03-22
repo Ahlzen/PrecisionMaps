@@ -12,7 +12,7 @@ public class DouglasPeuckerFixture : BaseFixture
     public void TestSimplify_DouglasPeucker_ByTolerance()
     {
         Visualizer.LoadOgrDataAndDrawPolygons(
-            Path.Join(TestDataPath, "GeoJSON/Aaron River Reservoir.geojson"),
+            Path.Join(TestDataPath, "Aaron River/Aaron River Reservoir.geojson"),
             400, 400, 1600, 400, Color.AntiqueWhite, (canvas, multiPolygons) =>
             {
                 CanvasLayer layer = canvas.AddNewLayer("water");

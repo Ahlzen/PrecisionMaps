@@ -2,4 +2,6 @@
 notes.txt
 bin/
 obj/
-examples/
+Examples/
+TestData/*
+!TestData/Aaron River/

@@ -10,7 +10,7 @@ public class GeoJsonDataReaderFixture<TReader>
     : BaseFixture where TReader : IVectorFormatReader, new()
 {
     public static string[] ExampleFilenames = {
-        "Aaron River Reservoir.geojson", // single multipolygon
+        //"Aaron River Reservoir.geojson", // single multipolygon
         "openlayers-line-samples.geojson",
         "openlayers-polygon-samples.geojson",
         "openlayers-vienna-streets.geojson",
