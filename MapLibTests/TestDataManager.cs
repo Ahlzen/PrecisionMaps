@@ -2,6 +2,7 @@
 using System.IO.Compression;
 using System.Net.Http;
 using System.Threading.Tasks;
+using MapLib.Util;
 
 namespace MapLib.Tests;
 
@@ -41,8 +42,7 @@ internal class TestDataManager
 
     [Test]
     [Explicit]
-    public async Task DownloadData() =>
-        await EnsureTestDataReady(Console.Out);
+    public void DownloadData() => EnsureTestDataReady(Console.Out);
 
     /// <summary>
     /// Checks that all of the required test data files exist locally, and
@@ -52,7 +52,7 @@ internal class TestDataManager
     /// Optional TextWriter for status/error output, such as Console.Out.
     /// No output if all files exist.
     /// </param>
-    public async static Task EnsureTestDataReady(TextWriter? logger)
+    public static void EnsureTestDataReady(TextWriter? logger)
     {
         foreach (string filename in UrlsByFilename.Keys)
         {
@@ -76,7 +76,8 @@ internal class TestDataManager
                 string url = UrlsByFilename[filename];
                 try
                 {
-                    await DownloadFile(url, destPath);
+                    //await DownloadFile(url, destPath);
+                    UrlHelper.DownloadUrl(url, destPath);
 
                     FileInfo fi = new FileInfo(destPath);
                     long length = fi.Length;
@@ -109,13 +110,13 @@ internal class TestDataManager
         }
     }
 
-    private static async Task DownloadFile(string url, string destFilename)
-    {
-        using (HttpClient client = new HttpClient())
-        using (Stream s = await client.GetStreamAsync(url))
-        using (FileStream fs = new FileStream(destFilename, FileMode.OpenOrCreate))
-        {
-            s.CopyTo(fs);
-        }
-    }
+    //private static async Task DownloadFile(string url, string destFilename)
+    //{
+    //    using (HttpClient client = new HttpClient())
+    //    using (Stream s = await client.GetStreamAsync(url))
+    //    using (FileStream fs = new FileStream(destFilename, FileMode.OpenOrCreate))
+    //    {
+    //        s.CopyTo(fs);
+    //    }
+    //}
 }

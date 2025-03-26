@@ -47,7 +47,8 @@ public class MapRenderFixture : BaseFixture
                 fillColor: Color.Tan));
 
         map.Render(canvas);
-        string filename = FileSystemHelpers.GetTempFileName(canvas.DefaultFileExtension);
+        string filename = FileSystemHelpers.GetTempFileName(
+            canvas.DefaultFileExtension, "RenderSimpleOsmData_");
         canvas.SaveToFile(filename);
         Console.WriteLine(filename);
         canvas.Dispose();
@@ -65,7 +66,8 @@ public class MapRenderFixture : BaseFixture
             new VectorFileDataSource(Path.Join(TestDataPath, "map.osm"))));
         map.DataSources.Add(
             new RasterMapDataSource("hillshading",
-            new GdalDataSource(Path.Join(TestDataPath, "MA Shaded Relief 5k 3857 enhanced.tif"))));
+            //new GdalDataSource(Path.Join(TestDataPath, "MA Shaded Relief 5k 3857 enhanced.tif"))));
+            new GdalDataSource(Path.Join(TestDataPath, "MassGIS LiDAR/be_19TCG340674.tif"))));
 
         map.Layers.Add(
             new RasterMapLayer("Hillshading", "hillshading"));
@@ -116,7 +118,7 @@ public class MapRenderFixture : BaseFixture
 
         Canvas canvas = new SvgCanvas(CanvasUnit.In, 11.0, 8.5, System.Drawing.Color.White);
         map.Render(canvas);
-        string filename = FileSystemHelpers.GetTempFileName(".svg");
+        string filename = FileSystemHelpers.GetTempFileName(".svg", "RenderSimpleOsmData2_");
         canvas.SaveToFile(filename);
         Console.WriteLine(filename);
         canvas.Dispose();

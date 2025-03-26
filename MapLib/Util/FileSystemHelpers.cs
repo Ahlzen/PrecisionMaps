@@ -21,5 +21,4 @@ public static class FileSystemHelpers
         while (Path.Exists(tempFileName));
         return tempFileName;
     }
-        
 }

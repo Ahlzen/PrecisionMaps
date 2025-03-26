@@ -28,6 +28,6 @@ public abstract class BaseFixture
         GdalUtils.Initialize();
 
         // Make sure we have all data required for the tests
-        TestDataManager.EnsureTestDataReady(Console.Out).Wait();
+        TestDataManager.EnsureTestDataReady(Console.Out);
     }
 }

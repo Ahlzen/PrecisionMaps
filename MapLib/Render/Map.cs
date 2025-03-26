@@ -1,21 +1,66 @@
 ﻿using MapLib.GdalSupport;
 using MapLib.Geometry;
 using MapLib.Output;
+using System.Diagnostics;
 using System.Drawing;
 
 namespace MapLib.Render;
 
+/// <summary>
+/// Strategies for handling the (common) case where the projection
+/// of the requested area doesn't exactly match the aspect ratio
+/// of the destination canvas.
+/// </summary>
+public enum AspectRatioMismatchStrategy
+{
+    /// <summary>
+    /// Stretch the data to fit the canvas. Typically results
+    /// in skewed objects.
+    /// </summary>
+    Stretch,
+
+    /// <summary>
+    /// Include only the requested area, centering the data
+    /// on the canvas. Typically results in empty space on
+    /// the left/right or top/bottom.
+    /// </summary>
+    Center,
+
+    /// <summary>
+    /// Crop (in either x or y) the requested area to
+    /// match the canvas aspect ratio. Typically results in parts
+    /// of the requested area not being included on the map.
+    /// </summary>
+    Crop,
+
+    /// <summary>
+    /// Extend (in either x or y) the requested area to
+    /// match the canvas aspect ratio. Typically results in a larger
+    /// area than requested included on the map.
+    /// </summary>
+    ExtendBounds,
+}
+
 public class Map
 {
     /// <summary>
-    /// Geographical bounds of the map (WGS84 lat/lon)
+    /// The requested bounds of the map, in lon/lat WGS84.
     /// </summary>
-    public Bounds BoundsWGS84 { get; set; }
+    public Bounds RequestedBoundsWgs84 { get; private set; }
 
     /// <summary>
-    /// Bounds in the SRS/projection of the map.
+    /// The actual bounds of the map, in lon/lat WGS84.
     /// </summary>
-    public Bounds BoundsMapSrs { get; set; }
+    /// <remarks>
+    /// This may be the same as the requested bounds, or different
+    /// if cropped or extended to match canvas aspect ratio.
+    /// </remarks>
+    public Bounds ActualBoundsWgs84 { get; private set; }
+
+    /// <summary>
+    /// The actual bounds of the map, in the map SRS.
+    /// </summary>
+    public Bounds ActualBoundsMapSrs { get; private set; }
 
     /// <summary>
     /// Coordinate system and projection for the
@@ -28,40 +73,170 @@ public class Map
     public string MapSrs { get; set; }
 
 
-    public List<MapDataSource> DataSources { get; }
-        = new List<MapDataSource>();
+    public List<MapDataSource> DataSources { get; } = new();
 
-    public List<MapLayer> Layers { get; }
-        = new List<MapLayer>();
+    public List<MapLayer> Layers { get; } = new();
 
+    private double _scaleX, _scaleY;
+    private double _offsetX, _offsetY;
 
     public Map(Bounds boundsWgs84, string mapSrs)
     {
         MapSrs = mapSrs;
-        BoundsWGS84 = boundsWgs84;
-
-        // Compute bounds in the map SRS
-        Transformer wgsToMapSrs = new(Transformer.WktWgs84, this.MapSrs);
-        BoundsMapSrs = wgsToMapSrs.Transform(boundsWgs84);
+        RequestedBoundsWgs84 = boundsWgs84;                       
     }
 
-
-    public void Render(Canvas canvas)
+    private void ComputeActualBounds(
+        Canvas canvas,
+        AspectRatioMismatchStrategy strategy)
     {
-        Dictionary<string, MapDataSource> sourcesByName =
-            DataSources.ToDictionary(ds => ds.Name);
+        Transformer wgs84ToMapSrs = new(Transformer.WktWgs84, this.MapSrs);
+        Transformer mapSrsToWgs84 = new(this.MapSrs, Transformer.WktWgs84);
+
+        Debug.WriteLine("Requested bounds (WGS84): " + RequestedBoundsWgs84);
+
+        double canvasAspectRatio = canvas.Width / canvas.Height;
+
+        Debug.WriteLine("Canvas aspect ratio: " + canvasAspectRatio);
+
+        double usableCanvasWidth = canvas.Width;
+        double usableCanvasHeight = canvas.Height;
+        double canvasOffsetX = 0;
+        double canvasOffsetY = 0;
+
+        Bounds requestedBoundsMapSrs = wgs84ToMapSrs.Transform(RequestedBoundsWgs84);
+        double projectedAspectRatio = requestedBoundsMapSrs.Width / requestedBoundsMapSrs.Height;
+
+        Debug.WriteLine("Requested bounds (map SRS): " + requestedBoundsMapSrs);
+        Debug.WriteLine("Projected aspect ratio: " + projectedAspectRatio);
+
+        // Compute actual bounds in the map SRS
+        // (and possibly adjusting useable canvas size/offset)
+        switch (strategy)
+        {
+            case AspectRatioMismatchStrategy.Stretch:
+                {
+                    // Use the requested bounds directly, regardless of aspect ratio
+                    ActualBoundsMapSrs = wgs84ToMapSrs.Transform(RequestedBoundsWgs84);                    
+                    break;
+                }
+            case AspectRatioMismatchStrategy.Center:
+                {
+                    // use the same requested bounds, but change the useable canvas size accordingly
+                    ActualBoundsMapSrs = requestedBoundsMapSrs;
+
+                    if (projectedAspectRatio < canvasAspectRatio)
+                    {
+                        // canvas is wider than projected
+                        usableCanvasWidth = canvas.Width * (projectedAspectRatio / canvasAspectRatio);
+                        canvasOffsetX = (canvas.Width - usableCanvasWidth) / 2;
+                    }
+                    else
+                    {
+                        // canvas is taller (or equal to) projected
+                        usableCanvasHeight = canvas.Height * (canvasAspectRatio / projectedAspectRatio);
+                        canvasOffsetY = (canvas.Height - usableCanvasHeight) / 2;
+                    }
+                    break;
+                }                
+            case AspectRatioMismatchStrategy.Crop:
+                {
+                    if (projectedAspectRatio < canvasAspectRatio)
+                    {
+                        // Canvas is wider than projected data
+                        // i.e. projected data is taller than canvas
+                        // Need to crop top and bottom.
+                        double useableVerticalFactor = projectedAspectRatio / canvasAspectRatio; // should be <= 1
+                        Debug.Assert(useableVerticalFactor <= 1);
+                        double cropFactor = (1 - useableVerticalFactor) / 2;
+                        double cropDistance = requestedBoundsMapSrs.Height * cropFactor;
+                        ActualBoundsMapSrs = new Bounds(
+                                requestedBoundsMapSrs.XMin,
+                                requestedBoundsMapSrs.XMax,
+                                requestedBoundsMapSrs.YMin + cropDistance,
+                                requestedBoundsMapSrs.YMax - cropDistance);
+                    }
+                    else
+                    {
+                        // Canvas is taller than projected data
+                        // i.e. projected data is wider than canvas
+                        // Need to crop left and right.
+                        double useableHorizontalFactor = canvasAspectRatio / projectedAspectRatio; // should be <= 1
+                        Debug.Assert(useableHorizontalFactor <= 1);
+                        double cropFactor = (1 - useableHorizontalFactor) / 2;
+                        double cropDistance = requestedBoundsMapSrs.Width * cropFactor;
+                        ActualBoundsMapSrs = new Bounds(
+                                requestedBoundsMapSrs.XMin + cropDistance,
+                                requestedBoundsMapSrs.XMax - cropDistance,
+                                requestedBoundsMapSrs.YMin,
+                                requestedBoundsMapSrs.YMax);
+                    }
+                    break;
+                }
+            case AspectRatioMismatchStrategy.ExtendBounds:
+                {
+                    if (projectedAspectRatio < canvasAspectRatio)
+                    {
+                        // Canvas is wider than projected data.
+                        // Extend actual bounds horizontally:
+                        double horizontalFactor = canvasAspectRatio / projectedAspectRatio;
+                        double projectedWidth = requestedBoundsMapSrs.Width;
+                        double extensionDistance = (projectedWidth * (horizontalFactor - 1)) / 2;
+                        ActualBoundsMapSrs = new Bounds(
+                            requestedBoundsMapSrs.XMin - extensionDistance,
+                            requestedBoundsMapSrs.XMax + extensionDistance,
+                            requestedBoundsMapSrs.YMin,
+                            requestedBoundsMapSrs.YMax);
+                    }
+                    else
+                    {
+                        // Canvas is taller than projected data
+                        // Extend actual bounds vertically:
+                        double verticalFactor = projectedAspectRatio / canvasAspectRatio;
+                        double projectedHeight = requestedBoundsMapSrs.Height;
+                        double extensionDistance = (projectedHeight * (verticalFactor - 1)) / 2;
+                        ActualBoundsMapSrs = new Bounds(
+                            requestedBoundsMapSrs.XMin,
+                            requestedBoundsMapSrs.XMax,
+                            requestedBoundsMapSrs.YMin - extensionDistance,
+                            requestedBoundsMapSrs.YMax + extensionDistance);
+                    }
+                    break;
+                }
+            default:
+                throw new NotSupportedException("Unexpected strategy: " + strategy);
+        }
+
+        // Back-project to lon/lat
+        ActualBoundsWgs84 = mapSrsToWgs84.Transform(ActualBoundsMapSrs);
+
+        Debug.WriteLine("Actual bounds (map SRS): " + ActualBoundsMapSrs);
+        Debug.WriteLine("Actual bounds (WGS84): " + ActualBoundsWgs84);
+        Debug.WriteLine("Usable canvas width: " + usableCanvasWidth);
+        Debug.WriteLine("Usable canvas height: " + usableCanvasHeight);
 
         // Compute offset/scale to transform
-        // map SRS to canvas space
-        double offsetX, offsetY;
-        double scaleX, scaleY;
+        // from map SRS to canvas space.
+        // Any projection is already done at this point,
+        // so we just need to scale/offset the result to fit the canvas.
 
-        scaleX = canvas.Width / BoundsMapSrs.Width;
-        scaleY = canvas.Height / BoundsMapSrs.Height;
-        offsetX = -BoundsMapSrs.XMin * scaleX;
-        offsetY = -BoundsMapSrs.YMin * scaleY;
+        // TODO: add in canvasOffsetX, canvasOffsetY
 
+        _scaleX = usableCanvasWidth / ActualBoundsMapSrs.Width;
+        _scaleY = usableCanvasHeight / ActualBoundsMapSrs.Height;
 
+        _offsetX = -ActualBoundsMapSrs.XMin * _scaleX;
+        _offsetY = -ActualBoundsMapSrs.YMin * _scaleY;
+    }
+
+    public void Render(Canvas canvas,
+        AspectRatioMismatchStrategy ratioMismatchStrategy = AspectRatioMismatchStrategy.Center)
+    {
+        ComputeActualBounds(canvas, ratioMismatchStrategy);
+
+        Dictionary<string, MapDataSource> sourcesByName =
+            DataSources.ToDictionary(ds => ds.Name);
+        
         foreach (MapLayer layer in Layers)
         {
             MapDataSource layerDataSource =
@@ -72,7 +247,7 @@ public class Map
                 layerDataSource.Srs, MapSrs);
 
             // Determine bounds in the SRS of the data source
-            Bounds dataSourceBounds = wgs84ToSourceTransformer.Transform(BoundsWGS84);
+            Bounds dataSourceBounds = wgs84ToSourceTransformer.Transform(RequestedBoundsWgs84);
 
             // Get data
             if (layerDataSource is VectorMapDataSource vectorDataSource)
@@ -91,7 +266,8 @@ public class Map
                 VectorData layerDataMapSrs = layerDataSourceSrs.Transform(sourceToMapTransformer);
 
                 // Transform to canvas space
-                VectorData layerDataCanvasSpace = layerDataMapSrs.Transform(scaleX, scaleY, offsetX, offsetY);
+                VectorData layerDataCanvasSpace =
+                    layerDataMapSrs.Transform(_scaleX, _scaleY, _offsetX, _offsetY);
 
                 // Render data onto canvas
                 DrawVectors(canvas, vectorLayer, layerDataCanvasSpace);
@@ -102,7 +278,7 @@ public class Map
                     throw new InvalidOperationException("Raster data source must use raster layer");
                 var rasterLayer = (RasterMapLayer)layer;
 
-                RasterData rasterData = rasterDataSource.DataSource.GetData(BoundsWGS84);
+                RasterData rasterData = rasterDataSource.DataSource.GetData(RequestedBoundsWgs84);
                 DrawRaster(canvas, rasterLayer, rasterData);
             }
         }

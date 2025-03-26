@@ -18,7 +18,7 @@ public static class UrlHelper
         {
             using HttpClient httpClient = new();
             using var stream = httpClient.GetStreamAsync(url);
-            using var fs = new FileStream("localfile.jpg", FileMode.OpenOrCreate);
+            using var fs = new FileStream(destFilename, FileMode.OpenOrCreate);
             await stream.Result.CopyToAsync(fs);
         }
         catch (Exception ex)

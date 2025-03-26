@@ -1,0 +1,8 @@
+﻿<wpf:ResourceDictionary xml:space="preserve" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=5860c799_002D8752_002D4138_002Db3be_002De7604ab5cd56/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="RenderSimpleOsmData" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
+  &lt;TestAncestor&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::4CBA79BC-D8C5-47A6-A8CB-CF4EED751AA4::net8.0-windows::MapLib.Tests.Render.MapRenderFixture.RenderSimpleOsmData&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::4CBA79BC-D8C5-47A6-A8CB-CF4EED751AA4::net8.0-windows::MapLib.Tests.TestDataManager.DownloadData&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::4CBA79BC-D8C5-47A6-A8CB-CF4EED751AA4::net8.0-windows::MapLib.Tests.Render.MapRenderFixture.RenderSimpleOsmData2&lt;/TestId&gt;&#xD;
+  &lt;/TestAncestor&gt;&#xD;
+&lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>
