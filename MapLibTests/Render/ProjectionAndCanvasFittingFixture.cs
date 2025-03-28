@@ -40,14 +40,20 @@ public class ProjectionAndCanvasFittingFixture : BaseFixture
         [ValueSource("CanvasSizes")] SizeF canvasSize,
         [ValueSource("Strategies")] AspectRatioMismatchStrategy strategy)
     {
+        var sw1 = new QuickStopwatch("Creating Map");
         Map map = new(
             // Roughly square region in 3857
             new Bounds(-70.931500, -70.925782, 42.204346, 42.208510),
             projection);
+        sw1.Dispose();
 
+        var sw2 = new QuickStopwatch("Adding data sources");
         map.DataSources.Add(
             new VectorMapDataSource("osmdata",
             new VectorFileDataSource(Path.Join(TestDataPath, "osm-xml/Weymouth Detail.osm"))));
+        sw2.Dispose();
+
+        var sw3 = new QuickStopwatch("Adding layers");
         map.Layers.Add(
             new VectorMapLayer("Water", "osmdata",
                 filter: new TagFilter("natural", "water"),
@@ -63,16 +69,27 @@ public class ProjectionAndCanvasFittingFixture : BaseFixture
             new VectorMapLayer("Building", "osmdata",
                 filter: new TagFilter("building"),
                 fillColor: Color.Tan));
+        sw3.Dispose();
 
         string projectionSummary = projection.Replace(":", "");
         string prefix = $"{projectionSummary}_{canvasSize.Width}x{canvasSize.Height}_{strategy}_";
 
+        var sw4 = new QuickStopwatch("Creating canvas");
         Canvas canvas = new BitmapCanvas(
             CanvasUnit.In, canvasSize.Width, canvasSize.Height,
             Color.White, 2.0);
+        sw4.Dispose();
+
         string filename = FileSystemHelpers.GetTempFileName(canvas.DefaultFileExtension, prefix);
+
+        var sw5 = new QuickStopwatch("Render");
         map.Render(canvas, strategy);
+        sw5.Dispose();
+
+        var sw6 = new QuickStopwatch("Save to file");
         canvas.SaveToFile(filename);
+        sw6.Dispose();
+
         Console.WriteLine(filename);
         canvas.Dispose();
     }
