@@ -79,6 +79,22 @@ public struct Bounds
         return b1.Value + b2.Value;
     }
 
+    public Bounds ResizeAndCenterX(double newWidth)
+    {
+        double extraWidth = newWidth - Width;
+        return new Bounds(
+            XMin - extraWidth / 2, XMax + extraWidth / 2,
+            YMin, YMax);
+    }
+
+    public Bounds ResizeAndCenterY(double newHeight)
+    {
+        double extraHeight = newHeight - Height;
+        return new Bounds(
+            XMin, XMax,
+            YMin - extraHeight / 2, YMax + extraHeight / 2);
+    }
+
     /// <summary>
     /// Returns the size, defined as the maximum of width and height.
     /// </summary>

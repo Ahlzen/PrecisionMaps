@@ -17,21 +17,21 @@ public enum AspectRatioMismatchStrategy
     /// Stretch the data to fit the canvas. Typically results
     /// in skewed objects.
     /// </summary>
-    Stretch,
+    StretchToFillCanvas,
 
     /// <summary>
     /// Include only the requested area, centering the data
     /// on the canvas. Typically results in empty space on
     /// the left/right or top/bottom.
     /// </summary>
-    Center,
+    CenterOnCanvas,
 
     /// <summary>
     /// Crop (in either x or y) the requested area to
     /// match the canvas aspect ratio. Typically results in parts
     /// of the requested area not being included on the map.
     /// </summary>
-    Crop,
+    CropBounds,
 
     /// <summary>
     /// Extend (in either x or y) the requested area to
@@ -114,13 +114,13 @@ public class Map
         // (and possibly adjusting useable canvas size/offset)
         switch (strategy)
         {
-            case AspectRatioMismatchStrategy.Stretch:
+            case AspectRatioMismatchStrategy.StretchToFillCanvas:
                 {
                     // Use the requested bounds directly, regardless of aspect ratio
                     ActualBoundsMapSrs = wgs84ToMapSrs.Transform(RequestedBoundsWgs84);                    
                     break;
                 }
-            case AspectRatioMismatchStrategy.Center:
+            case AspectRatioMismatchStrategy.CenterOnCanvas:
                 {
                     // use the same requested bounds, but change the useable canvas size accordingly
                     ActualBoundsMapSrs = requestedBoundsMapSrs;
@@ -139,37 +139,25 @@ public class Map
                     }
                     break;
                 }                
-            case AspectRatioMismatchStrategy.Crop:
+            case AspectRatioMismatchStrategy.CropBounds:
                 {
                     if (projectedAspectRatio < canvasAspectRatio)
                     {
-                        // Canvas is wider than projected data
-                        // i.e. projected data is taller than canvas
-                        // Need to crop top and bottom.
+                        // Canvas is wider than projected data, i.e. projected data
+                        // is taller than canvas: Need to crop top and bottom.
                         double useableVerticalFactor = projectedAspectRatio / canvasAspectRatio; // should be <= 1
                         Debug.Assert(useableVerticalFactor <= 1);
-                        double cropFactor = (1 - useableVerticalFactor) / 2;
-                        double cropDistance = requestedBoundsMapSrs.Height * cropFactor;
-                        ActualBoundsMapSrs = new Bounds(
-                                requestedBoundsMapSrs.XMin,
-                                requestedBoundsMapSrs.XMax,
-                                requestedBoundsMapSrs.YMin + cropDistance,
-                                requestedBoundsMapSrs.YMax - cropDistance);
+                        ActualBoundsMapSrs = requestedBoundsMapSrs.ResizeAndCenterY(
+                            newHeight: requestedBoundsMapSrs.Height * useableVerticalFactor);
                     }
                     else
                     {
-                        // Canvas is taller than projected data
-                        // i.e. projected data is wider than canvas
-                        // Need to crop left and right.
+                        // Canvas is taller than projected data i.e. projected data
+                        // is wider than canvas: Need to crop left and right.
                         double useableHorizontalFactor = canvasAspectRatio / projectedAspectRatio; // should be <= 1
                         Debug.Assert(useableHorizontalFactor <= 1);
-                        double cropFactor = (1 - useableHorizontalFactor) / 2;
-                        double cropDistance = requestedBoundsMapSrs.Width * cropFactor;
-                        ActualBoundsMapSrs = new Bounds(
-                                requestedBoundsMapSrs.XMin + cropDistance,
-                                requestedBoundsMapSrs.XMax - cropDistance,
-                                requestedBoundsMapSrs.YMin,
-                                requestedBoundsMapSrs.YMax);
+                        ActualBoundsMapSrs = requestedBoundsMapSrs.ResizeAndCenterX(
+                            newWidth: requestedBoundsMapSrs.Width * useableHorizontalFactor);
                     }
                     break;
                 }
@@ -180,26 +168,18 @@ public class Map
                         // Canvas is wider than projected data.
                         // Extend actual bounds horizontally:
                         double horizontalFactor = canvasAspectRatio / projectedAspectRatio;
-                        double projectedWidth = requestedBoundsMapSrs.Width;
-                        double extensionDistance = (projectedWidth * (horizontalFactor - 1)) / 2;
-                        ActualBoundsMapSrs = new Bounds(
-                            requestedBoundsMapSrs.XMin - extensionDistance,
-                            requestedBoundsMapSrs.XMax + extensionDistance,
-                            requestedBoundsMapSrs.YMin,
-                            requestedBoundsMapSrs.YMax);
+                        Debug.Assert(horizontalFactor >= 1);
+                        ActualBoundsMapSrs = requestedBoundsMapSrs.ResizeAndCenterX(
+                            newWidth: requestedBoundsMapSrs.Width * horizontalFactor);
                     }
                     else
                     {
-                        // Canvas is taller than projected data
+                        // Canvas is taller than projected data.
                         // Extend actual bounds vertically:
                         double verticalFactor = projectedAspectRatio / canvasAspectRatio;
-                        double projectedHeight = requestedBoundsMapSrs.Height;
-                        double extensionDistance = (projectedHeight * (verticalFactor - 1)) / 2;
-                        ActualBoundsMapSrs = new Bounds(
-                            requestedBoundsMapSrs.XMin,
-                            requestedBoundsMapSrs.XMax,
-                            requestedBoundsMapSrs.YMin - extensionDistance,
-                            requestedBoundsMapSrs.YMax + extensionDistance);
+                        Debug.Assert(verticalFactor >= 1);
+                        ActualBoundsMapSrs = requestedBoundsMapSrs.ResizeAndCenterY(
+                            newHeight: requestedBoundsMapSrs.Height * verticalFactor);
                     }
                     break;
                 }
@@ -230,7 +210,7 @@ public class Map
     }
 
     public void Render(Canvas canvas,
-        AspectRatioMismatchStrategy ratioMismatchStrategy = AspectRatioMismatchStrategy.Center)
+        AspectRatioMismatchStrategy ratioMismatchStrategy = AspectRatioMismatchStrategy.CenterOnCanvas)
     {
         ComputeActualBounds(canvas, ratioMismatchStrategy);
 

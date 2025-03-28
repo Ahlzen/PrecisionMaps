@@ -28,9 +28,9 @@ public class ProjectionAndCanvasFittingFixture : BaseFixture
     ];
 
     private static readonly AspectRatioMismatchStrategy[] Strategies = [
-        AspectRatioMismatchStrategy.Stretch,
-        AspectRatioMismatchStrategy.Center,
-        AspectRatioMismatchStrategy.Crop,
+        AspectRatioMismatchStrategy.StretchToFillCanvas,
+        AspectRatioMismatchStrategy.CenterOnCanvas,
+        AspectRatioMismatchStrategy.CropBounds,
         AspectRatioMismatchStrategy.ExtendBounds
     ];
 
