@@ -3,6 +3,7 @@ using MapLib.Geometry;
 using MapLib.Output;
 using System.Diagnostics;
 using System.Drawing;
+using System.Threading;
 
 namespace MapLib.Render;
 
@@ -41,7 +42,7 @@ public enum AspectRatioMismatchStrategy
     ExtendBounds,
 }
 
-public class Map
+public class Map : IHasSrs, IBounded
 {
     /// <summary>
     /// The requested bounds of the map, in lon/lat WGS84.
@@ -62,6 +63,8 @@ public class Map
     /// </summary>
     public Bounds ActualBoundsMapSrs { get; private set; }
 
+    public Bounds Bounds => ActualBoundsMapSrs;
+
     /// <summary>
     /// Coordinate system and projection for the
     /// resulting map.
@@ -70,8 +73,7 @@ public class Map
     /// If data sources are in a different projection, they
     /// are reprojected on-the-fly.
     /// </remarks>
-    public string MapSrs { get; set; }
-
+    public string Srs { get; set; }
 
     public List<MapDataSource> DataSources { get; } = new();
 
@@ -82,7 +84,7 @@ public class Map
 
     public Map(Bounds boundsWgs84, string mapSrs)
     {
-        MapSrs = mapSrs;
+        Srs = mapSrs;
         RequestedBoundsWgs84 = boundsWgs84;                       
     }
 
@@ -90,8 +92,8 @@ public class Map
         Canvas canvas,
         AspectRatioMismatchStrategy strategy)
     {
-        Transformer wgs84ToMapSrs = new(Transformer.WktWgs84, this.MapSrs);
-        Transformer mapSrsToWgs84 = new(this.MapSrs, Transformer.WktWgs84);
+        Transformer wgs84ToMapSrs = new(Transformer.WktWgs84, this.Srs);
+        Transformer mapSrsToWgs84 = new(this.Srs, Transformer.WktWgs84);
 
         Debug.WriteLine("Requested bounds (WGS84): " + RequestedBoundsWgs84);
 
@@ -224,7 +226,7 @@ public class Map
             using Transformer wgs84ToSourceTransformer = new(
                 Transformer.WktWgs84, layerDataSource.Srs);
             using Transformer sourceToMapTransformer = new(
-                layerDataSource.Srs, MapSrs);
+                layerDataSource.Srs, Srs);
 
             // Determine bounds in the SRS of the data source
             Bounds dataSourceBounds = wgs84ToSourceTransformer.Transform(RequestedBoundsWgs84);
@@ -309,8 +311,18 @@ public class Map
     private void DrawRaster(Canvas canvas, RasterMapLayer mapLayer, RasterData data)
     {
         CanvasLayer layer = canvas.AddNewLayer(mapLayer.Name);
+
+        Console.WriteLine("Map SRS: " + Srs);
+        Console.WriteLine("Raster SRS: " + data.Srs);
         
-        // The requested bounds should exactly cover the full canvas
-        layer.DrawBitmap(data.Bitmap, 0, canvas.Height, canvas.Width, canvas.Height, 1.0);
+        Console.WriteLine("Map bounds LL: " + this.BoundsToSrs(Transformer.WktWgs84));
+        Console.WriteLine("Raster bounds LL: " + data.BoundsToSrs(Transformer.WktWgs84));
+
+        Console.WriteLine("Map bounds: " + Bounds);
+        Console.WriteLine("Raster bounds: " + data.BoundsToSrs(this.Srs));
+
+        //layer.DrawBitmap(data.Bitmap, 0, canvas.Height, canvas.Width, canvas.Height, 1.0);
+
+
     }
 }

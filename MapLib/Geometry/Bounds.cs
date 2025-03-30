@@ -3,7 +3,7 @@
 /// <summary>
 /// A 2D bounding box. Immutable.
 /// </summary>
-public struct Bounds
+public struct Bounds : IEquatable<Bounds>
 {
     public double XMin { get; }
     public double XMax { get; }
@@ -79,6 +79,25 @@ public struct Bounds
         return b1.Value + b2.Value;
     }
 
+    /// <summary>
+    /// Returns the intersection (overlapping area) of this
+    /// and the specified other Bounds. Returns null if no overlap,
+    /// including when sharing a corner or side.
+    /// </summary>
+    public Bounds? Intersection(Bounds other)
+    {
+        if (XMax <= other.XMin ||
+            XMin >= other.XMax ||
+            YMax <= other.YMin ||
+            YMin >= other.YMax)
+            return null;
+        return new Bounds(
+            Math.Max(XMin, other.XMin),
+            Math.Min(XMax, other.XMax),
+            Math.Max(YMin, other.YMin),
+            Math.Min(YMax, other.YMax));
+    }
+
     public Bounds ResizeAndCenterX(double newWidth)
     {
         double extraWidth = newWidth - Width;
@@ -107,4 +126,16 @@ public struct Bounds
 
     public override string ToString() =>
         $"X: ({XMin}, {XMax}) Y: ({YMin}, {YMax})";
+
+    #region IEquatable
+
+    public static bool operator ==(Bounds b1, Bounds b2) => b1.Equals(b2);
+    public static bool operator !=(Bounds b1, Bounds b2) => !(b1 == b2);
+    public bool Equals(Bounds other) =>
+        XMin == other.XMin &&
+        XMax == other.XMax &&
+        YMin == other.YMin &&
+        YMax == other.YMax;
+
+    #endregion
 }
