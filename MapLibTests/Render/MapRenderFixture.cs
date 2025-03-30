@@ -55,7 +55,8 @@ public class MapRenderFixture : BaseFixture
     }
 
     [Test]
-    public void RenderSimpleOsmDataAndRaster()
+    [TestCaseSource("LetterSizeCanvases")]
+    public void RenderSimpleOsmDataAndRaster(Canvas canvas)
     {
         Map map = new Map(
             new Bounds(-70.944, -70.915, 42.187, 42.207),
@@ -63,10 +64,9 @@ public class MapRenderFixture : BaseFixture
 
         map.DataSources.Add(
             new VectorMapDataSource("osmdata",
-            new VectorFileDataSource(Path.Join(TestDataPath, "map.osm"))));
+            new VectorFileDataSource(Path.Join(TestDataPath, "osm-xml/Weymouth Detail.osm"))));
         map.DataSources.Add(
             new RasterMapDataSource("hillshading",
-            //new GdalDataSource(Path.Join(TestDataPath, "MA Shaded Relief 5k 3857 enhanced.tif"))));
             new GdalDataSource(Path.Join(TestDataPath, "MassGIS LiDAR/be_19TCG340674.tif"))));
 
         map.Layers.Add(
@@ -116,9 +116,10 @@ public class MapRenderFixture : BaseFixture
                 filter: new TagFilter("building"),
                 fillColor: Color.Tan));
 
-        Canvas canvas = new SvgCanvas(CanvasUnit.In, 11.0, 8.5, System.Drawing.Color.White);
+        //Canvas canvas = new SvgCanvas(CanvasUnit.In, 11.0, 8.5, Color.White);
         map.Render(canvas);
-        string filename = FileSystemHelpers.GetTempFileName(".svg", "RenderSimpleOsmDataAndRaster_");
+        string filename = FileSystemHelpers.GetTempFileName(
+            canvas.DefaultFileExtension, "RenderSimpleOsmDataAndRaster_");
         canvas.SaveToFile(filename);
         Console.WriteLine(filename);
         canvas.Dispose();

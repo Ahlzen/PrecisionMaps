@@ -1,4 +1,6 @@
-﻿namespace MapLib.Geometry;
+﻿using MapLib.GdalSupport;
+
+namespace MapLib.Geometry;
 
 /// <summary>
 /// A 2D bounding box. Immutable.
@@ -136,6 +138,38 @@ public struct Bounds : IEquatable<Bounds>
         XMax == other.XMax &&
         YMin == other.YMin &&
         YMax == other.YMax;
+    
+    public override bool Equals(object? obj) =>
+        obj is Bounds && Equals((Bounds)obj);
+    
+    public override int GetHashCode() =>
+        XMin.GetHashCode() ^
+        XMax.GetHashCode() ^
+        YMin.GetHashCode() ^
+        YMax.GetHashCode();
+
+    #endregion
+
+    #region Transformations
+
+    // NOTE: These transform the corner coordinates only.
+
+    public Bounds Transform(double scale, double offsetX, double offsetY)
+        => new Bounds(
+            TopLeft.Transform(scale, offsetX, offsetY),
+            BottomRight.Transform(scale, offsetX, offsetY));
+
+    public Bounds Transform(double scaleX, double scaleY, double offsetX, double offsetY)
+        => new Bounds(
+            TopLeft.Transform(scaleX, scaleY, offsetX, offsetY),
+            BottomRight.Transform(scaleX, scaleY, offsetX, offsetY));
+
+    public Bounds Transform(Transformer transformer)
+        => new Bounds(
+            transformer.Transform(TopLeft),
+            transformer.Transform(BottomRight));
+
+
 
     #endregion
 }

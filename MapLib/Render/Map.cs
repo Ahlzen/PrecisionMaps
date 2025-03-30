@@ -321,8 +321,20 @@ public class Map : IHasSrs, IBounded
         Console.WriteLine("Map bounds: " + Bounds);
         Console.WriteLine("Raster bounds: " + data.BoundsToSrs(this.Srs));
 
-        //layer.DrawBitmap(data.Bitmap, 0, canvas.Height, canvas.Width, canvas.Height, 1.0);
+        // Find overlapping area (in map SRS)
+        Bounds? overlap = Bounds.Intersection(data.BoundsToSrs(this.Srs));
+        if (overlap == null)
+            return; // no overlap - nothing to render
 
-
+        // TODO: Figure out cropped part of bitmap
+        // For now, just transform coordinates to canvas space,
+        // and draw the full bitmap
+        Bounds rasterBoundsInMapSrs = data.BoundsToSrs(this.Srs);
+        Bounds rasterBoundsInCanvasSrs = rasterBoundsInMapSrs.Transform(
+            _scaleX, _scaleY, _offsetX, _offsetY);
+        layer.DrawBitmap(data.Bitmap,
+            rasterBoundsInCanvasSrs.XMin, rasterBoundsInCanvasSrs.YMin,
+            rasterBoundsInCanvasSrs.Width, rasterBoundsInCanvasSrs.Height,
+            1.0);
     }
 }

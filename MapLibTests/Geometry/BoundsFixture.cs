@@ -53,8 +53,8 @@ public class BoundsFixture : BaseFixture
     [Test]
     public void TestResizeAndCenterY()
     {
-        Bounds b = new(4, 8, 2, 4);
 
+        Bounds b = new(4, 8, 2, 4);
         Bounds tall = b.ResizeAndCenterY(newHeight: 8);
         Assert.That(tall.BottomLeft == new Coord(4, -1));
         Assert.That(tall.TopRight == new Coord(8, 7));
