@@ -5,10 +5,14 @@ namespace MapLib;
 
 public class RasterData : GeoData
 {
-    // TODO: implement properly
+    
+    /// <param name="srs">SRS of raster data.</param>
+    /// <param name="bounds">Bounds (in source/dataset SRS)</param>
+    /// <param name="bitmap">Bitmap containing the raster data/layer.</param>
     public RasterData(string srs, Bounds bounds, Bitmap bitmap)
         : base(srs)
     {
+        // TODO: implement properly
         Bounds = bounds;
         Bitmap = bitmap;
     }

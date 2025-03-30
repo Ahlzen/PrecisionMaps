@@ -8,11 +8,11 @@ using Transformer = MapLib.GdalSupport.Transformer;
 
 namespace MapLib.DataSources.Vector;
 
-public class VectorFileDataSource : IVectorDataSource
+public class VectorFileDataSource : BaseVectorDataSource
 {
-    public string Name => "Vector file";
-    public string Srs { get; }
-    public Bounds? BoundsWgs84 { get; }
+    public override string Name => "Vector file";
+    public override string Srs { get; }
+    public override Bounds? Bounds { get; }
     public string Filename { get; }
 
     private IVectorFormatReader _reader;
@@ -35,14 +35,14 @@ public class VectorFileDataSource : IVectorDataSource
                 {
                     using Dataset dataset = OgrUtils.GetVectorDataset(filename);
                     Srs = OgrUtils.GetSrsAsWkt(dataset);
-                    BoundsWgs84 = OgrUtils.GetDatasetBounds(dataset);
+                    Bounds = OgrUtils.GetDatasetBounds(dataset);
                     _reader = new OgrDataReader();
                 }
                 break;
         }
     }
 
-    public VectorData GetData(Bounds bounds)
+    public override VectorData GetData(Bounds bounds)
     {
         return _reader.ReadFile(Filename);
     }

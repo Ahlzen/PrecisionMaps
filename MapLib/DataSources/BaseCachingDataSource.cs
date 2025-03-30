@@ -2,21 +2,19 @@
 
 namespace MapLib.DataSources;
 
-public abstract class BaseCachingDataSource
+internal class DataFileCacheManager
 {
-    public abstract TimeSpan DefaultCacheDuration { get; }
-
     public TimeSpan CacheDuration { get; set; }
 
-    protected BaseCachingDataSource()
+    public DataFileCacheManager(TimeSpan defaultCacheDuration)
     {
-        CacheDuration = DefaultCacheDuration;
+        CacheDuration = defaultCacheDuration;
     }
 
     /// <summary>
     /// Returns a cached file path that is still valid, or null if none.
     /// </summary>
-    protected string? GetExistingCachedFile(string baseFileName, string extension)
+    public string? GetExistingCachedFile(string baseFileName, string extension)
     {
         string? mostRecentValidFilename = null;
         DateTime? mostRecentDatetime = null;
@@ -42,11 +40,11 @@ public abstract class BaseCachingDataSource
         return mostRecentValidFilename;
     }
 
-    protected string FormatFileName(string baseFileName, string extension)
+    public string FormatFileName(string baseFileName, string extension)
     {
         string isodate = DateTime.Now
             .ToString("s", System.Globalization.CultureInfo.InvariantCulture)
-            .Replace(":", "_"); // windows doesn't like ":" in filenames
+            .Replace(":", "_"); // windows doesn't allow ":" in filenames
         return Path.Join(Path.GetTempPath(), baseFileName + "_" + isodate + extension);
 
     }

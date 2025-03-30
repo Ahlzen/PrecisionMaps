@@ -12,6 +12,7 @@ internal class OsmDataReaderFixture : BaseFixture
         OsmDataReader reader = new();
         VectorData map = reader.ReadFile(Path.Join(TestDataPath, "map.osm"));
 
+        Assert.That(map.Bounds, Is.Not.Null);
         Assert.That(map.Bounds.Width, Is.GreaterThan(0));
         Assert.That(map.Bounds.Height, Is.GreaterThan(0));
         Assert.That(map.Points, Is.Not.Empty);

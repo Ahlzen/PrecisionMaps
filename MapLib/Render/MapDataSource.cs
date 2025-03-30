@@ -15,11 +15,11 @@ public abstract class MapDataSource
 
 public class VectorMapDataSource : MapDataSource
 {
-    public IVectorDataSource DataSource { get; }
+    public BaseVectorDataSource DataSource { get; }
     public override string Srs => DataSource.Srs;
 
     public VectorMapDataSource(string name,
-        IVectorDataSource dataSource) : base(name)
+        BaseVectorDataSource dataSource) : base(name)
     {
         DataSource = dataSource;
     }
@@ -27,11 +27,11 @@ public class VectorMapDataSource : MapDataSource
 
 public class RasterMapDataSource : MapDataSource
 {
-    public IRasterDataSource DataSource { get; }
+    public BaseRasterDataSource DataSource { get; }
     public override string Srs => DataSource.Srs;
 
     public RasterMapDataSource(string name,
-        IRasterDataSource dataSource) : base(name)
+        BaseRasterDataSource dataSource) : base(name)
     {
         DataSource = dataSource;
     }

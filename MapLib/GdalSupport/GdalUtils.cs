@@ -158,21 +158,37 @@ public static class GdalUtils
     /// Returns the transformed coordinates of the specified raster position
     /// (pixel) in the raster.
     /// </summary>
-    public static (double xCoord, double yCoord)
-        GDALInfoGetPosition(Dataset ds, double x, double y)
+    public static Coord GDALInfoGetPosition(Dataset ds, double x, double y)
     {
         double[] adfGeoTransform = new double[6];
         double dfGeoX, dfGeoY;
         ds.GetGeoTransform(adfGeoTransform);
         dfGeoX = adfGeoTransform[0] + adfGeoTransform[1] * x + adfGeoTransform[2] * y;
         dfGeoY = adfGeoTransform[3] + adfGeoTransform[4] * x + adfGeoTransform[5] * y;
-        return (dfGeoX, dfGeoY);
+        return new Coord(dfGeoX, dfGeoY);
     }
 
     public static string GDALInfoGetPositionSummary(Dataset ds, double x, double y)
     {
-        (double dfGeoX, double dfGeoY) = GDALInfoGetPosition(ds, x, y);
-        return dfGeoX.ToString() + ", " + dfGeoY.ToString();
+        Coord coord = GDALInfoGetPosition(ds, x, y);
+        return coord.X.ToString() + ", " + coord.Y.ToString();
+    }
+
+    /// <summary>
+    /// Returns the bounds, in the source (dataset) SRS.
+    /// </summary>
+    /// <remarks>
+    /// Bounds are calculated by including all four corners.
+    /// TODO: Should we calculate differently and/or sample more
+    /// positions along the edges?
+    /// </remarks>
+    public static Bounds GetBounds(Dataset ds)
+    {
+        int width = ds.RasterXSize;
+        int height = ds.RasterYSize;
+        Coord c1 = GDALInfoGetPosition(ds, 0, 0);
+        Coord c2 = GDALInfoGetPosition(ds, width-1, height-1);
+        return Bounds.FromCoords([c1, c2]);
     }
 
     public static Bitmap GetBitmap(string filename, Bounds areaProjected,
@@ -208,7 +224,7 @@ public static class GdalUtils
         }
     }
 
-    private static Bitmap GetBitmap(Dataset ds, int xOffset, int yOffset,
+    public static Bitmap GetBitmap(Dataset ds, int xOffset, int yOffset,
         int width, int height, int imageWidth, int imageHeight)
     {
         if (ds.RasterCount == 0)

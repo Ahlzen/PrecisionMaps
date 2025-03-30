@@ -4,7 +4,11 @@ namespace MapLib;
 
 public abstract class GeoData
 {
+    /// <summary>
+    /// Bounds, in source (dataset) SRS.
+    /// </summary>
     public abstract Bounds Bounds { get; }
+
     public virtual Coord Center => Bounds.Center;
 
     /// <summary>

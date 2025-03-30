@@ -258,7 +258,7 @@ public class Map
                     throw new InvalidOperationException("Raster data source must use raster layer");
                 var rasterLayer = (RasterMapLayer)layer;
 
-                RasterData rasterData = rasterDataSource.DataSource.GetData(RequestedBoundsWgs84);
+                RasterData rasterData = rasterDataSource.DataSource.GetData();
                 DrawRaster(canvas, rasterLayer, rasterData);
             }
         }

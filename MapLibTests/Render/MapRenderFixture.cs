@@ -55,7 +55,7 @@ public class MapRenderFixture : BaseFixture
     }
 
     [Test]
-    public void RenderSimpleOsmData2()
+    public void RenderSimpleOsmDataAndRaster()
     {
         Map map = new Map(
             new Bounds(-70.944, -70.915, 42.187, 42.207),
@@ -118,7 +118,7 @@ public class MapRenderFixture : BaseFixture
 
         Canvas canvas = new SvgCanvas(CanvasUnit.In, 11.0, 8.5, System.Drawing.Color.White);
         map.Render(canvas);
-        string filename = FileSystemHelpers.GetTempFileName(".svg", "RenderSimpleOsmData2_");
+        string filename = FileSystemHelpers.GetTempFileName(".svg", "RenderSimpleOsmDataAndRaster_");
         canvas.SaveToFile(filename);
         Console.WriteLine(filename);
         canvas.Dispose();
