@@ -77,7 +77,6 @@ public abstract class BaseVectorDataSource : BaseDataSource
     /// <summary>
     /// See GetData(). Returns data in the specified SRS, reprojecting if needed.
     /// </summary>
-    //public abstract VectorData GetData(string destSrs);
     public virtual VectorData GetData(string destSrs)
     {
         Transformer transformer = new(this.Srs, destSrs);
@@ -97,7 +96,6 @@ public abstract class BaseVectorDataSource : BaseDataSource
     /// <summary>
     /// See GetData(). Returns data in the specified SRS, reprojecting if needed.
     /// </summary>
-    //public abstract VectorData GetData(Bounds boundsWgs84, string destSrs);
     public virtual VectorData GetData(Bounds boundsWgs84, string destSrs)
     {
         Transformer transformer = new(this.Srs, destSrs);

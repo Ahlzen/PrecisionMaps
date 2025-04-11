@@ -3,8 +3,6 @@ using MapLib.GdalSupport;
 using MapLib.Geometry;
 using OSGeo.GDAL;
 using OSGeo.OSR;
-
-using OSGeo.OSR;
 using System.Drawing;
 
 namespace MapLib.DataSources.Raster;
@@ -31,15 +29,6 @@ public class GdalDataSource : BaseRasterDataSource
         HeightPx = dataset.RasterYSize;
     }
 
-    //public RasterData GetData(Bounds boundsWgs84)
-    //{
-    //    using OSGeo.GDAL.Dataset dataset = GdalUtils.GetRasterDataset(Filename);
-    //    Transformer transformer = new(Transformer.WktWgs84, Srs);
-    //    Bounds srcBounds = transformer.Transform(boundsWgs84);
-    //    Bitmap bitmap = GdalUtils.GetBitmap(dataset, srcBounds);
-    //    return new RasterData(Srs, srcBounds, bitmap);
-    //}
-
     public override RasterData GetData()
     {
         using OSGeo.GDAL.Dataset dataset = GdalUtils.GetRasterDataset(Filename);
@@ -56,20 +45,12 @@ public class GdalDataSource : BaseRasterDataSource
         // Reproject source data, if needed
         if (Srs != destSrs)
         {
-            //SpatialReference srFrom = GdalUtils.GetSpatialReference(sourceDataset); //new SpatialReference(null);
-            //SpatialReference srTo = new SpatialReference(null);
-            //srTo.ImportFromWkt(ref destSrs);
             string sourceSrs = GdalUtils.GetSrsAsWkt(sourceDataset);
-
             using Dataset destDataset = Gdal.AutoCreateWarpedVRT(sourceDataset,
                 sourceSrs, destSrs, ResampleAlg.GRA_Lanczos,
                 maxerror: 0 // use exact calculations
                 );
-            
-            // Get raster data from reprojected dataset
             return GetRasterData(destDataset);
-            //destDataset.SetDescription()
-            
 
             //Gdal.ReprojectImage(sourceDataset, destDataset,
             //    sourceSrs, destSrs, ResampleAlg.GRA_Lanczos,
