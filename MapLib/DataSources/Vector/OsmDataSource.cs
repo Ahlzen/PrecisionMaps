@@ -10,6 +10,8 @@ public class OsmDataSource : BaseVectorDataSource
 
     public override string Srs => "EPSG:4326"; // WGS84 lon/lat
 
+    public override bool IsBounded => false;
+
     public static Bounds _bounds = new Bounds(-180, 180, -90, 90);
     public override Bounds? Bounds => _bounds;
 
@@ -22,6 +24,12 @@ public class OsmDataSource : BaseVectorDataSource
     public OsmDataSource()
     {
         _cacheManager = new(DefaultCacheDuration);
+    }
+
+    public override VectorData GetData()
+    {
+        throw new InvalidOperationException(
+            "Must specify bounds with OSM data source.");
     }
 
     public override VectorData GetData(Bounds bounds)

@@ -3,6 +3,7 @@ using MapLib.Geometry;
 using MapLib.Output;
 using System.Diagnostics;
 using System.Drawing;
+using System.Security.Cryptography;
 using System.Threading;
 
 namespace MapLib.Render;
@@ -224,9 +225,9 @@ public class Map : IHasSrs, IBounded
             MapDataSource layerDataSource =
                 sourcesByName[layer.DataSourceName];
             using Transformer wgs84ToSourceTransformer = new(
-                Transformer.WktWgs84, layerDataSource.Srs);
+                Transformer.WktWgs84, layerDataSource.SourceSrs);
             using Transformer sourceToMapTransformer = new(
-                layerDataSource.Srs, Srs);
+                layerDataSource.SourceSrs, Srs);
 
             // Determine bounds in the SRS of the data source
             Bounds dataSourceBounds = wgs84ToSourceTransformer.Transform(RequestedBoundsWgs84);
@@ -238,21 +239,26 @@ public class Map : IHasSrs, IBounded
                     throw new InvalidOperationException("Vector data source must use vector layer");
                 var vectorLayer = (VectorMapLayer)layer;
 
-                VectorData layerDataSourceSrs = vectorDataSource.DataSource.GetData(dataSourceBounds);
+                //VectorData layerDataSourceSrs = vectorDataSource.DataSource.GetData(dataSourceBounds);
+
+                VectorData data = vectorDataSource.DataSource.GetData(dataSourceBounds, this.Srs);
 
                 // Filter features?
+                //if (vectorLayer.Filter != null)
+                //    layerDataSourceSrs = vectorLayer.Filter.Filter(layerDataSourceSrs);
                 if (vectorLayer.Filter != null)
-                    layerDataSourceSrs = vectorLayer.Filter.Filter(layerDataSourceSrs);
+                    data = vectorLayer.Filter.Filter(data);
 
                 // Transform layer data to map SRS/Projection
-                VectorData layerDataMapSrs = layerDataSourceSrs.Transform(sourceToMapTransformer);
+                //VectorData layerDataMapSrs = layerDataSourceSrs.Transform(sourceToMapTransformer);
 
                 // Transform to canvas space
-                VectorData layerDataCanvasSpace =
-                    layerDataMapSrs.Transform(_scaleX, _scaleY, _offsetX, _offsetY);
+                VectorData dataInCanvasSpace =
+                    //layerDataMapSrs.Transform(_scaleX, _scaleY, _offsetX, _offsetY);
+                    data.Transform(_scaleX, _scaleY, _offsetX, _offsetY);
 
                 // Render data onto canvas
-                DrawVectors(canvas, vectorLayer, layerDataCanvasSpace);
+                DrawVectors(canvas, vectorLayer, dataInCanvasSpace);
             }
             else if (layerDataSource is RasterMapDataSource rasterDataSource)
             {
@@ -260,8 +266,11 @@ public class Map : IHasSrs, IBounded
                     throw new InvalidOperationException("Raster data source must use raster layer");
                 var rasterLayer = (RasterMapLayer)layer;
 
-                RasterData rasterData = rasterDataSource.DataSource.GetData();
-                DrawRaster(canvas, rasterLayer, rasterData);
+                //RasterData rasterData = rasterDataSource.DataSource.GetData();
+                RasterData data = rasterDataSource.DataSource.GetData(this.Srs);
+
+                //DrawRaster(canvas, rasterLayer, rasterData);
+                DrawRaster(canvas, rasterLayer, data);
             }
         }
     }
@@ -308,6 +317,15 @@ public class Map : IHasSrs, IBounded
         }
     }
 
+    private void ProjectAndDrawRaster(Canvas canvas, RasterMapLayer mapLayer, RasterData data)
+    {
+        if (data.Srs != this.Srs)
+        {
+            // reproject
+
+        }
+    }
+
     private void DrawRaster(Canvas canvas, RasterMapLayer mapLayer, RasterData data)
     {
         CanvasLayer layer = canvas.AddNewLayer(mapLayer.Name);
@@ -321,6 +339,8 @@ public class Map : IHasSrs, IBounded
         Console.WriteLine("Map bounds: " + Bounds);
         Console.WriteLine("Raster bounds: " + data.BoundsToSrs(this.Srs));
 
+        Console.WriteLine("Bitmap pixel format: " + data.Bitmap.PixelFormat);
+
         // Find overlapping area (in map SRS)
         Bounds? overlap = Bounds.Intersection(data.BoundsToSrs(this.Srs));
         if (overlap == null)
@@ -332,6 +352,7 @@ public class Map : IHasSrs, IBounded
         Bounds rasterBoundsInMapSrs = data.BoundsToSrs(this.Srs);
         Bounds rasterBoundsInCanvasSrs = rasterBoundsInMapSrs.Transform(
             _scaleX, _scaleY, _offsetX, _offsetY);
+
         layer.DrawBitmap(data.Bitmap,
             rasterBoundsInCanvasSrs.XMin, rasterBoundsInCanvasSrs.YMin,
             rasterBoundsInCanvasSrs.Width, rasterBoundsInCanvasSrs.Height,

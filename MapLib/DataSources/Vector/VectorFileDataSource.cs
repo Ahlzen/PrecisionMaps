@@ -15,6 +15,8 @@ public class VectorFileDataSource : BaseVectorDataSource
     public override Bounds? Bounds { get; }
     public string Filename { get; }
 
+    public override bool IsBounded => true;
+
     private IVectorFormatReader _reader;
 
     public VectorFileDataSource(string filename)
@@ -42,8 +44,10 @@ public class VectorFileDataSource : BaseVectorDataSource
         }
     }
 
-    public override VectorData GetData(Bounds bounds)
+    public override VectorData GetData()
     {
         return _reader.ReadFile(Filename);
     }
+
+    public override VectorData GetData(Bounds bounds) => GetData();
 }

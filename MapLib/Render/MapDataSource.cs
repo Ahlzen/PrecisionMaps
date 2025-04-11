@@ -5,7 +5,12 @@ namespace MapLib.Render;
 public abstract class MapDataSource
 {
     public string Name { get; }
-    public abstract string Srs { get; }
+ 
+    public abstract string SourceSrs { get; }
+
+    //public abstract string MapSrs { get; }
+
+
 
     public MapDataSource(string name)
     {
@@ -16,7 +21,9 @@ public abstract class MapDataSource
 public class VectorMapDataSource : MapDataSource
 {
     public BaseVectorDataSource DataSource { get; }
-    public override string Srs => DataSource.Srs;
+    public override string SourceSrs => DataSource.Srs;
+
+
 
     public VectorMapDataSource(string name,
         BaseVectorDataSource dataSource) : base(name)
@@ -28,7 +35,7 @@ public class VectorMapDataSource : MapDataSource
 public class RasterMapDataSource : MapDataSource
 {
     public BaseRasterDataSource DataSource { get; }
-    public override string Srs => DataSource.Srs;
+    public override string SourceSrs => DataSource.Srs;
 
     public RasterMapDataSource(string name,
         BaseRasterDataSource dataSource) : base(name)

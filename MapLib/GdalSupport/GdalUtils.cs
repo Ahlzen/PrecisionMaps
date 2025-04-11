@@ -134,6 +134,15 @@ public static class GdalUtils
         return sb.ToString();
     }
 
+    public static SpatialReference GetSpatialReference(Dataset rasterDataSet)
+    {
+        // TODO: add error handling
+        string wkt = rasterDataSet.GetProjectionRef();
+        SpatialReference srs = new SpatialReference(null);
+        srs.ImportFromWkt(ref wkt);
+        return srs;
+    }
+
     public static string GetSrsAsWkt(Dataset rasterDataset)
     {
         string projection = rasterDataset.GetProjectionRef();
@@ -151,6 +160,16 @@ public static class GdalUtils
         {
             return projection;
         }
+    }
+
+    public static Dataset Reproject(Dataset sourceDataset, string destSrs)
+    {
+        string sourceSrs = GdalUtils.GetSrsAsWkt(sourceDataset);
+        using Dataset destDataset = Gdal.AutoCreateWarpedVRT(sourceDataset,
+            sourceSrs, destSrs, ResampleAlg.GRA_Lanczos,
+            maxerror: 0 // use exact calculations
+            );
+        return destDataset;
     }
 
 
