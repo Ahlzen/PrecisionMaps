@@ -143,6 +143,11 @@ public static class GdalUtils
         return srs;
     }
 
+    public static string GetSrsAsWkt(string filename)
+    {
+        using Dataset dataSet = GetRasterDataset(filename);
+        return GetSrsAsWkt(dataSet);
+    }
     public static string GetSrsAsWkt(Dataset rasterDataset)
     {
         string projection = rasterDataset.GetProjectionRef();

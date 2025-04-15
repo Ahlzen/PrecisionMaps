@@ -7,6 +7,9 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 using System.Drawing.Imaging;
+using MapLib.GdalSupport;
+using OSGeo.GDAL;
+using OSGeo.OSR;
 
 namespace MapLib.Tests.DataSources;
 
@@ -28,5 +31,24 @@ public class GdalDataSourceFixture : BaseFixture
         Assert.That(data.Bitmap, Is.Not.Null);
         Assert.That(data.Bitmap.Width, Is.EqualTo(dataSource.WidthPx));
         Assert.That(data.Bitmap.Height, Is.EqualTo(dataSource.HeightPx));
+    }
+
+    [Test]
+    public void TestTransform()
+    {
+        string sourceFilename = Path.Join(
+            TestDataPath, "MassGIS LiDAR/be_19TCG339672.tif");
+
+        // Source is "EPSG:6348 - NAD83(2011) / UTM zone 19N"
+        // Transform to EPSG:3857
+        string destFilename = GdalDataSource.Transform(sourceFilename, "EPSG:3857");
+
+        Console.WriteLine(destFilename);
+
+        using Dataset destDataset = GdalUtils.GetRasterDataset(destFilename);
+        SpatialReference sr = GdalUtils.GetSpatialReference(destDataset);
+
+        // Check that dest is indeed 3857
+        Assert.That(sr.AutoIdentifyEPSG(), Is.EqualTo(3857));
     }
 }

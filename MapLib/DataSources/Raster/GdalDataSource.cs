@@ -1,9 +1,13 @@
 ﻿using MapLib.FileFormats.Raster;
 using MapLib.GdalSupport;
 using MapLib.Geometry;
+using MapLib.Util;
 using OSGeo.GDAL;
+using OSGeo.OGR;
 using OSGeo.OSR;
+using System.Diagnostics;
 using System.Drawing;
+using System.Net.Http;
 
 namespace MapLib.DataSources.Raster;
 
@@ -52,20 +56,37 @@ public class GdalDataSource : BaseRasterDataSource
                 );
             return GetRasterData(destDataset);
 
-            //Gdal.ReprojectImage(sourceDataset, destDataset,
-            //    sourceSrs, destSrs, ResampleAlg.GRA_Lanczos,
-            //    WarpMemoryLimit: 0.0, // use default memory limit)
-            //    maxerror: 0.0, // use exact calculations
-            //    callback: null,
-            //    callback_data: null,
-            //    options: new string[] { }
-            //    );
-            //srFrom.ImportFromWkt(dataset.GetProjectionRef());
+            
         }
         else
         {
             return GetRasterData(sourceDataset);
         }
+    }
+
+    //public string Transform(string )
+
+    public static string Transform(string sourceFilename, string destSrs)
+    {
+        // Get source SRS
+        using Dataset sourceDataset = GdalUtils.GetRasterDataset(sourceFilename);
+        string sourceSrs = GdalUtils.GetSrsAsWkt(sourceDataset);
+
+        GDALWarpAppOptions appOptions = new GDALWarpAppOptions(new string[] {
+                "-s_srs", sourceSrs,
+                "-t_srs", destSrs,
+                "-r", "lanczos",
+                "-of", "gtiff"
+            });
+
+        string destFilename = FileSystemHelpers.GetTempFileName(".tif", "warped");
+        using Dataset result = Gdal.Warp(destFilename,
+            new Dataset[] { sourceDataset },
+            appOptions,
+            callback: null,
+            callback_data: null);
+        result.Close();
+        return destFilename;
     }
 
     private static RasterData GetRasterData(Dataset dataset)
