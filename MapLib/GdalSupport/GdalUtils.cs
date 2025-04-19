@@ -121,7 +121,6 @@ public static class GdalUtils
                 double units = srs.GetAngularUnits();
                 string unitsName = srs.GetAngularUnitsName();
                 string linearUnitsName = srs.GetLinearUnitsName();
-                srs.ExportToXML(out string xml, "");
                 sb.AppendLine("Coordinate System is:");
                 sb.AppendLine(wkt);
             }

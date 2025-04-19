@@ -62,6 +62,9 @@ public class GdalDataSource : BaseRasterDataSource
         
         using Dataset sourceDataset =
             GdalUtils.GetRasterDataset(filename);
+
+        Console.WriteLine(GdalUtils.GetRasterInfo(sourceDataset));
+
         return GetRasterData(sourceDataset);
     }
 

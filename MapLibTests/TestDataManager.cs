@@ -28,10 +28,14 @@ internal class TestDataManager
         {"Natural Earth/ne_110m_land.zip", "https://naciscdn.org/naturalearth/110m/physical/ne_110m_land.zip" },
 
         // MassGIS Elevation from LiDAR
+        // These are single-band Float32 rasters, forming a contiguous grid
         {"MassGIS LiDAR/be_19TCG339674.zip", "https://s3.us-east-1.amazonaws.com/download.massgis.digital.mass.gov/lidar/2021_LIDAR/be_rasters/be_19TCG339674.zip" },
         {"MassGIS LiDAR/be_19TCG340674.zip", "https://s3.us-east-1.amazonaws.com/download.massgis.digital.mass.gov/lidar/2021_LIDAR/be_rasters/be_19TCG340674.zip" },
         {"MassGIS LiDAR/be_19TCG339672.zip", "https://s3.us-east-1.amazonaws.com/download.massgis.digital.mass.gov/lidar/2021_LIDAR/be_rasters/be_19TCG339672.zip" },
         {"MassGIS LiDAR/be_19TCG340672.zip", "https://s3.us-east-1.amazonaws.com/download.massgis.digital.mass.gov/lidar/2021_LIDAR/be_rasters/be_19TCG340672.zip" },
+
+        // MassGIS Shaded Relief
+        // TODO
 
         // MassGIS Contour Lines
         {"MassGIS contours/contour_1ft_19TCG339674.zip", "https://s3.us-east-1.amazonaws.com/download.massgis.digital.mass.gov/lidar/2021_LIDAR/contours/contour_1ft_19TCG339674.zip" },
