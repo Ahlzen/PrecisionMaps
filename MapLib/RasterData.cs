@@ -21,38 +21,50 @@ public class RasterData : GeoData
     public Bitmap Bitmap { get; }
 }
 
-public class RasterData2 : GeoData
+public abstract class RasterData2 : GeoData
 {
     public override Bounds Bounds { get; }
 
     public int WidthPx { get; }
     public int HeightPx { get; }
 
+    public RasterData2(string srs, Bounds bounds, int widthPx, int heightPx) : base(srs)
+    {
+        Bounds = bounds;
+        WidthPx = widthPx;
+        HeightPx = heightPx;
+    }
+}
+
+public class SingleBandRasterData : RasterData2
+{
     /// <summary>
     /// Values  for data sources that contain a single band of values
     /// rather than images, such as DEMs, bathymetry and other grid measurements.
     /// WidthPx * HeightPx * 4 bytes (Float32).
     /// </summary>
     public float[]? SingleBandData { get; }
-    public bool IsSingleBand => SingleBandData != null;
 
+    public SingleBandRasterData(string srs, Bounds bounds, int widthPx, int heightPx, float[] singleBandData)
+    : base(srs, bounds, widthPx, heightPx)
+    {
+        SingleBandData = singleBandData;
+    }
+}
+
+public class ImageRasterData : RasterData2
+{
     /// <summary>
     /// Image data for image data sources (aerial imagery, maps, shaded
     /// relief etc).
     /// WidthPx * HeightPx * 4 bytes (ARGB).
     /// </summary>
-    public byte[]? ImageData { get; }
-    public bool IsImage => ImageData != null;
+    public byte[] ImageData { get; }
 
-    public RasterData2(string srs, Bounds bounds, int widthPx, int heightPx,
-        byte[]? imageData, float[]? singleBandData) : base(srs)
+    public ImageRasterData(string srs, Bounds bounds, int widthPx, int heightPx, byte[] imageData)
+        : base(srs, bounds, widthPx, heightPx)
     {
-        Bounds = bounds;
-        WidthPx = widthPx;
-        HeightPx = heightPx;
         ImageData = imageData;
-        SingleBandData = singleBandData;
-
         _bitmapBuilder = new Lazy<Bitmap>(BuildBitmap);
     }
 
