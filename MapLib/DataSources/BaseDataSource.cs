@@ -44,17 +44,21 @@ public abstract class BaseRasterDataSource : BaseDataSource
     /// raster data if necessary.
     /// </summary>
     public abstract RasterData GetData(string destSrs);
+}
 
-    ///// <summary>
-    ///// Return raster data for (at least) the specified bounds from
-    ///// this source.
-    ///// </summary>
-    ///// <remarks>
-    ///// May return less if the requested area extends outside the bounds
-    ///// of this data source.
-    ///// May return more if needed (e.g. may not crop/trim a file data source).
-    ///// </remarks>
-    //public abstract RasterData GetData(Bounds boundsWgs84);
+public abstract class BaseRasterDataSource2 : BaseDataSource
+{
+    /// <summary>
+    /// Return all raster data for the specified source.
+    /// </summary>
+    public abstract RasterData2 GetData();
+
+    /// <summary>
+    /// Return all raster data for the specified source
+    /// in the specfied srs/projection, reprojecting (warping) the
+    /// raster data if necessary.
+    /// </summary>
+    public abstract RasterData2 GetData(string destSrs);
 }
 
 public abstract class BaseVectorDataSource : BaseDataSource

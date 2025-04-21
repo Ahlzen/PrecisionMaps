@@ -6,60 +6,18 @@ using System.Text;
 
 namespace MapLib.DataSources.Raster;
 
-//public enum RasterDataFormat
-//{
-//    /// <summary>
-//    /// 8-Bit grayscale values (1 byte per pixel)
-//    /// </summary>
-//    Grayscale8,
-
-//    /// <summary>
-//    /// Red/Green/Blue/Alpha values (4 bytes per pixel)
-//    /// </summary>
-//    RGBA,
-
-//    /// <summary>
-//    /// Single 32-bit floating point per pixel (4 bytes per pixel)
-//    /// </summary>
-//    Float32,
-//}
-
-public class GdalDataSource2 : BaseRasterDataSource
+public class GdalDataSource2 : BaseRasterDataSource2
 {
     public override string Name => "Raster File (using GDAL)";
     
     public string Filename { get; }
-
-    //public override string Srs { get; }
-    //public override Bounds? Bounds { get; }
-
-    //public int WidthPx { get; }
-    //public int HeightPx { get; }
-
-    //public RasterDataFormat Format { get; }
 
     public double[] AffineGeoTransform { get; } // pixel to geo
     public double[] AffineInverseGeoTransform { get; } // geo to pixel
 
     // NOTE: Either SingleBandData or PixelData should be non-null,
     // depending on the type of data in the source.
-
-    ///// <summary>
-    ///// Values  for data sources that contain a single band of values
-    ///// rather than images, such as DEMs, bathymetry and other grid measurements.
-    ///// WidthPx * HeightPx * 4 bytes (Float32).
-    ///// </summary>
-    //public float[]? SingleBandData { get; }
-    //public bool IsSingleBand => SingleBandData != null;
-
-    ///// <summary>
-    ///// Image data for image data sources (aerial imagery, maps, shaded
-    ///// relief etc).
-    ///// WidthPx * HeightPx * 4 bytes (RGBA).
-    ///// </summary>
-    //public byte[]? ImageData { get; }
-    //public bool IsImage => ImageData != null;
-    
+  
     public RasterData2 RasterData { get; }
     public override string Srs => RasterData.Srs;
     public override Bounds? Bounds => RasterData.Bounds;
@@ -95,29 +53,6 @@ public class GdalDataSource2 : BaseRasterDataSource
             Band band = dataset.GetRasterBand(i);
             bandDataTypes.Add(band.DataType);
             bandColorInterp.Add(band.GetColorInterpretation());
-
-            //// Read raw band data
-            //int bytesPerPixel = 0;
-            //switch (band.DataType)
-            //{
-            //    case DataType.GDT_Byte:
-            //        bytesPerPixel = 1;
-            //        break;
-            //    case DataType.GDT_Float32:
-            //        bytesPerPixel = 4;
-            //        break;
-            //    default:
-            //        throw new NotSupportedException(
-            //            "Unsupported raster band data type: " + band.DataType);
-            //}
-            //long bandSize = WidthPx * HeightPx * bytesPerPixel;
-            //byte[] data = new byte[bandSize];
-            //CPLErr error = band.ReadRaster(
-            //    xOff: 0, yOff: 0, xSize: WidthPx, ySize: HeightPx,
-            //    buffer: data, buf_xSize: WidthPx, buf_ySize: HeightPx,
-            //    0, 0);
-            //if (error != CPLErr.CE_None)
-            //    throw new ApplicationException("Failed to read raster data for band " + i);
         }
 
         // Determine whether this is an image (e.g. an orthophoto or
@@ -158,7 +93,6 @@ public class GdalDataSource2 : BaseRasterDataSource
                     imageData[offset + 1] = gray; // R
                     imageData[offset + 2] = gray; // G
                     imageData[offset + 3] = gray; // B
-                    
                 }
             }
             else if (bandDataTypes[0] == DataType.GDT_Byte &&
@@ -287,12 +221,12 @@ public class GdalDataSource2 : BaseRasterDataSource
         return sb.ToString();
     }
 
-    public override RasterData GetData()
+    public override RasterData2 GetData()
     {
-        throw new NotImplementedException();
+        return RasterData;
     }
 
-    public override RasterData GetData(string destSrs)
+    public override RasterData2 GetData(string destSrs)
     {
         throw new NotImplementedException();
     }

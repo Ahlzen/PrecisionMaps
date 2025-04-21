@@ -44,24 +44,6 @@ public class RasterData2 : GeoData
     public byte[]? ImageData { get; }
     public bool IsImage => ImageData != null;
 
-    //public RasterData2(string srs, Bounds bounds, int widthPx, int heightPx,
-    //    float[] singleBandData) : base(srs)
-    //{
-    //    Bounds = bounds;
-    //    WidthPx = widthPx;
-    //    HeightPx = heightPx;
-    //    SingleBandData = singleBandData;
-    //}
-
-    //public RasterData2(string srs, Bounds bounds, int widthPx, int heightPx,
-    //    byte[] imageData) : base(srs)
-    //{
-    //    Bounds = bounds;
-    //    WidthPx = widthPx;
-    //    HeightPx = heightPx;
-    //    ImageData = imageData;
-    //}
-
     public RasterData2(string srs, Bounds bounds, int widthPx, int heightPx,
         byte[]? imageData, float[]? singleBandData) : base(srs)
     {
