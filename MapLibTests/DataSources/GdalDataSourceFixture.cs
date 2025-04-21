@@ -1,12 +1,5 @@
 ﻿using MapLib.DataSources.Raster;
-using Microsoft.VisualStudio.TestPlatform.Common.ExtensionFramework;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.IO;
-using System.Drawing.Imaging;
 using MapLib.GdalSupport;
 using OSGeo.GDAL;
 using OSGeo.OSR;

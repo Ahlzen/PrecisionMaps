@@ -51,7 +51,7 @@ public class OsmDataSource : BaseVectorDataSource
 
         // Download data
         string destFilename = FileSystemHelpers.GetTempFileName(".osm");
-        UrlHelper.DownloadUrl(overpassUrl, destFilename);
+        UrlHelper.DownloadUrl(overpassUrl, destFilename).Wait();
         return destFilename;
     }
 }

@@ -10,6 +10,8 @@ internal class TestDataManager
 {
     public static readonly Dictionary<string, string> UrlsByFilename = new()
     {
+        ///// Vector data sets
+        
         // OSM test data (OSM XML)
         {"osm-xml/Weymouth Detail.osm", "https://www.openstreetmap.org/api/0.6/map?bbox=-70.9473%2C42.18745%2C-70.91211%2C42.216" },
         {"osm-xml/Aaron River Reservoir.osm", "https://overpass-api.de/api/interpreter?data=%2F*%0AThis%20has%20been%20generated%20by%20the%20overpass-turbo%20wizard.%0AThe%20original%20search%20was%3A%0A%E2%80%9Cname%3D%22Aaron%20River%20Reservoir%22%E2%80%9D%0A*%2F%0A%5Bout%3Axml%5D%5Btimeout%3A25%5D%3B%0A%2F%2F%20gather%20results%0Anwr%5B%22name%22%3D%22Aaron%20River%20Reservoir%22%5D%2842.164930299745755%2C-70.86301803588869%2C42.22889868544603%2C-70.75650215148927%29%3B%0A%2F%2F%20print%20results%0Aout%20geom%3B%0A" },
@@ -27,6 +29,15 @@ internal class TestDataManager
         {"Natural Earth/ne_10m_populated_places_simple.zip", "https://naciscdn.org/naturalearth/10m/cultural/ne_10m_populated_places_simple.zip" },
         {"Natural Earth/ne_110m_land.zip", "https://naciscdn.org/naturalearth/110m/physical/ne_110m_land.zip" },
 
+        // MassGIS Contour Lines
+        {"MassGIS Contours/contour_1ft_19TCG339674.zip", "https://s3.us-east-1.amazonaws.com/download.massgis.digital.mass.gov/lidar/2021_LIDAR/contours/contour_1ft_19TCG339674.zip" },
+        {"MassGIS Contours/contour_1ft_19TCG340674.zip", "https://s3.us-east-1.amazonaws.com/download.massgis.digital.mass.gov/lidar/2021_LIDAR/contours/contour_1ft_19TCG340674.zip" },
+        {"MassGIS Contours/contour_1ft_19TCG339672.zip", "https://s3.us-east-1.amazonaws.com/download.massgis.digital.mass.gov/lidar/2021_LIDAR/contours/contour_1ft_19TCG339672.zip" },
+        {"MassGIS Contours/contour_1ft_19TCG340672.zip", "https://s3.us-east-1.amazonaws.com/download.massgis.digital.mass.gov/lidar/2021_LIDAR/contours/contour_1ft_19TCG340672.zip" },
+
+
+        ///// Raster data sets
+
         // MassGIS Elevation from LiDAR
         // These are single-band Float32 rasters, forming a contiguous grid
         {"MassGIS LiDAR/be_19TCG339674.zip", "https://s3.us-east-1.amazonaws.com/download.massgis.digital.mass.gov/lidar/2021_LIDAR/be_rasters/be_19TCG339674.zip" },
@@ -34,14 +45,23 @@ internal class TestDataManager
         {"MassGIS LiDAR/be_19TCG339672.zip", "https://s3.us-east-1.amazonaws.com/download.massgis.digital.mass.gov/lidar/2021_LIDAR/be_rasters/be_19TCG339672.zip" },
         {"MassGIS LiDAR/be_19TCG340672.zip", "https://s3.us-east-1.amazonaws.com/download.massgis.digital.mass.gov/lidar/2021_LIDAR/be_rasters/be_19TCG340672.zip" },
 
+        // MassGIS 2023 Aerial Imagery (orthophotos)
+        {"MassGIS Aerial/19TCG390740.zip", "https://s3.us-east-1.amazonaws.com/download.massgis.digital.mass.gov/images/coq2023_15cm_jp2/19TCG390740.zip"},
+        {"MassGIS Aerial/19TCG390725.zip", "https://s3.us-east-1.amazonaws.com/download.massgis.digital.mass.gov/images/coq2023_15cm_jp2/19TCG390725.zip"},
+        {"MassGIS Aerial/19TCG405740.zip", "https://s3.us-east-1.amazonaws.com/download.massgis.digital.mass.gov/images/coq2023_15cm_jp2/19TCG405740.zip"},
+        {"MassGIS Aerial/19TCG405725.zip", "https://s3.us-east-1.amazonaws.com/download.massgis.digital.mass.gov/images/coq2023_15cm_jp2/19TCG405725.zip"},
+
+        // MassGIS Impervious Surface
+        {"MassGIS Impervious Surface/imp_ne6.zip", "https://s3.us-east-1.amazonaws.com/download.massgis.digital.mass.gov/images/impervious/imp_ne6.zip"},
+
+        // USGS Topo Quad 1:25,000
+        {"USGS Topo Quad 25k/q249882.zip","https://s3.us-east-1.amazonaws.com/download.massgis.digital.mass.gov/images/usgs_topo25k_tiff/q249882.zip" },
+        
+        // USGS National Elevation Dataset DEM
+        {"USGS NED/USGS_OPR_MA_CentralEastern_2021_B21_be_19TCG339672.tif","https://prd-tnm.s3.amazonaws.com/StagedProducts/Elevation/OPR/Projects/MA_CentralEastern_2021_B21/MA_CentralEastern_1_2021/TIFF/USGS_OPR_MA_CentralEastern_2021_B21_be_19TCG339672.tif" }
+
         // MassGIS Shaded Relief
         // TODO
-
-        // MassGIS Contour Lines
-        {"MassGIS contours/contour_1ft_19TCG339674.zip", "https://s3.us-east-1.amazonaws.com/download.massgis.digital.mass.gov/lidar/2021_LIDAR/contours/contour_1ft_19TCG339674.zip" },
-        {"MassGIS contours/contour_1ft_19TCG340674.zip", "https://s3.us-east-1.amazonaws.com/download.massgis.digital.mass.gov/lidar/2021_LIDAR/contours/contour_1ft_19TCG340674.zip" },
-        {"MassGIS contours/contour_1ft_19TCG339672.zip", "https://s3.us-east-1.amazonaws.com/download.massgis.digital.mass.gov/lidar/2021_LIDAR/contours/contour_1ft_19TCG339672.zip" },
-        {"MassGIS contours/contour_1ft_19TCG340672.zip", "https://s3.us-east-1.amazonaws.com/download.massgis.digital.mass.gov/lidar/2021_LIDAR/contours/contour_1ft_19TCG340672.zip" },
     };
 
     [Test]
@@ -80,8 +100,8 @@ internal class TestDataManager
                 string url = UrlsByFilename[filename];
                 try
                 {
-                    //await DownloadFile(url, destPath);
-                    UrlHelper.DownloadUrl(url, destPath);
+                    Task t = UrlHelper.DownloadUrl(url, destPath);
+                    t.Wait();
 
                     FileInfo fi = new FileInfo(destPath);
                     long length = fi.Length;
@@ -113,14 +133,4 @@ internal class TestDataManager
             }
         }
     }
-
-    //private static async Task DownloadFile(string url, string destFilename)
-    //{
-    //    using (HttpClient client = new HttpClient())
-    //    using (Stream s = await client.GetStreamAsync(url))
-    //    using (FileStream fs = new FileStream(destFilename, FileMode.OpenOrCreate))
-    //    {
-    //        s.CopyTo(fs);
-    //    }
-    //}
 }

@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System.Net.Http;
+using System.Threading.Tasks;
 
 namespace MapLib.Util;
 
@@ -12,7 +13,7 @@ public static class UrlHelper
     /// Thrown on error. InnerException and message contain
     /// more details.
     /// </exception>
-    public static async void DownloadUrl(string url, string destFilename)
+    public static async Task DownloadUrl(string url, string destFilename)
     {
         try
         {
