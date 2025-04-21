@@ -1,4 +1,6 @@
 ﻿using MapLib.DataSources.Raster;
+using MapLib.GdalSupport;
+using OSGeo.GDAL;
 using System.IO;
 
 namespace MapLib.Tests.DataSources;
@@ -14,11 +16,8 @@ public class GdalDataSource2Fixture : BaseFixture
     [TestCase("USGS NED/USGS_OPR_MA_CentralEastern_2021_B21_be_19TCG339672.tif")]
     public void TestGetSummaryAndRasterBandConfiguration(string filename)
     {
-        // This outputs internal info, if enabled
-        GdalDataSource2 dataSource = new(
-            Path.Join(TestDataPath, filename));
-        Console.Write(dataSource.GetRasterBandSummary());
-
+        using Dataset dataset = GdalUtils.GetRasterDataset(filename);
+        Console.Write(GdalUtils.GetRasterBandSummary(dataset));
 
         /*
         Example raster band configuration for different image types:

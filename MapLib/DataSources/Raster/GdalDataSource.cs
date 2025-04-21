@@ -44,57 +44,17 @@ public class GdalDataSource : BaseRasterDataSource
 
     public override RasterData GetData(string destSrs)
     {
-        //using OSGeo.GDAL.Dataset sourceDataset = GdalUtils.GetRasterDataset(Filename);
-
         string filename = Filename;
         if (Srs != destSrs)
         {
-            //string sourceSrs = GdalUtils.GetSrsAsWkt(sourceDataset);
-            //using Dataset destDataset = Gdal.AutoCreateWarpedVRT(sourceDataset,
-            //    sourceSrs, destSrs, ResampleAlg.GRA_Lanczos,
-            //    maxerror: 0 // use exact calculations
-            //    );
-            //return GetRasterData(destDataset);
-
             // Reproject source data, and use that file
-            filename = Transform(filename, destSrs);
+            filename = GdalUtils.Transform(filename, destSrs);
         }
         
         using Dataset sourceDataset =
             GdalUtils.GetRasterDataset(filename);
-
-        Console.WriteLine(GdalUtils.GetRasterInfo(sourceDataset));
-
+        Console.WriteLine(GdalUtils.GetRasterBandSummary(sourceDataset));
         return GetRasterData(sourceDataset);
-    }
-
-    //public string Transform(string )
-
-    /// <summary>
-    /// Reprojects (warps) the source file, saves and returns
-    /// the resulting file path.
-    /// </summary>
-    public static string Transform(string sourceFilename, string destSrs)
-    {
-        // Get source SRS
-        using Dataset sourceDataset = GdalUtils.GetRasterDataset(sourceFilename);
-        string sourceSrs = GdalUtils.GetSrsAsWkt(sourceDataset);
-
-        // Warp
-        GDALWarpAppOptions appOptions = new GDALWarpAppOptions(new string[] {
-                "-s_srs", sourceSrs,
-                "-t_srs", destSrs,
-                "-r", "lanczos",
-                "-of", "gtiff"
-            });
-        string destFilename = FileSystemHelpers.GetTempFileName(".tif", "warped");
-        using Dataset result = Gdal.Warp(destFilename,
-            new Dataset[] { sourceDataset },
-            appOptions,
-            callback: null,
-            callback_data: null);
-
-        return destFilename;
     }
 
     private static RasterData GetRasterData(Dataset dataset)

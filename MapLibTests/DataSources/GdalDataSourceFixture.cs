@@ -34,7 +34,7 @@ public class GdalDataSourceFixture : BaseFixture
 
         // Source is "EPSG:6348 - NAD83(2011) / UTM zone 19N"
         // Transform to EPSG:3857
-        string destFilename = GdalDataSource.Transform(sourceFilename, "EPSG:3857");
+        string destFilename = GdalUtils.Transform(sourceFilename, "EPSG:3857");
 
         Console.WriteLine(destFilename);
 

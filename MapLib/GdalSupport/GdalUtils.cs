@@ -5,6 +5,7 @@ using System.Text;
 using OSGeo.GDAL;
 using OSGeo.OSR;
 using MapLib.Geometry;
+using MapLib.Util;
 
 namespace MapLib.GdalSupport;
 
@@ -133,6 +134,23 @@ public static class GdalUtils
         return sb.ToString();
     }
 
+    public static string GetRasterBandSummary(Dataset dataset)
+    {
+        StringBuilder sb = new();
+        sb.AppendLine(string.Join(", ", dataset.GetFileList()));
+        sb.AppendLine($"Size: {dataset.RasterXSize}x{dataset.RasterYSize} px");
+        sb.AppendLine("Raster count: " + dataset.RasterCount);
+        for (int i = 1; i <= dataset.RasterCount; i++) // NOTE: these are 1-indexed
+        {
+            Band band = dataset.GetRasterBand(i);
+            sb.AppendLine("Band " + i);
+            sb.AppendLine(" DataType: " + band.DataType);
+            sb.AppendLine(" Size: " + Gdal.GetDataTypeSize(band.DataType));
+            sb.AppendLine(" Interpretation: " + band.GetRasterColorInterpretation());
+        }
+        return sb.ToString();
+    }
+
     public static SpatialReference GetSpatialReference(Dataset rasterDataSet)
     {
         // TODO: add error handling
@@ -174,6 +192,34 @@ public static class GdalUtils
             maxerror: 0 // use exact calculations
             );
         return destDataset;
+    }
+
+    /// <summary>
+    /// Reprojects (warps) the source file, saves and returns
+    /// the resulting file path.
+    /// </summary>
+    // TODO: Move to GdalUtils.cs
+    public static string Transform(string sourceFilename, string destSrs)
+    {
+        // Get source SRS
+        using Dataset sourceDataset = GdalUtils.GetRasterDataset(sourceFilename);
+        string sourceSrs = GdalUtils.GetSrsAsWkt(sourceDataset);
+
+        // Warp
+        GDALWarpAppOptions appOptions = new GDALWarpAppOptions(new string[] {
+                "-s_srs", sourceSrs,
+                "-t_srs", destSrs,
+                "-r", "lanczos",
+                "-of", "gtiff"
+            });
+        string destFilename = FileSystemHelpers.GetTempFileName(".tif", "warped");
+        using Dataset result = Gdal.Warp(destFilename,
+            new Dataset[] { sourceDataset },
+            appOptions,
+            callback: null,
+            callback_data: null);
+
+        return destFilename;
     }
 
 
