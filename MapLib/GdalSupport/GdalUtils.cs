@@ -26,30 +26,76 @@ public static class GdalUtils
         GdalConfiguration.ConfigureOgr();
     }
 
+    /// <summary>
+    /// Opens and returns the dataset at the specified file name.
+    /// </summary>
+    /// <exception cref="ApplicationException">
+    /// Thrown on failure.
+    /// </exception>
+    public static Dataset OpenDataset(string filename)
+    {
+        Dataset dataset = Gdal.Open(filename, Access.GA_ReadOnly);
+        if (dataset == null)
+            throw new ApplicationException("Failed to open " + filename);
+        return dataset;
+    }
+
+    #region Raster <-> Pixel coordinate transformation
+
+    /// <summary>
+    /// Returns the specified pixel coordinates transformed to
+    /// geometric coordinates in the raster's SRS.
+    /// </summary>
     public static Coord PixelToGeo(Dataset ds, Coord pixelCoord)
     {
-        double[] adfGeoTransform = new double[6];
-        ds.GetGeoTransform(adfGeoTransform);
-        return new Coord(
-            adfGeoTransform[0] + adfGeoTransform[1] * pixelCoord.X + adfGeoTransform[2] * pixelCoord.Y,
-            adfGeoTransform[3] + adfGeoTransform[4] * pixelCoord.X + adfGeoTransform[5] * pixelCoord.Y
-        );
+        double[] affineGeoTransform = new double[6];
+        ds.GetGeoTransform(affineGeoTransform);
+        return PixelToGeo(affineGeoTransform, pixelCoord);
     }
+    public static Coord PixelToGeo(Dataset ds, double x, double y)
+        => PixelToGeo(ds, new Coord(x, y));
+    public static Coord PixelToGeo(double[] affineGeoTransform, Coord pixelCoord)
+        => new Coord(
+            affineGeoTransform[0] + affineGeoTransform[1] * pixelCoord.X + affineGeoTransform[2] * pixelCoord.Y,
+            affineGeoTransform[3] + affineGeoTransform[4] * pixelCoord.X + affineGeoTransform[5] * pixelCoord.Y);
 
+    /// <summary>
+    /// Returns the specified geometric coordinates in the raster's SRS
+    /// transformed to pixel coordinates.
+    /// </summary>
     public static Coord GeoToPixel(Dataset ds, Coord geoCoord)
     {
-        double[] adfGeoTransform = new double[6];
-        ds.GetGeoTransform(adfGeoTransform);
-        double[] invTransform = new double[6];
-        Gdal.InvGeoTransform(adfGeoTransform, invTransform);
-        return new Coord(
-            invTransform[0] + invTransform[1] * geoCoord.X + invTransform[2] * geoCoord.Y,
-            invTransform[3] + invTransform[4] * geoCoord.X + invTransform[5] * geoCoord.Y
-        );
+        double[] affineGeoTransform = new double[6];
+        double[] inverseTransform = new double[6];
+        ds.GetGeoTransform(affineGeoTransform);
+        Gdal.InvGeoTransform(affineGeoTransform, inverseTransform);
+        return GeoToPixel(inverseTransform, geoCoord);
+    }
+    public static Coord GeoToPixel(double[] inverseTransform, Coord geoCoord)
+        => new Coord(
+            inverseTransform[0] + inverseTransform[1] * geoCoord.X + inverseTransform[2] * geoCoord.Y,
+            inverseTransform[3] + inverseTransform[4] * geoCoord.X + inverseTransform[5] * geoCoord.Y);
+
+    /// <summary>
+    /// Returns the bounds, in the source (dataset) SRS.
+    /// </summary>
+    /// <remarks>
+    /// Bounds are calculated by including all four corners.
+    /// TODO: Should we calculate differently and/or sample more
+    /// positions along the edges?
+    /// </remarks>
+    public static Bounds GetBounds(Dataset ds)
+    {
+        int width = ds.RasterXSize;
+        int height = ds.RasterYSize;
+        Coord c1 = PixelToGeo(ds, 0, 0);
+        Coord c2 = PixelToGeo(ds, width - 1, height - 1);
+        return Bounds.FromCoords([c1, c2]);
     }
 
-    public static Dataset GetRasterDataset(string filename)
-        => Gdal.Open(filename, Access.GA_ReadOnly);
+    #endregion
+
+    #region Info and reporting
 
     public static string GetRasterInfo(string filename)
     {
@@ -103,11 +149,11 @@ public static class GdalUtils
 
         // Report corners
         sb.AppendLine("Corner Coordinates:");
-        sb.AppendLine("  Upper Left (" + GDALInfoGetPositionSummary(ds, 0.0, 0.0) + ")");
-        sb.AppendLine("  Lower Left (" + GDALInfoGetPositionSummary(ds, 0.0, ds.RasterYSize) + ")");
-        sb.AppendLine("  Upper Right (" + GDALInfoGetPositionSummary(ds, ds.RasterXSize, 0.0) + ")");
-        sb.AppendLine("  Lower Right (" + GDALInfoGetPositionSummary(ds, ds.RasterXSize, ds.RasterYSize) + ")");
-        sb.AppendLine("  Center (" + GDALInfoGetPositionSummary(ds, ds.RasterXSize / 2, ds.RasterYSize / 2) + ")");
+        sb.AppendLine("  Upper Left (" + PixelToGeo(ds, 0.0, 0.0) + ")");
+        sb.AppendLine("  Lower Left (" + PixelToGeo(ds, 0.0, ds.RasterYSize) + ")");
+        sb.AppendLine("  Upper Right (" + PixelToGeo(ds, ds.RasterXSize, 0.0) + ")");
+        sb.AppendLine("  Lower Right (" + PixelToGeo(ds, ds.RasterXSize, ds.RasterYSize) + ")");
+        sb.AppendLine("  Center (" + PixelToGeo(ds, ds.RasterXSize / 2, ds.RasterYSize / 2) + ")");
         sb.AppendLine("");
 
         // Report projection.
@@ -151,6 +197,10 @@ public static class GdalUtils
         return sb.ToString();
     }
 
+    #endregion
+    
+    #region Spatial Reference Systems
+
     public static SpatialReference GetSpatialReference(Dataset rasterDataSet)
     {
         // TODO: add error handling
@@ -162,7 +212,7 @@ public static class GdalUtils
 
     public static string GetSrsAsWkt(string filename)
     {
-        using Dataset dataSet = GetRasterDataset(filename);
+        using Dataset dataSet = OpenDataset(filename);
         return GetSrsAsWkt(dataSet);
     }
     public static string GetSrsAsWkt(Dataset rasterDataset)
@@ -184,25 +234,18 @@ public static class GdalUtils
         }
     }
 
-    public static Dataset Reproject(Dataset sourceDataset, string destSrs)
-    {
-        string sourceSrs = GdalUtils.GetSrsAsWkt(sourceDataset);
-        using Dataset destDataset = Gdal.AutoCreateWarpedVRT(sourceDataset,
-            sourceSrs, destSrs, ResampleAlg.GRA_Lanczos,
-            maxerror: 0 // use exact calculations
-            );
-        return destDataset;
-    }
+    #endregion
+
+    #region Reprojection / Warping
 
     /// <summary>
     /// Reprojects (warps) the source file, saves and returns
     /// the resulting file path.
     /// </summary>
-    // TODO: Move to GdalUtils.cs
-    public static string Transform(string sourceFilename, string destSrs)
+    public static string Warp(string sourceFilename, string destSrs)
     {
         // Get source SRS
-        using Dataset sourceDataset = GdalUtils.GetRasterDataset(sourceFilename);
+        using Dataset sourceDataset = GdalUtils.OpenDataset(sourceFilename);
         string sourceSrs = GdalUtils.GetSrsAsWkt(sourceDataset);
 
         // Warp
@@ -222,43 +265,26 @@ public static class GdalUtils
         return destFilename;
     }
 
-
     /// <summary>
-    /// Returns the transformed coordinates of the specified raster position
-    /// (pixel) in the raster.
-    /// </summary>
-    public static Coord GDALInfoGetPosition(Dataset ds, double x, double y)
-    {
-        double[] adfGeoTransform = new double[6];
-        double dfGeoX, dfGeoY;
-        ds.GetGeoTransform(adfGeoTransform);
-        dfGeoX = adfGeoTransform[0] + adfGeoTransform[1] * x + adfGeoTransform[2] * y;
-        dfGeoY = adfGeoTransform[3] + adfGeoTransform[4] * x + adfGeoTransform[5] * y;
-        return new Coord(dfGeoX, dfGeoY);
-    }
-
-    public static string GDALInfoGetPositionSummary(Dataset ds, double x, double y)
-    {
-        Coord coord = GDALInfoGetPosition(ds, x, y);
-        return coord.X.ToString() + ", " + coord.Y.ToString();
-    }
-
-    /// <summary>
-    /// Returns the bounds, in the source (dataset) SRS.
+    /// Reprojects (warps) the source dataset and returns the result.
     /// </summary>
     /// <remarks>
-    /// Bounds are calculated by including all four corners.
-    /// TODO: Should we calculate differently and/or sample more
-    /// positions along the edges?
+    /// Does not support NODATA (transparency) in result. Use other overloads
+    /// for that.
     /// </remarks>
-    public static Bounds GetBounds(Dataset ds)
+    public static Dataset Warp(Dataset sourceDataset, string destSrs)
     {
-        int width = ds.RasterXSize;
-        int height = ds.RasterYSize;
-        Coord c1 = GDALInfoGetPosition(ds, 0, 0);
-        Coord c2 = GDALInfoGetPosition(ds, width-1, height-1);
-        return Bounds.FromCoords([c1, c2]);
+        string sourceSrs = GdalUtils.GetSrsAsWkt(sourceDataset);
+        using Dataset destDataset = Gdal.AutoCreateWarpedVRT(sourceDataset,
+            sourceSrs, destSrs, ResampleAlg.GRA_Lanczos,
+            maxerror: 0 // use exact calculations
+            );
+        return destDataset;
     }
+
+    #endregion
+
+    #region Bitmap builders (TODO: make obsolete)
 
     public static Bitmap GetBitmap(string filename, Bounds areaProjected,
         int? imageWidth = null, int? imageHeight = null)
@@ -267,6 +293,7 @@ public static class GdalUtils
         if (ds == null) throw new ApplicationException("Failed to open " + filename);
         return GetBitmap(ds, areaProjected, imageWidth, imageHeight);
     }
+
     public static Bitmap GetBitmap(Dataset ds, Bounds areaProjected,
         int? imageWidth = null, int? imageHeight = null)
     {
@@ -292,7 +319,7 @@ public static class GdalUtils
             return GetBitmap(ds, xOffset, yOffset, width, height, imageWidth, imageHeight);
         }
     }
-
+    
     public static Bitmap GetBitmap(Dataset ds, int xOffset, int yOffset,
         int width, int height, int imageWidth, int imageHeight)
     {
@@ -466,4 +493,6 @@ public static class GdalUtils
 
         return bitmap;
     }
+
+    #endregion
 }

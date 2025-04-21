@@ -25,7 +25,7 @@ public class GdalDataSource : BaseRasterDataSource
     public GdalDataSource(string filename)
     {
         Filename = filename;
-        using OSGeo.GDAL.Dataset dataset = GdalUtils.GetRasterDataset(Filename);
+        using OSGeo.GDAL.Dataset dataset = GdalUtils.OpenDataset(Filename);
         
         Srs = GdalUtils.GetSrsAsWkt(dataset);
         Bounds = GdalUtils.GetBounds(dataset);
@@ -35,7 +35,7 @@ public class GdalDataSource : BaseRasterDataSource
 
     public override RasterData GetData()
     {
-        using OSGeo.GDAL.Dataset dataset = GdalUtils.GetRasterDataset(Filename);
+        using OSGeo.GDAL.Dataset dataset = GdalUtils.OpenDataset(Filename);
         int width = dataset.RasterXSize;
         int height = dataset.RasterYSize;
         Bitmap bitmap = GdalUtils.GetBitmap(dataset, 0, 0, width, height, width, height);
@@ -48,11 +48,11 @@ public class GdalDataSource : BaseRasterDataSource
         if (Srs != destSrs)
         {
             // Reproject source data, and use that file
-            filename = GdalUtils.Transform(filename, destSrs);
+            filename = GdalUtils.Warp(filename, destSrs);
         }
         
         using Dataset sourceDataset =
-            GdalUtils.GetRasterDataset(filename);
+            GdalUtils.OpenDataset(filename);
         Console.WriteLine(GdalUtils.GetRasterBandSummary(sourceDataset));
         return GetRasterData(sourceDataset);
     }

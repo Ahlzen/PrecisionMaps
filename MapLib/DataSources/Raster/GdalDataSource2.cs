@@ -9,7 +9,7 @@ namespace MapLib.DataSources.Raster;
 public class GdalDataSource2 : BaseRasterDataSource2
 {
     public override string Name => "Raster File (using GDAL)";
-    
+
     public string Filename { get; }
 
     //public double[] AffineGeoTransform { get; } // pixel to geo
@@ -26,7 +26,7 @@ public class GdalDataSource2 : BaseRasterDataSource2
 
     public GdalDataSource2(string filename)
     {
-        using Dataset dataset = OpenDataset(filename);
+        using Dataset dataset = GdalUtils.OpenDataset(filename);
 
         Filename = filename;
         Srs = GdalUtils.GetSrsAsWkt(dataset);
@@ -35,7 +35,7 @@ public class GdalDataSource2 : BaseRasterDataSource2
         HeightPx = dataset.RasterYSize;
 
 
-        
+
 
         //// Get size, projection and bounds
         //int widthPx = dataset.RasterXSize;
@@ -157,7 +157,7 @@ public class GdalDataSource2 : BaseRasterDataSource2
         //            imageData[offset + 1] = ctR[colorIndex]; // R
         //            imageData[offset + 2] = ctG[colorIndex]; // G
         //            imageData[offset + 3] = ctB[colorIndex]; // B
-                    
+
         //        }
         //    }
         //    else
@@ -177,7 +177,7 @@ public class GdalDataSource2 : BaseRasterDataSource2
 
         //    // Fill with 255 (fully opaque) in case there is no alpha channel
         //    Array.Fill<byte>(imageData, 255);
-            
+
         //    // Process one band (channel) at a time
         //    for (int b = 1; b <= rasterCount; b++)
         //    {
@@ -218,8 +218,8 @@ public class GdalDataSource2 : BaseRasterDataSource2
         var affineGeoTransform = new double[6];
         dataset.GetGeoTransform(affineGeoTransform);
         Bounds bounds = Geometry.Bounds.FromCoords([
-            new Coord(PixelToGeo(affineGeoTransform, new Coord(0, 0))),
-            new Coord(PixelToGeo(affineGeoTransform, new Coord(widthPx - 1, heightPx - 1)))]);
+            new Coord(GdalUtils.PixelToGeo(affineGeoTransform, new Coord(0, 0))),
+            new Coord(GdalUtils.PixelToGeo(affineGeoTransform, new Coord(widthPx - 1, heightPx - 1)))]);
         string srs = GdalUtils.GetSrsAsWkt(dataset);
 
         // Get raster band configuration
@@ -391,7 +391,7 @@ public class GdalDataSource2 : BaseRasterDataSource2
 
     public override RasterData2 GetData()
     {
-        using Dataset dataset = OpenDataset(Filename);
+        using Dataset dataset = GdalUtils.OpenDataset(Filename);
         return GetRasterData(dataset);
     }
 
@@ -401,34 +401,11 @@ public class GdalDataSource2 : BaseRasterDataSource2
         if (Srs != destSrs)
         {
             // Reproject source data, and use that file
-            filename = GdalUtils.Transform(filename, destSrs);
+            filename = GdalUtils.Warp(filename, destSrs);
         }
         using Dataset sourceDataset =
-            GdalUtils.GetRasterDataset(filename);
+            GdalUtils.OpenDataset(filename);
         Console.WriteLine(GdalUtils.GetRasterInfo(sourceDataset));
         return GetRasterData(sourceDataset);
     }
-
-    /// <summary>
-    /// Opens and returns the dataset at the specified file name.
-    /// </summary>
-    /// <exception cref="ApplicationException">
-    /// Thrown on failure.
-    /// </exception>
-    private Dataset OpenDataset(string filename)
-    {
-        Dataset dataset = Gdal.Open(filename, Access.GA_ReadOnly);
-        if (dataset == null)
-            throw new ApplicationException("Failed to open " + filename);
-        return dataset;
-    }
-
-    /// <summary>
-    /// Returns the specified pixel coordinates transformed to
-    /// geometric coordinates in the raster's SRS.
-    /// </summary>
-    private Coord PixelToGeo(double[] affineGeoTransform, Coord c)
-        => new Coord(
-            affineGeoTransform[0] + affineGeoTransform[1] * c.X + affineGeoTransform[2] * c.Y,
-            affineGeoTransform[3] + affineGeoTransform[4] * c.X + affineGeoTransform[5] * c.Y);
 }

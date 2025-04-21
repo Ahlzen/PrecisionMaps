@@ -16,7 +16,7 @@ internal class GdalDataReader : IRasterFormatReader
     /// </param>
     public RasterData ReadFile(string filename, Bounds projectedBounds)
     {
-        using Dataset dataset = GdalUtils.GetRasterDataset(filename);
+        using Dataset dataset = GdalUtils.OpenDataset(filename);
         Bitmap bitmap = GdalUtils.GetBitmap(dataset, projectedBounds);
         string srs = GdalUtils.GetSrsAsWkt(dataset);
         RasterData raster = new RasterData(srs, projectedBounds, bitmap);

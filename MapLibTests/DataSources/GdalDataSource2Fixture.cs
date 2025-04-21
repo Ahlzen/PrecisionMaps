@@ -16,7 +16,7 @@ public class GdalDataSource2Fixture : BaseFixture
     [TestCase("USGS NED/USGS_OPR_MA_CentralEastern_2021_B21_be_19TCG339672.tif")]
     public void TestGetSummaryAndRasterBandConfiguration(string filename)
     {
-        using Dataset dataset = GdalUtils.GetRasterDataset(filename);
+        using Dataset dataset = GdalUtils.OpenDataset(filename);
         Console.Write(GdalUtils.GetRasterBandSummary(dataset));
 
         /*
