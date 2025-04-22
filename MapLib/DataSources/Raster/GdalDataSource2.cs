@@ -34,7 +34,7 @@ public class GdalDataSource2 : BaseRasterDataSource2
         // Get size, projection and bounds
         int widthPx = dataset.RasterXSize;
         int heightPx = dataset.RasterYSize;
-        int pixelCount = widthPx * heightPx;
+        long pixelCount = widthPx * heightPx;
         var affineGeoTransform = new double[6];
         dataset.GetGeoTransform(affineGeoTransform);
         Bounds bounds = Geometry.Bounds.FromCoords([
@@ -86,9 +86,9 @@ public class GdalDataSource2 : BaseRasterDataSource2
 
                 // Build ARGB image data
                 imageData = new byte[pixelCount * 4];
-                for (int pixel = 0; pixel < pixelCount; pixel++)
+                for (long pixel = 0; pixel < pixelCount; pixel++)
                 {
-                    int offset = pixel * 4;
+                    long offset = pixel * 4;
                     byte gray = buffer[pixel];
                     imageData[offset] = 255; // A
                     imageData[offset + 1] = gray; // R
@@ -107,7 +107,7 @@ public class GdalDataSource2 : BaseRasterDataSource2
 
                 // Build single-band raw data
                 singleBandData = new float[pixelCount];
-                for (int pixel = 0; pixel < pixelCount; pixel++)
+                for (long pixel = 0; pixel < pixelCount; pixel++)
                     singleBandData[pixel] = (float)buffer[pixel];
             }
             else if (bandDataTypes[0] == DataType.GDT_Float32 &&
@@ -146,9 +146,9 @@ public class GdalDataSource2 : BaseRasterDataSource2
 
                 // Build ARGB image data
                 imageData = new byte[pixelCount * 4];
-                for (int pixel = 0; pixel < pixelCount; pixel++)
+                for (long pixel = 0; pixel < pixelCount; pixel++)
                 {
-                    int offset = pixel * 4;
+                    long offset = pixel * 4;
                     byte colorIndex = buffer[pixel];
                     imageData[offset] = ctA[colorIndex]; // A
                     imageData[offset + 1] = ctR[colorIndex]; // R
@@ -185,7 +185,7 @@ public class GdalDataSource2 : BaseRasterDataSource2
                 byte[] buffer = new byte[pixelCount];
                 band.ReadRaster(0, 0, widthPx, heightPx, buffer,
                     widthPx, heightPx, 0, 0);
-                int byteOffset = band.GetRasterColorInterpretation() switch
+                long byteOffset = band.GetRasterColorInterpretation() switch
                 {
                     ColorInterp.GCI_AlphaBand or
                     ColorInterp.GCI_Undefined => 0,
@@ -195,7 +195,7 @@ public class GdalDataSource2 : BaseRasterDataSource2
                     _ => throw new NotSupportedException(
                         "Unsupported raster band configuration.")
                 };
-                for (int pixel = 0; pixel < pixelCount; pixel++)
+                for (long pixel = 0; pixel < pixelCount; pixel++)
                     imageData[pixel * 4 + byteOffset] = buffer[pixel];
             }
         }

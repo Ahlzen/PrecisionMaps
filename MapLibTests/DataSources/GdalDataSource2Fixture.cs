@@ -16,8 +16,31 @@ public class GdalDataSource2Fixture : BaseFixture
     [TestCase("USGS NED/USGS_OPR_MA_CentralEastern_2021_B21_be_19TCG339672.tif")]
     public void TestGetSummaryAndRasterBandConfiguration(string filename)
     {
-        using Dataset dataset = GdalUtils.OpenDataset(filename);
-        Console.Write(GdalUtils.GetRasterBandSummary(dataset));
+        filename = Path.Join(TestDataPath, filename);
+
+        Console.WriteLine(filename);
+        using (Dataset dataset = GdalUtils.OpenDataset(filename))
+        {
+            Console.Write(GdalUtils.GetRasterBandSummary(dataset));
+        }
+        Console.WriteLine();
+
+        // Test that reading the data completes successfully
+        GdalDataSource2 ds = new(filename);
+        _ = ds.GetData();
+        
+        // Warp (reproject) it and show summary again
+        string warpedFilename = GdalUtils.Warp(filename, GdalSupport.Transformer.WktWebMercator);
+        Console.Write("Warped: " + warpedFilename);
+        using (Dataset warpedDataset = GdalUtils.OpenDataset(warpedFilename))
+        {
+            Console.Write(GdalUtils.GetRasterBandSummary(warpedDataset));
+        }
+        Console.WriteLine();
+
+        // Test that reading the data completes successfully
+        GdalDataSource2 dsWarped = new(warpedFilename);
+        _ = dsWarped.GetData();
 
         /*
         Example raster band configuration for different image types:
@@ -76,3 +99,4 @@ public class GdalDataSource2Fixture : BaseFixture
         */
     }
 }
+ 
