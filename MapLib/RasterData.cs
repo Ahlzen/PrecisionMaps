@@ -43,12 +43,20 @@ public class SingleBandRasterData : RasterData2
     /// rather than images, such as DEMs, bathymetry and other grid measurements.
     /// WidthPx * HeightPx * 4 bytes (Float32).
     /// </summary>
-    public float[]? SingleBandData { get; }
+    public float[] SingleBandData { get; }
 
-    public SingleBandRasterData(string srs, Bounds bounds, int widthPx, int heightPx, float[] singleBandData)
+    /// <summary>
+    /// If non-null, this value represents a point
+    /// in the raster with no data.
+    /// </summary>
+    public float? NoDataValue { get; }
+
+    public SingleBandRasterData(string srs, Bounds bounds, int widthPx, int heightPx,
+        float[] singleBandData, float? noDataValue)
     : base(srs, bounds, widthPx, heightPx)
     {
         SingleBandData = singleBandData;
+        NoDataValue = noDataValue;
     }
 }
 

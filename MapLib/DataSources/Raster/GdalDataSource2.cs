@@ -66,10 +66,14 @@ public class GdalDataSource2 : BaseRasterDataSource2
 
         byte[]? imageData = null;
         float[]? singleBandData = null;
+        float? noDataValue = null;
 
         if (rasterCount == 1)
         {
             Band band = dataset.GetRasterBand(1);
+            band.GetNoDataValue(out double rawNoDataValue, out int hasNoDataValue);
+            if (hasNoDataValue == 1)
+                noDataValue = (float)rawNoDataValue;
 
             if (bandDataTypes[0] == DataType.GDT_Byte &&
                 bandColorInterp[0] == ColorInterp.GCI_GrayIndex)
@@ -78,6 +82,8 @@ public class GdalDataSource2 : BaseRasterDataSource2
 
                 // TODO: Perhaps reading it three times over using ReadRaster(),
                 // directly into each of the R, G, B channels, would be more efficient?
+
+                byte? noDataByte = hasNoDataValue == 1 ? (byte)rawNoDataValue : null;
 
                 // Read the grayscale band
                 byte[] buffer = new byte[pixelCount];
@@ -90,7 +96,7 @@ public class GdalDataSource2 : BaseRasterDataSource2
                 {
                     long offset = pixel * 4;
                     byte gray = buffer[pixel];
-                    imageData[offset] = 255; // A
+                    imageData[offset] = (gray == noDataByte) ? (byte)0 : (byte)255; // A
                     imageData[offset + 1] = gray; // R
                     imageData[offset + 2] = gray; // G
                     imageData[offset + 3] = gray; // B
@@ -104,6 +110,8 @@ public class GdalDataSource2 : BaseRasterDataSource2
                 byte[] buffer = new byte[pixelCount];
                 band.ReadRaster(0, 0, widthPx, heightPx, buffer,
                     widthPx, heightPx, 0, 0);
+
+                // TODO: Record nodata value
 
                 // Build single-band raw data
                 singleBandData = new float[pixelCount];
@@ -123,6 +131,8 @@ public class GdalDataSource2 : BaseRasterDataSource2
                 bandColorInterp[0] == ColorInterp.GCI_PaletteIndex)
             {
                 // 8-bit indexed (256 color) RGB
+
+                byte? noDataByte = hasNoDataValue == 1 ? (byte)rawNoDataValue : null;
 
                 byte[] buffer = new byte[pixelCount];
                 band.ReadRaster(0, 0, widthPx, heightPx, buffer,
@@ -150,7 +160,8 @@ public class GdalDataSource2 : BaseRasterDataSource2
                 {
                     long offset = pixel * 4;
                     byte colorIndex = buffer[pixel];
-                    imageData[offset] = ctA[colorIndex]; // A
+                    imageData[offset] = (colorIndex == noDataByte) ?
+                        (byte)0 : ctA[colorIndex]; // A
                     imageData[offset + 1] = ctR[colorIndex]; // R
                     imageData[offset + 2] = ctG[colorIndex]; // G
                     imageData[offset + 3] = ctB[colorIndex]; // B
@@ -206,9 +217,9 @@ public class GdalDataSource2 : BaseRasterDataSource2
         if (imageData != null)
             return new ImageRasterData(srs, bounds, widthPx, heightPx, imageData!);
         else
-            return new SingleBandRasterData(srs, bounds, widthPx, heightPx, singleBandData!);
+            return new SingleBandRasterData(srs, bounds, widthPx, heightPx,
+                singleBandData!, noDataValue);
     }
-
     
     public override RasterData2 GetData()
     {

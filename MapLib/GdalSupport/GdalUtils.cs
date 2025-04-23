@@ -193,6 +193,10 @@ public static class GdalUtils
             sb.AppendLine(" DataType: " + band.DataType);
             sb.AppendLine(" Size: " + Gdal.GetDataTypeSize(band.DataType));
             sb.AppendLine(" Interpretation: " + band.GetRasterColorInterpretation());
+
+            band.GetNoDataValue(out double noDataValue, out int hasNoDataValue);
+            if (hasNoDataValue == 1)
+                sb.AppendLine(" No-data value: " + noDataValue);
         }
         return sb.ToString();
     }
