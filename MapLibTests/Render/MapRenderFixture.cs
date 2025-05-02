@@ -65,12 +65,17 @@ public class MapRenderFixture : BaseFixture
         map.DataSources.Add(
             new VectorMapDataSource("osmdata",
             new VectorFileDataSource(Path.Join(TestDataPath, "osm-xml/Weymouth Detail.osm"))));
+        //map.DataSources.Add(
+        //    new RasterMapDataSource("hillshading",
+        //    new GdalDataSource(Path.Join(TestDataPath, "MassGIS LiDAR/be_19TCG340674.tif"))));
         map.DataSources.Add(
-            new RasterMapDataSource("hillshading",
-            new GdalDataSource(Path.Join(TestDataPath, "MassGIS LiDAR/be_19TCG340674.tif"))));
+            new RasterMapDataSource2("ortophoto",
+            new GdalDataSource2(Path.Join(TestDataPath, "MassGIS Aerial/19TCG390725.jp2"))));
 
+        //map.Layers.Add(
+        //    new RasterMapLayer("Hillshading", "hillshading"));
         map.Layers.Add(
-            new RasterMapLayer("Hillshading", "hillshading"));
+            new RasterMapLayer("ortophoto", "ortophoto"));
 
         map.Layers.Add(
             new VectorMapLayer("Water", "osmdata",

@@ -272,6 +272,18 @@ public class Map : IHasSrs, IBounded
                 //DrawRaster(canvas, rasterLayer, rasterData);
                 DrawRaster(canvas, rasterLayer, data);
             }
+            else if (layerDataSource is RasterMapDataSource2 rasterDataSource2)
+            {
+                if (!(layer is RasterMapLayer))
+                    throw new InvalidOperationException("Raster data source must use raster layer");
+                var rasterLayer = (RasterMapLayer)layer;
+
+                //RasterData rasterData = rasterDataSource.DataSource.GetData();
+                RasterData2 data = rasterDataSource2.DataSource.GetData(this.Srs);
+
+                //DrawRaster(canvas, rasterLayer, rasterData);
+                DrawRaster(canvas, rasterLayer, data);
+            }
         }
     }
 
@@ -357,5 +369,54 @@ public class Map : IHasSrs, IBounded
             rasterBoundsInCanvasSrs.XMin, rasterBoundsInCanvasSrs.YMin,
             rasterBoundsInCanvasSrs.Width, rasterBoundsInCanvasSrs.Height,
             1.0);
+    }
+
+    private void DrawRaster(Canvas canvas, RasterMapLayer mapLayer, RasterData2 data)
+    {
+        CanvasLayer layer = canvas.AddNewLayer(mapLayer.Name);
+
+        Console.WriteLine("Map SRS: " + Srs);
+        Console.WriteLine("Raster SRS: " + data.Srs);
+
+        Console.WriteLine("Map bounds LL: " + this.BoundsToSrs(Transformer.WktWgs84));
+        Console.WriteLine("Raster bounds LL: " + data.BoundsToSrs(Transformer.WktWgs84));
+
+        Console.WriteLine("Map bounds: " + Bounds);
+        Console.WriteLine("Raster bounds: " + data.BoundsToSrs(this.Srs));
+
+        if (data is SingleBandRasterData)
+        {
+            throw new InvalidOperationException(
+                "Single-band raster data cannot be rendered directly");
+        }
+        else if (data is ImageRasterData imageData)
+        {
+            Console.WriteLine("Bitmap pixel format: " +
+                imageData.Bitmap.PixelFormat);
+
+            // Find overlapping area (in map SRS)
+            Bounds? overlap = Bounds.Intersection(data.BoundsToSrs(this.Srs));
+            if (overlap == null)
+                return; // no overlap - nothing to render
+
+            // TODO: Figure out cropped part of bitmap
+            // For now, just transform coordinates to canvas space,
+            // and draw the full bitmap
+            Bounds rasterBoundsInMapSrs = data.BoundsToSrs(this.Srs);
+            Bounds rasterBoundsInCanvasSrs = rasterBoundsInMapSrs.Transform(
+                _scaleX, _scaleY, _offsetX, _offsetY);
+
+            layer.DrawBitmap(imageData.Bitmap,
+                rasterBoundsInCanvasSrs.XMin, rasterBoundsInCanvasSrs.YMin,
+                rasterBoundsInCanvasSrs.Width, rasterBoundsInCanvasSrs.Height,
+                1.0);
+        }
+        else
+        {
+            throw new NotSupportedException("Unsupported raster data type");
+        }
+        
+        
+
     }
 }

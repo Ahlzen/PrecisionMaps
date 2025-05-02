@@ -1,6 +1,7 @@
 ﻿using MapLib.GdalSupport;
 using MapLib.Geometry;
 using OSGeo.GDAL;
+using System.ComponentModel.Design;
 using System.IO;
 using System.Text;
 
@@ -27,6 +28,9 @@ public class GdalDataSource2 : BaseRasterDataSource2
         Bounds = GdalUtils.GetBounds(dataset);
         WidthPx = dataset.RasterXSize;
         HeightPx = dataset.RasterYSize;
+
+        // For debugging
+        Console.WriteLine(GdalUtils.GetRasterBandSummary(dataset));
     }
 
     private RasterData2 GetRasterData(Dataset dataset)
@@ -96,10 +100,10 @@ public class GdalDataSource2 : BaseRasterDataSource2
                 {
                     long offset = pixel * 4;
                     byte gray = buffer[pixel];
-                    imageData[offset] = (gray == noDataByte) ? (byte)0 : (byte)255; // A
-                    imageData[offset + 1] = gray; // R
-                    imageData[offset + 2] = gray; // G
-                    imageData[offset + 3] = gray; // B
+                    imageData[offset + 3] = (gray == noDataByte) ? (byte)0 : (byte)255; // A
+                    imageData[offset + 2] = gray; // R
+                    imageData[offset + 1] = gray; // G
+                    imageData[offset + 0] = gray; // B
                 }
             }
             else if (bandDataTypes[0] == DataType.GDT_Byte &&
@@ -141,6 +145,8 @@ public class GdalDataSource2 : BaseRasterDataSource2
                 // Read color table
                 ColorTable colorTable = band.GetColorTable();
                 int colorCount = colorTable.GetCount();
+                var paletteInterp = colorTable.GetPaletteInterpretation();
+
                 byte[] ctR = new byte[colorCount];
                 byte[] ctG = new byte[colorCount];
                 byte[] ctB = new byte[colorCount];
@@ -160,12 +166,10 @@ public class GdalDataSource2 : BaseRasterDataSource2
                 {
                     long offset = pixel * 4;
                     byte colorIndex = buffer[pixel];
-                    imageData[offset] = (colorIndex == noDataByte) ?
-                        (byte)0 : ctA[colorIndex]; // A
-                    imageData[offset + 1] = ctR[colorIndex]; // R
-                    imageData[offset + 2] = ctG[colorIndex]; // G
-                    imageData[offset + 3] = ctB[colorIndex]; // B
-
+                    imageData[offset + 3] = (colorIndex == noDataByte) ? (byte)0 : ctA[colorIndex]; // A
+                    imageData[offset + 2] = ctR[colorIndex]; // R
+                    imageData[offset + 1] = ctG[colorIndex]; // G
+                    imageData[offset + 0] = ctB[colorIndex]; // B
                 }
             }
             else
@@ -193,21 +197,50 @@ public class GdalDataSource2 : BaseRasterDataSource2
                 if (band.DataType != DataType.GDT_Byte)
                     throw new NotSupportedException(
                         "Unsupported raster band configuration.");
+
+                band.GetNoDataValue(out double rawNoDataValue, out int hasNoDataValue);
+                byte noDataByte = (hasNoDataValue == 1) ? (byte)rawNoDataValue : (byte)0;
+
                 byte[] buffer = new byte[pixelCount];
                 band.ReadRaster(0, 0, widthPx, heightPx, buffer,
                     widthPx, heightPx, 0, 0);
-                long byteOffset = band.GetRasterColorInterpretation() switch
+
+                ColorInterp colorInterpretation = band.GetRasterColorInterpretation();
+                bool isAlphaBand = false;
+                long byteOffset = 0;
+                
+                switch (colorInterpretation)
                 {
-                    ColorInterp.GCI_AlphaBand or
-                    ColorInterp.GCI_Undefined => 0,
-                    ColorInterp.GCI_RedBand => 1,
-                    ColorInterp.GCI_GreenBand => 2,
-                    ColorInterp.GCI_BlueBand => 3,
-                    _ => throw new NotSupportedException(
-                        "Unsupported raster band configuration.")
+                    case ColorInterp.GCI_Undefined:
+                    case ColorInterp.GCI_AlphaBand: {
+                        isAlphaBand = true;
+                        byteOffset = 3;
+                        break;
+                    }
+                    case ColorInterp.GCI_RedBand: {
+                        byteOffset = 2; break;
+                    }
+                    case ColorInterp.GCI_GreenBand: {
+                            byteOffset = 1; break;
+                    }
+                    case ColorInterp.GCI_BlueBand: {
+                            byteOffset = 0; break;
+                    }
+                    default:
+                        throw new NotSupportedException(
+                            "Unsupported raster band configuration.");
                 };
-                for (long pixel = 0; pixel < pixelCount; pixel++)
-                    imageData[pixel * 4 + byteOffset] = buffer[pixel];
+
+                if (byteOffset == -1) continue;
+                if (isAlphaBand && hasNoDataValue == 1)
+                {
+                    for (long pixel = 0; pixel < pixelCount; pixel++)
+                        imageData[pixel * 4 + byteOffset] =
+                            buffer[pixel] == noDataByte ? (byte)0 : (byte)255;
+                }
+                else
+                    for (long pixel = 0; pixel < pixelCount; pixel++)
+                        imageData[pixel * 4 + byteOffset] = buffer[pixel];
             }
         }
         else

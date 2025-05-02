@@ -195,8 +195,9 @@ public static class GdalUtils
             sb.AppendLine(" Interpretation: " + band.GetRasterColorInterpretation());
 
             band.GetNoDataValue(out double noDataValue, out int hasNoDataValue);
-            if (hasNoDataValue == 1)
-                sb.AppendLine(" No-data value: " + noDataValue);
+            sb.AppendLine(" Has no-data value: " + hasNoDataValue);
+            //if (hasNoDataValue == 1)
+            sb.AppendLine(" No-data value: " + noDataValue);
         }
         return sb.ToString();
     }
@@ -257,7 +258,9 @@ public static class GdalUtils
                 "-s_srs", sourceSrs,
                 "-t_srs", destSrs,
                 "-r", "lanczos",
-                "-of", "gtiff"
+                "-of", "gtiff",
+                "-srcnodata", "-9999",
+                "-dstnodata", "-9999",
             });
         string destFilename = FileSystemHelpers.GetTempFileName(".tif", "warped");
         using Dataset result = Gdal.Warp(destFilename,

@@ -1,13 +1,49 @@
-﻿using MapLib.DataSources.Raster;
+﻿using System.Drawing.Imaging;
+using MapLib.DataSources.Raster;
 using MapLib.GdalSupport;
 using OSGeo.GDAL;
 using System.IO;
+using MapLib.Util;
 
 namespace MapLib.Tests.DataSources;
 
 [TestFixture]
 public class GdalDataSource2Fixture : BaseFixture
 {
+    [Test]
+    [TestCase("MassGIS Aerial/19TCG390725.jp2")] // RGB imagery
+    [TestCase("USGS Topo Quad 25k/q249882.tif")] // indexed
+    public void TestSaveAsPng(string filename)
+    {
+        filename = Path.Join(TestDataPath, filename);
+        GdalDataSource2 ds = new(filename);
+        RasterData2 data = ds.GetData();
+        Assert.That(data, Is.TypeOf<ImageRasterData>());
+        var imageData = data as ImageRasterData;
+        Assert.That(imageData, Is.Not.Null);
+        string outFilename = FileSystemHelpers.GetTempFileName(
+            ".png", Path.GetFileNameWithoutExtension(filename) + "_converted_");
+        imageData!.Bitmap.Save(outFilename);
+    }
+
+    [Test]
+    [TestCase("MassGIS Aerial/19TCG390725.jp2")] // RGB imagery
+    [TestCase("USGS Topo Quad 25k/q249882.tif")] // indexed
+    public void TestWarpAndSaveAsPng(string filename)
+    {
+        filename = Path.Join(TestDataPath, filename);
+        string warpedFilename = GdalUtils.Warp(filename, GdalSupport.Transformer.WktWebMercator);
+        GdalDataSource2 ds = new(warpedFilename);
+        RasterData2 data = ds.GetData();
+        Assert.That(data, Is.TypeOf<ImageRasterData>());
+        var imageData = data as ImageRasterData;
+        Assert.That(imageData, Is.Not.Null);
+        string outFilename = FileSystemHelpers.GetTempFileName(
+            ".png", Path.GetFileNameWithoutExtension(filename) + "_warped_");
+        Console.WriteLine(imageData!.Bitmap.PixelFormat);
+        imageData!.Bitmap.Save(outFilename, ImageFormat.Png);
+    }
+
     [Test]
     [TestCase("MassGIS LiDAR/be_19TCG339672.tif")] // Float32 DEM
     [TestCase("MassGIS Aerial/19TCG390725.jp2")] // RGB imagery

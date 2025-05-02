@@ -43,3 +43,15 @@ public class RasterMapDataSource : MapDataSource
         DataSource = dataSource;
     }
 }
+
+public class RasterMapDataSource2 : MapDataSource
+{
+    public BaseRasterDataSource2 DataSource { get; }
+    public override string SourceSrs => DataSource.Srs;
+
+    public RasterMapDataSource2(string name,
+        BaseRasterDataSource2 dataSource) : base(name)
+    {
+        DataSource = dataSource;
+    }
+}

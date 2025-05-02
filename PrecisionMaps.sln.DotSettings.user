@@ -4,5 +4,12 @@
     &lt;TestId&gt;NUnit3x::4CBA79BC-D8C5-47A6-A8CB-CF4EED751AA4::net8.0-windows::MapLib.Tests.Render.MapRenderFixture.RenderSimpleOsmData&lt;/TestId&gt;&#xD;
     &lt;TestId&gt;NUnit3x::4CBA79BC-D8C5-47A6-A8CB-CF4EED751AA4::net8.0-windows::MapLib.Tests.TestDataManager.DownloadData&lt;/TestId&gt;&#xD;
     &lt;TestId&gt;NUnit3x::4CBA79BC-D8C5-47A6-A8CB-CF4EED751AA4::net8.0-windows::MapLib.Tests.Render.MapRenderFixture.RenderSimpleOsmData2&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::4CBA79BC-D8C5-47A6-A8CB-CF4EED751AA4::net8.0-windows::MapLib.Tests.DataSources.GdalDataSource2Fixture.TestSaveAsPngImage&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::4CBA79BC-D8C5-47A6-A8CB-CF4EED751AA4::net8.0-windows::MapLib.Tests.DataSources.GdalDataSource2Fixture.TestSaveAsPngImage("MassGIS Aerial/19TCG390725.jp2")&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::4CBA79BC-D8C5-47A6-A8CB-CF4EED751AA4::net8.0-windows::MapLib.Tests.DataSources.GdalDataSource2Fixture.TestSaveAsPngImage("MassGIS Impervious Surface/imp_ne6.img")&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::4CBA79BC-D8C5-47A6-A8CB-CF4EED751AA4::net8.0-windows::MapLib.Tests.DataSources.GdalDataSource2Fixture.TestSaveAsPngImage("USGS Topo Quad 25k/q249882.tif")&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::4CBA79BC-D8C5-47A6-A8CB-CF4EED751AA4::net8.0-windows::MapLib.Tests.DataSources.GdalDataSource2Fixture.TestWarpAndSaveAsPng&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::4CBA79BC-D8C5-47A6-A8CB-CF4EED751AA4::net8.0-windows::MapLib.Tests.DataSources.GdalDataSource2Fixture.TestWarpAndSaveAsPng("MassGIS Aerial/19TCG390725.jp2")&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::4CBA79BC-D8C5-47A6-A8CB-CF4EED751AA4::net8.0-windows::MapLib.Tests.DataSources.GdalDataSource2Fixture.TestWarpAndSaveAsPng("USGS Topo Quad 25k/q249882.tif")&lt;/TestId&gt;&#xD;
   &lt;/TestAncestor&gt;&#xD;
 &lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>
