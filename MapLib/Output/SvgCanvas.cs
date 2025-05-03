@@ -121,7 +121,7 @@ public class SvgCanvasLayer : CanvasLayer, IDisposable
     {
         _objects.Add(new XElement(SvgCanvas.XmlNs + "g",
             GetRasterAttributes(opacity),
-            GetRasterData(bitmap, x, _layerHeight-y, width, height)));
+            GetRasterData(bitmap, x, _layerHeight - y - height, width, height)));
     }
 
     public override void DrawLine(Coord[] coords, double width,
