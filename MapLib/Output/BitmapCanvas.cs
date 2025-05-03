@@ -141,6 +141,14 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
     public override void DrawBitmap(Bitmap srcBitmap,
         double x, double y, double width, double height, double opacity)
     {
+        // Since our Y-coordinate is flipped, but the
+        // bitmap contents is not, we need to paint it upside down.
+        // Quick-and-dirty solution: Flip the contents.
+        // TODO: Find more efficient solution.
+        // TODO: Also, this seems to break the alpha channel in ARGB/RGBA images.
+        using var flippedBitmap = Bitmap.FromHbitmap(srcBitmap.GetHbitmap());
+        flippedBitmap.RotateFlip(RotateFlipType.RotateNoneFlipY);
+
         if (opacity < 1.0)
         {
             float[][] colorMatrixElements = {
@@ -156,7 +164,8 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
                ColorMatrixFlag.Default,
                ColorAdjustType.Bitmap);
             GraphicsUnit unit = GraphicsUnit.Pixel;
-            _graphics.DrawImage(srcBitmap, [
+
+            _graphics.DrawImage(flippedBitmap, [
                     new PointF((float)x, (float)(_layerHeight-y)),
                     new PointF((float)(x+width), (float)(_layerHeight-y)),
                     new PointF((float)x, (float)(_layerHeight - y + height))],
@@ -166,7 +175,7 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
         }
         else
         {
-            _graphics.DrawImage(srcBitmap, new[] {
+            _graphics.DrawImage(flippedBitmap, new[] {
                 new PointF((float)x, (float)(y)),
                 new PointF((float)(x+width), (float)(y)),
                 new PointF((float)x, (float)(y + height))});
