@@ -1,4 +1,5 @@
 ﻿using MapLib.Geometry;
+using MapLib.RasterOps;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
@@ -58,6 +59,37 @@ public class SingleBandRasterData : RasterData2
         SingleBandData = singleBandData;
         NoDataValue = noDataValue;
     }
+
+
+    // Raster operations
+
+    /// <summary>
+    /// Returns the min and max value in the raster (excluding
+    /// no-data values).
+    /// </summary>
+    /// <exception cref="InvalidOperationException">
+    /// The raster has no pixels with valid data (only no-data values).
+    /// </exception>
+    public void GetMinMax(out float min, out float max)
+        => SimpleRasterDataOps.ComputeMinMax(this, out min, out max);
+
+    /// <summary>
+    /// Returns the number of pixels in the raster (excluding
+    /// no-data values)
+    /// </summary>
+    public long GetPixelCount()
+        => SimpleRasterDataOps.ComputePixelCount(this);
+
+    public ImageRasterData ToImageData(bool normalize = true)
+    {
+        throw new NotImplementedException();
+    }
+
+    // TODO: Hillshading (basic)
+    // TODO: Hypsometric tints (basic)
+    // TODO: Contour lines (basic)
+    // TODO: Levels/contrast/stretch/histogram etc
+    // TODO: Low pass filtering (smoothing)
 }
 
 public class ImageRasterData : RasterData2
