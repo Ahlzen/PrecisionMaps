@@ -60,36 +60,23 @@ public class SingleBandRasterData : RasterData2
         NoDataValue = noDataValue;
     }
 
-
-    // Raster operations
-
     /// <summary>
-    /// Returns the min and max value in the raster (excluding
-    /// no-data values).
+    /// Creates a clone of this ImageRasterData, but with new
+    /// content (keeping all other metadata).
     /// </summary>
-    /// <exception cref="InvalidOperationException">
-    /// The raster has no pixels with valid data (only no-data values).
-    /// </exception>
-    public void GetMinMax(out float min, out float max)
-        => SimpleRasterDataOps.ComputeMinMax(this, out min, out max);
-
-    /// <summary>
-    /// Returns the number of pixels in the raster (excluding
-    /// no-data values)
-    /// </summary>
-    public long GetPixelCount()
-        => SimpleRasterDataOps.ComputePixelCount(this);
-
-    public ImageRasterData ToImageData(bool normalize = true)
+    public SingleBandRasterData CloneWithNewData(float[] newImageData)
     {
-        throw new NotImplementedException();
-    }
+        // Check that the length matches
+        long expectedLength = HeightPx * WidthPx;
+        if (newImageData.LongLength != expectedLength)
+            throw new ArgumentException("New data is not of correct length: " +
+                $"Expected {expectedLength}, Was {newImageData.LongLength}",
+                nameof(newImageData));
 
-    // TODO: Hillshading (basic)
-    // TODO: Hypsometric tints (basic)
-    // TODO: Contour lines (basic)
-    // TODO: Levels/contrast/stretch/histogram etc
-    // TODO: Low pass filtering (smoothing)
+        SingleBandRasterData newData = new SingleBandRasterData(
+            Srs, Bounds, WidthPx, HeightPx, newImageData, NoDataValue);
+        return newData;
+    }
 }
 
 public class ImageRasterData : RasterData2

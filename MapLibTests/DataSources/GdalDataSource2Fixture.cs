@@ -3,6 +3,7 @@ using MapLib.DataSources.Raster;
 using MapLib.GdalSupport;
 using OSGeo.GDAL;
 using System.IO;
+using MapLib.RasterOps;
 using MapLib.Util;
 
 namespace MapLib.Tests.DataSources;
@@ -42,6 +43,33 @@ public class GdalDataSource2Fixture : BaseFixture
             ".png", Path.GetFileNameWithoutExtension(filename) + "_warped_");
         Console.WriteLine(imageData!.Bitmap.PixelFormat);
         imageData!.Bitmap.Save(outFilename, ImageFormat.Png);
+    }
+
+    [Test]
+    [TestCase("MassGIS LiDAR/be_19TCG339672.tif")] // Float32 DEM
+    [TestCase("USGS NED/USGS_OPR_MA_CentralEastern_2021_B21_be_19TCG339672.tif")]
+    public void TestGenerateHillshade(string filename)
+    {
+        filename = Path.Join(TestDataPath, filename);
+        
+        // Load DEM (single-band raster)
+        GdalDataSource2 ds = new(filename);
+        SingleBandRasterData? dem = ds.GetData() as SingleBandRasterData;
+        Assert.That(dem, Is.Not.Null);
+
+        // Save DEM and hillshade as images
+        string demFilename = FileSystemHelpers.GetTempFileName(
+            ".png", Path.GetFileNameWithoutExtension(filename) + "_dem_");
+        dem!
+            .ToImageRasterData(normalize: true)
+            .Bitmap.Save(demFilename);
+
+        string hillshadeFilename = FileSystemHelpers.GetTempFileName(
+            ".png", Path.GetFileNameWithoutExtension(filename) + "_hillshade_");
+        dem!
+            .GetHillshade_Basic()
+            .ToImageRasterData(normalize: true)
+            .Bitmap.Save(hillshadeFilename);
     }
 
     [Test]
