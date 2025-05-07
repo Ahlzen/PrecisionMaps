@@ -92,7 +92,6 @@ public static class SimpleRasterDataOps
         GetMinMax(source, out float sourceMin, out float sourceMax);
         float sourceRange = sourceMax - sourceMin;
         float destRange = max - min;
-        float offset = min - sourceMin;
         float scale = (sourceRange == 0) ? 0 : destRange / sourceRange;
         long pixelCount = source.HeightPx * source.WidthPx;
         float[] normalizedData = new float[pixelCount];
@@ -101,7 +100,7 @@ public static class SimpleRasterDataOps
             for (long i = 0; i < pixelCount; i++)
             {
                 float v = source.SingleBandData[i];
-                normalizedData[i] = offset + v * scale;
+                normalizedData[i] = min + (scale * (v - sourceMin));
             }
         }
         else
@@ -111,7 +110,7 @@ public static class SimpleRasterDataOps
             {
                 float v = source.SingleBandData[i];
                 if (v != n)
-                    normalizedData[i] = offset + v * scale;
+                    normalizedData[i] = min + (scale * (v - sourceMin));
                 else
                     normalizedData[i] = n;
             }
@@ -173,7 +172,7 @@ public static class SimpleRasterDataOps
         {
             for (long i = 0; i < pixelCount; i++)
             {
-                byte v = (byte)source.SingleBandData[i];
+                byte v = (byte)(source.SingleBandData[i]+.5f); // add .5 since casting truncates (rounds down)
                 imageData[offset++] = v; // B
                 imageData[offset++] = v; // G
                 imageData[offset++] = v; // R
@@ -186,7 +185,7 @@ public static class SimpleRasterDataOps
             for (long i = 0; i < pixelCount; i++)
             {
                 float f = source.SingleBandData[i];
-                byte b = (byte)f;
+                byte b = (byte)(f+.5f); // add .5 since casting truncates (rounds down)
                 imageData[offset++] = b; // B
                 imageData[offset++] = b; // G
                 imageData[offset++] = b; // R
