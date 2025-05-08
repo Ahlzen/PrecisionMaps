@@ -67,8 +67,11 @@ public class GdalDataSource2Fixture : BaseFixture
         string hillshadeFilename = FileSystemHelpers.GetTempFileName(
             ".png", Path.GetFileNameWithoutExtension(filename) + "_hillshade_");
         dem!
-            .GetHillshade_Basic()
-            .ToImageRasterData(normalize: true)
+            .GetHillshade_Basic() // appx [-3, 5]
+            .GetClamped(-1.5f, 1.5f) // cut top and bottom to increase contrast a bit
+            .GetWithOffset(1.5f)
+            .GetScaled(255/3f)
+            .ToImageRasterData(normalize: false)
             .Bitmap.Save(hillshadeFilename);
     }
 

@@ -1,5 +1,6 @@
 ﻿// ReSharper disable CompareOfFloatsByEqualityOperator
 using MapLib.Render;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace MapLib.RasterOps;
 
@@ -13,28 +14,61 @@ public static class SimpleRasterDataOps
     /// The raster has no pixels with valid data (only no-data values).
     /// </exception>
     public static void GetMinMax(
-        this SingleBandRasterData data, out float min, out float max)
+        this SingleBandRasterData source, out float min, out float max)
+    {
+        //min = float.MaxValue;
+        //max = float.MinValue;
+
+        //long pixelCount = source.HeightPx * source.WidthPx;
+
+        //if (source.NoDataValue == null)
+        //{
+        //    for (long i = 0; i < pixelCount; i++)
+        //    {
+        //        float v = source.SingleBandData[i];
+        //        if (v < min) min = v;
+        //        if (v > max) max = v;
+        //    }
+        //}
+        //else
+        //{
+        //    float n = source.NoDataValue.Value;
+        //    for (long i = 0; i < pixelCount; i++)
+        //    {
+        //        float v = source.SingleBandData[i];
+        //        if (v != n)
+        //        {
+        //            if (v < min) min = v;
+        //            if (v > max) max = v;
+        //        }
+        //    }
+        //}
+
+        //// Special case, where there are no pixels with data
+        //if (min == float.MaxValue && max == float.MinValue)
+        //    throw new InvalidOperationException("No data");
+        GetMinMax(source.SingleBandData, out min, out max, source.NoDataValue);
+    }
+    private static void GetMinMax(float[] data, out float min, out float max, float? noDataValue)
     {
         min = float.MaxValue;
         max = float.MinValue;
-
-        long pixelCount = data.HeightPx * data.WidthPx;
-
-        if (data.NoDataValue == null)
+        long pixelCount = data.Length;
+        if (noDataValue == null)
         {
             for (long i = 0; i < pixelCount; i++)
             {
-                float v = data.SingleBandData[i];
+                float v = data[i];
                 if (v < min) min = v;
                 if (v > max) max = v;
             }
         }
         else
         {
-            float n = data.NoDataValue.Value;
+            float n = noDataValue.Value;
             for (long i = 0; i < pixelCount; i++)
             {
-                float v = data.SingleBandData[i];
+                float v = data[i];
                 if (v != n)
                 {
                     if (v < min) min = v;
@@ -48,24 +82,30 @@ public static class SimpleRasterDataOps
             throw new InvalidOperationException("No data");
     }
 
+    private static void PrintMinMax(float[] data, float? noDataValue, string? prefix)
+    {
+        GetMinMax(data, out float min, out float max, noDataValue);
+        Console.WriteLine($"{prefix}Min: {min}, Max: {max}");
+    }
+
     /// <summary>
     /// Returns the number of pixels in the raster (excluding
     /// no-data values)
     /// </summary>
-    public static long GetPixelCount(this SingleBandRasterData data)
+    public static long GetPixelCount(this SingleBandRasterData source)
     {
-        if (data.NoDataValue == null)
+        if (source.NoDataValue == null)
         {
-            return data.WidthPx * data.HeightPx;
+            return source.WidthPx * source.HeightPx;
         }
         else
         {
-            long totalPixelCount = data.HeightPx * data.WidthPx;
+            long totalPixelCount = source.HeightPx * source.WidthPx;
             long dataPixelCount = 0;
-            float n = data.NoDataValue.Value;
+            float n = source.NoDataValue.Value;
             for (long i = 0; i < totalPixelCount; i++)
             {
-                float v = data.SingleBandData[i];
+                float v = source.SingleBandData[i];
                 if (v != n)
                     dataPixelCount++;
             }
@@ -115,6 +155,7 @@ public static class SimpleRasterDataOps
                     normalizedData[i] = n;
             }
         }
+        PrintMinMax(normalizedData, source.NoDataValue, "Normalized: ");
         return source.CloneWithNewData(normalizedData);
     }
 
@@ -147,7 +188,29 @@ public static class SimpleRasterDataOps
                     clampedData[i] = n;
             }
         }
+        PrintMinMax(clampedData, source.NoDataValue, "Clamped: ");
         return source.CloneWithNewData(clampedData);
+    }
+
+    /// <summary>
+    /// Clamps (limits) values at the top and bottom of the value range.
+    /// </summary>
+    /// <remarks>
+    /// For example, to clamp values below the bottom 20% and above
+    /// the top 30% of the value range, use:
+    /// bottomFactor = 0.2, topFactor = 0.3
+    /// Then, if the original values were within [0, 100], values
+    /// below 20 are clamped to 20, values above 70 are clamped
+    /// to 70, so the result falls within [20, 70].
+    /// BottomFactor + TopFactor must add up to less than 1.
+    /// </remarks>
+    public static SingleBandRasterData GetWithExtremesClamped(
+        this SingleBandRasterData source, float bottomFactor, float topFactor)
+    {
+        GetMinMax(source, out float srcMin, out float srcMax);
+        float destMin = srcMin + (srcMax - srcMin) * bottomFactor;
+        float destMax = srcMax - (srcMax - srcMin) * topFactor;
+        return GetClamped(source, destMin, destMax);
     }
 
     /// <summary>
@@ -225,9 +288,69 @@ public static class SimpleRasterDataOps
         for (int x = 0; x < source.WidthPx; x++)
             hillshadeData[x] = hillshadeData[x + source.WidthPx];
 
+        PrintMinMax(hillshadeData, source.NoDataValue, "Hillshade: ");
         return source.CloneWithNewData(hillshadeData);
     }
 
+    /// <summary>
+    /// Offsets (adds or subtracts a fixed amount to each value)
+    /// the raster data. No-data values are preserved.
+    /// </summary>
+    public static SingleBandRasterData GetWithOffset(
+        this SingleBandRasterData source, float amount)
+    {
+        long pixelCount = source.HeightPx * source.WidthPx;
+        float[] offsetData = new float[pixelCount];
+        if (source.NoDataValue == null)
+        {
+            for (long i = 0; i < pixelCount; i++)
+                offsetData[i] = source.SingleBandData[i] + amount;
+        }
+        else
+        {
+            float n = source.NoDataValue.Value;
+            for (long i = 0; i < pixelCount; i++)
+            {
+                float v = source.SingleBandData[i];
+                if (v != n)
+                    offsetData[i] = v + amount;
+                else
+                    offsetData[i] = n;
+            }
+        }
+        PrintMinMax(offsetData, source.NoDataValue, "Offset: ");
+        return source.CloneWithNewData(offsetData);
+    }
+
+    /// <summary>
+    /// Scales (multiplies each value by the specified factor)
+    /// the raster data. No-data values are preserved.
+    /// </summary>
+    public static SingleBandRasterData GetScaled(
+        this SingleBandRasterData source, float factor)
+    {
+        long pixelCount = source.HeightPx * source.WidthPx;
+        float[] scaledData = new float[pixelCount];
+        if (source.NoDataValue == null)
+        {
+            for (long i = 0; i < pixelCount; i++)
+                scaledData[i] = source.SingleBandData[i] * factor;
+        }
+        else
+        {
+            float n = source.NoDataValue.Value;
+            for (long i = 0; i < pixelCount; i++)
+            {
+                float v = source.SingleBandData[i];
+                if (v != n)
+                    scaledData[i] = v * factor;
+                else
+                    scaledData[i] = n;
+            }
+        }
+        PrintMinMax(scaledData, source.NoDataValue, "Scaled: ");
+        return source.CloneWithNewData(scaledData);
+    }
 
     // TODO: Hypsometric tints (basic)
     // TODO: Contour lines (basic)
