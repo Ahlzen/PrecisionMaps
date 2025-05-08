@@ -1,5 +1,6 @@
 ﻿// ReSharper disable CompareOfFloatsByEqualityOperator
 using MapLib.Render;
+using System.Diagnostics;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace MapLib.RasterOps;
@@ -15,40 +16,8 @@ public static class SimpleRasterDataOps
     /// </exception>
     public static void GetMinMax(
         this SingleBandRasterData source, out float min, out float max)
-    {
-        //min = float.MaxValue;
-        //max = float.MinValue;
+        => GetMinMax(source.SingleBandData, out min, out max, source.NoDataValue);
 
-        //long pixelCount = source.HeightPx * source.WidthPx;
-
-        //if (source.NoDataValue == null)
-        //{
-        //    for (long i = 0; i < pixelCount; i++)
-        //    {
-        //        float v = source.SingleBandData[i];
-        //        if (v < min) min = v;
-        //        if (v > max) max = v;
-        //    }
-        //}
-        //else
-        //{
-        //    float n = source.NoDataValue.Value;
-        //    for (long i = 0; i < pixelCount; i++)
-        //    {
-        //        float v = source.SingleBandData[i];
-        //        if (v != n)
-        //        {
-        //            if (v < min) min = v;
-        //            if (v > max) max = v;
-        //        }
-        //    }
-        //}
-
-        //// Special case, where there are no pixels with data
-        //if (min == float.MaxValue && max == float.MinValue)
-        //    throw new InvalidOperationException("No data");
-        GetMinMax(source.SingleBandData, out min, out max, source.NoDataValue);
-    }
     private static void GetMinMax(float[] data, out float min, out float max, float? noDataValue)
     {
         min = float.MaxValue;
@@ -80,12 +49,6 @@ public static class SimpleRasterDataOps
         // Special case, where there are no pixels with data
         if (min == float.MaxValue && max == float.MinValue)
             throw new InvalidOperationException("No data");
-    }
-
-    private static void PrintMinMax(float[] data, float? noDataValue, string? prefix)
-    {
-        GetMinMax(data, out float min, out float max, noDataValue);
-        Console.WriteLine($"{prefix}Min: {min}, Max: {max}");
     }
 
     /// <summary>
@@ -356,4 +319,12 @@ public static class SimpleRasterDataOps
     // TODO: Contour lines (basic)
     // TODO: Levels/contrast/stretch/histogram etc
     // TODO: Low pass filtering (smoothing)
+
+    /// <remarks>For development only</remarks>
+    [Conditional("DEBUG")]
+    private static void PrintMinMax(float[] data, float? noDataValue, string? prefix)
+    {
+        GetMinMax(data, out float min, out float max, noDataValue);
+        Console.WriteLine($"{prefix}Min: {min}, Max: {max}");
+    }
 }
