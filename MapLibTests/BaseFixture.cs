@@ -1,4 +1,7 @@
 ﻿using MapLib.GdalSupport;
+using MapLib.Output;
+using MapLib.Util;
+using System.Drawing;
 
 namespace MapLib.Tests;
 
@@ -29,5 +32,13 @@ public abstract class BaseFixture
 
         // Make sure we have all data required for the tests
         TestDataManager.EnsureTestDataReady(Console.Out);
+    }
+
+
+
+    protected void SaveTempBitmap(Bitmap bitmap, string? prefix = null, string extension = ".png")
+    {
+        string filename = FileSystemHelpers.GetTempFileName(extension, prefix);
+        bitmap.Save(filename);
     }
 }

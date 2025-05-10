@@ -1,7 +1,6 @@
 ﻿// ReSharper disable CompareOfFloatsByEqualityOperator
-using MapLib.Render;
 using System.Diagnostics;
-using static System.Runtime.InteropServices.JavaScript.JSType;
+using System.Reflection.Metadata.Ecma335;
 
 namespace MapLib.RasterOps;
 
@@ -314,6 +313,14 @@ public static class SimpleRasterDataOps
         PrintMinMax(scaledData, source.NoDataValue, "Scaled: ");
         return source.CloneWithNewData(scaledData);
     }
+
+    /// <summary>
+    /// Adjusts the levels in the specified raster through the supplied
+    /// table of input->output values.
+    /// </summary>
+    public static SingleBandRasterData GetWithLevelAdjustment(
+        this SingleBandRasterData source, LevelAdjustment adjustmentTable)
+        => source.CloneWithNewData(adjustmentTable.Apply(source.SingleBandData));
 
     // TODO: Hypsometric tints (basic)
     // TODO: Contour lines (basic)
