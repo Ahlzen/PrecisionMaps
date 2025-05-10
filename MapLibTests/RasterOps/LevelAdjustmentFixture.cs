@@ -46,6 +46,17 @@ public class LevelAdjustmentFixture : BaseFixture
         _visualizer.Add("Quantize 64", LevelAdjustment.Quantize(64));
         SaveTempBitmap(_visualizer.Render(), "Quantize");
     }
+
+    [Test]
+    public void TestAdjustMidpoint()
+    {
+        _visualizer.Add("AdjustMidpoint 0.1", LevelAdjustment.AdjustMidpoint(0.1f));
+        _visualizer.Add("AdjustMidpoint 0.3", LevelAdjustment.AdjustMidpoint(0.3f));
+        _visualizer.Add("AdjustMidpoint 0.5", LevelAdjustment.AdjustMidpoint(0.5f));
+        _visualizer.Add("AdjustMidpoint 0.7", LevelAdjustment.AdjustMidpoint(0.7f));
+        _visualizer.Add("AdjustMidpoint 0.9", LevelAdjustment.AdjustMidpoint(0.9f));
+        SaveTempBitmap(_visualizer.Render(), "AdjustMidpoint");
+    }
 }
 
 
