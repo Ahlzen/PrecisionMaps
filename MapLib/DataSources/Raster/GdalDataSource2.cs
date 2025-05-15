@@ -1,9 +1,6 @@
 ﻿using MapLib.GdalSupport;
 using MapLib.Geometry;
 using OSGeo.GDAL;
-using System.ComponentModel.Design;
-using System.IO;
-using System.Text;
 
 namespace MapLib.DataSources.Raster;
 
@@ -15,6 +12,7 @@ public class GdalDataSource2 : BaseRasterDataSource2
 
     public override string Srs { get; }
     public override Bounds? Bounds { get; }
+    public override bool IsBounded => true; // Probably depends on the source
 
     public int WidthPx { get; }
     public int HeightPx { get; }
@@ -254,16 +252,18 @@ public class GdalDataSource2 : BaseRasterDataSource2
                 singleBandData!, noDataValue);
     }
     
-    public override RasterData2 GetData()
-    {
-        using Dataset dataset = GdalUtils.OpenDataset(Filename);
-        return GetRasterData(dataset);
-    }
+    //public override RasterData2 GetData()
+    //{
+    //    using Dataset dataset = GdalUtils.OpenDataset(Filename);
+    //    return GetRasterData(dataset);
+    //}
 
-    public override RasterData2 GetData(string destSrs)
+
+
+    public override RasterData2 GetData(string? destSrs = null)
     {
         string filename = Filename;
-        if (Srs != destSrs)
+        if (destSrs != null && destSrs != Srs)
         {
             // Reproject source data, and use that file
             filename = GdalUtils.Warp(filename, destSrs);
@@ -273,4 +273,13 @@ public class GdalDataSource2 : BaseRasterDataSource2
         Console.WriteLine(GdalUtils.GetRasterInfo(sourceDataset));
         return GetRasterData(sourceDataset);
     }
+
+    public override RasterData2 GetData()
+        => GetData(null);
+
+    public override RasterData2 GetData(Bounds boundsWgs84)
+        => GetData(null);
+
+    public override RasterData2 GetData(Bounds boundsWgs84, string? destSrs = null)
+        => GetData(destSrs);
 }

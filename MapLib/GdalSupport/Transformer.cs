@@ -11,6 +11,9 @@ public class Transformer : IDisposable
     // Short-hand WKT strings for a few common SRS
     public const string WktWgs84 = "EPSG:4326";
     public const string WktWebMercator = "EPSG:3857";
+    public const string WktNad83 = "EPSG:4269";
+
+    public const string WktVanDerGrinten = "EPSG:53029";
 
     public string SourceSrs { get; }
     public string DestSrs { get; }

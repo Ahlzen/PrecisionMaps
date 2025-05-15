@@ -25,4 +25,21 @@ public static class CoordinateTransformationExtensions
         Transformer transformer = new(feature.Srs, destSrs);
         return transformer.Transform(coord);
     }
+
+
+    public static Coord Transform(this Coord coord, string srcSrs, string destSrs)
+    {
+        Transformer transformer = new(srcSrs, destSrs);
+        return transformer.Transform(coord);
+    }
+    public static Coord ToWgs84(this Coord coord, string srcSrs)
+        => coord.Transform(srcSrs, Transformer.WktWgs84);
+
+    public static Bounds Transform(this Bounds bounds, string srcSrs, string destSrs)
+    {
+        Transformer transformer = new(srcSrs, destSrs);
+        return transformer.Transform(bounds);
+    }
+    public static Bounds ToWgs84(this Bounds bounds, string srcSrs)
+        => bounds.Transform(srcSrs, Transformer.WktWgs84);
 }

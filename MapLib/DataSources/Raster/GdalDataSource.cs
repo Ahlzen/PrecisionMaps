@@ -1,16 +1,11 @@
-﻿using MapLib.FileFormats.Raster;
-using MapLib.GdalSupport;
+﻿using MapLib.GdalSupport;
 using MapLib.Geometry;
-using MapLib.Util;
 using OSGeo.GDAL;
-using OSGeo.OGR;
-using OSGeo.OSR;
-using System.Diagnostics;
 using System.Drawing;
-using System.Net.Http;
 
 namespace MapLib.DataSources.Raster;
 
+[Obsolete]
 public class GdalDataSource : BaseRasterDataSource
 {
     public override string Name => "Raster file (using GDAL)";
@@ -18,15 +13,16 @@ public class GdalDataSource : BaseRasterDataSource
 
     public override string Srs { get; }
     public override Bounds? Bounds { get; }
-    
+    public override bool IsBounded => true; // Probably depends on the source
+
     public int WidthPx { get; }
     public int HeightPx { get; }
-    
+
     public GdalDataSource(string filename)
     {
         Filename = filename;
         using OSGeo.GDAL.Dataset dataset = GdalUtils.OpenDataset(Filename);
-        
+
         Srs = GdalUtils.GetSrsAsWkt(dataset);
         Bounds = GdalUtils.GetBounds(dataset);
         WidthPx = dataset.RasterXSize;
@@ -50,12 +46,18 @@ public class GdalDataSource : BaseRasterDataSource
             // Reproject source data, and use that file
             filename = GdalUtils.Warp(filename, destSrs);
         }
-        
+
         using Dataset sourceDataset =
             GdalUtils.OpenDataset(filename);
         Console.WriteLine(GdalUtils.GetRasterBandSummary(sourceDataset));
         return GetRasterData(sourceDataset);
     }
+
+    public override RasterData GetData(Bounds boundsWgs84)
+        => GetData(); // for now
+
+    public override RasterData GetData(Bounds boundsWgs84, string destSrs)
+        => GetData(destSrs); // for now
 
     private static RasterData GetRasterData(Dataset dataset)
     {

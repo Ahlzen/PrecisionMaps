@@ -6,6 +6,7 @@ using OSGeo.OSR;
 
 namespace MapLib.Tests.DataSources;
 
+[Obsolete]
 [TestFixture]
 public class GdalDataSourceFixture : BaseFixture
 {
@@ -15,7 +16,7 @@ public class GdalDataSourceFixture : BaseFixture
         GdalDataSource dataSource = new(Path.Join(TestDataPath, "MassGIS LiDAR/be_19TCG339672.tif"));
         Console.WriteLine("SRS: " + dataSource.Srs);
         Console.WriteLine("Bounds: " + dataSource.Bounds);
-        Console.WriteLine("Bounds (WGS84): " + dataSource.BoundsWgs84);
+        Console.WriteLine("Bounds (WGS84): " + dataSource.Bounds?.ToWgs84(dataSource.Srs));
         Console.WriteLine("Dimensions: " + dataSource.WidthPx + " x " + dataSource.HeightPx);
 
         RasterData data = dataSource.GetData();
