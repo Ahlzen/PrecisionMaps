@@ -1,6 +1,7 @@
 ﻿using MapLib.GdalSupport;
 using MapLib.Geometry;
 using OSGeo.GDAL;
+using System.Threading.Tasks;
 
 namespace MapLib.DataSources.Raster;
 
@@ -252,15 +253,7 @@ public class GdalDataSource2 : BaseRasterDataSource2
                 singleBandData!, noDataValue);
     }
     
-    //public override RasterData2 GetData()
-    //{
-    //    using Dataset dataset = GdalUtils.OpenDataset(Filename);
-    //    return GetRasterData(dataset);
-    //}
-
-
-
-    public override RasterData2 GetData(string? destSrs = null)
+    public override Task<RasterData2> GetData(string? destSrs = null)
     {
         string filename = Filename;
         if (destSrs != null && destSrs != Srs)
@@ -271,15 +264,15 @@ public class GdalDataSource2 : BaseRasterDataSource2
         using Dataset sourceDataset =
             GdalUtils.OpenDataset(filename);
         Console.WriteLine(GdalUtils.GetRasterInfo(sourceDataset));
-        return GetRasterData(sourceDataset);
+        return Task.FromResult(GetRasterData(sourceDataset));
     }
 
-    public override RasterData2 GetData()
+    public override Task<RasterData2> GetData()
         => GetData(null);
 
-    public override RasterData2 GetData(Bounds boundsWgs84)
+    public override Task<RasterData2> GetData(Bounds boundsWgs84)
         => GetData(null);
 
-    public override RasterData2 GetData(Bounds boundsWgs84, string? destSrs = null)
+    public override Task<RasterData2> GetData(Bounds boundsWgs84, string? destSrs = null)
         => GetData(destSrs);
 }

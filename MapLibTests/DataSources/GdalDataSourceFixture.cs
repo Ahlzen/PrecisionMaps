@@ -11,7 +11,7 @@ namespace MapLib.Tests.DataSources;
 public class GdalDataSourceFixture : BaseFixture
 {
     [Test]
-    public void TestReadGdalRaster()
+    public async void TestReadGdalRaster()
     {
         GdalDataSource dataSource = new(Path.Join(TestDataPath, "MassGIS LiDAR/be_19TCG339672.tif"));
         Console.WriteLine("SRS: " + dataSource.Srs);
@@ -19,7 +19,7 @@ public class GdalDataSourceFixture : BaseFixture
         Console.WriteLine("Bounds (WGS84): " + dataSource.Bounds?.ToWgs84(dataSource.Srs));
         Console.WriteLine("Dimensions: " + dataSource.WidthPx + " x " + dataSource.HeightPx);
 
-        RasterData data = dataSource.GetData();
+        RasterData data = await dataSource.GetData();
         Console.WriteLine("Bitmap PixelFormat: " + data.Bitmap.PixelFormat);
 
         Assert.That(data.Bitmap, Is.Not.Null);

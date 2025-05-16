@@ -1,5 +1,8 @@
 ﻿using MapLib.GdalSupport;
 using MapLib.Geometry;
+using MapLib.Util;
+using System.IO;
+using System.Threading.Tasks;
 
 namespace MapLib.DataSources;
 
@@ -23,7 +26,7 @@ public abstract class BaseDataSource<TData>
     /// Bounds of full data set, in lon/lat WGS84. If known/applicable.
     /// </summary>
     public Bounds? BoundsWgs84 => Bounds?.ToWgs84(Srs);
-    
+
 
     /// <summary>
     /// Returns true if this source is strictly bounded (beyond the
@@ -33,7 +36,7 @@ public abstract class BaseDataSource<TData>
     /// </summary>
     public abstract bool IsBounded { get; }
 
-    
+
     /// <summary>
     /// Return all data from the specified source.
     /// Supported for bounded sources only.
@@ -41,13 +44,13 @@ public abstract class BaseDataSource<TData>
     /// <exception cref="InvalidOperationException">
     /// Thrown if called on an unbounded source.
     /// </exception>
-    public abstract TData GetData();
+    public abstract Task<TData> GetData();
 
     /// <summary>
     /// See GetData(). Returns data in the specified SRS,
     /// reprojecting/warping if needed.
     /// </summary>
-    public abstract TData GetData(string destSrs);
+    public abstract Task<TData> GetData(string destSrs);
 
     /// <summary>
     /// Return data for (at least) the specified bounds from
@@ -58,24 +61,76 @@ public abstract class BaseDataSource<TData>
     /// this data source.
     /// May return more if needed (e.g. may not crop/trim a file data source).
     /// </remarks>
-    public abstract TData GetData(Bounds boundsWgs84);
+    public abstract Task<TData> GetData(Bounds boundsWgs84);
 
     /// <summary>
     /// See GetData(). Returns data in the specified SRS,
     /// reprojecting/warping if needed.
     /// </summary>
-    public abstract TData GetData(Bounds boundsWgs84, string destSrs);
-}
+    public abstract Task<TData> GetData(Bounds boundsWgs84, string destSrs);
 
+
+    #region Data file caching
+
+    public static readonly string DataCachePath =
+        Path.Join(Path.GetTempPath(), "MapLib", "Cache");
+
+    /// <summary>
+    /// Downloads a file to the data cache, unless it already exists.
+    /// </summary>
+    /// <param name="url">Source URL</param>
+    /// <param name="subdirectory">Optional. Sub-directory under data cache directory.</param>
+    /// <param name="filename">Optional. If null, file name is derived from the URL.</param>
+    /// <returns>Path to downloaded or cached file.</returns>
+    /// <exception cref="ApplicationException">
+    /// Thrown if download failed. Message contains details.
+    /// </exception>
+    protected virtual async Task<string> DownloadAndCache(
+        string url, string? subdirectory = null, string? filename = null)
+    {
+        // TODO: Merge into DataFileCacheManager
+
+        string destDirectory = subdirectory == null ?
+            DataCachePath : Path.Combine(DataCachePath, subdirectory);
+
+        if (!Directory.Exists(destDirectory))
+        {
+            try
+            {
+                Directory.CreateDirectory(destDirectory);
+            }
+            catch (Exception ex)
+            {
+                throw new ApplicationException(
+                    "Failed to create destination directory \"\": "
+                    + ex.Message, ex);
+            }
+        }
+
+        filename ??= UrlHelper.GetFilenameFromUrl_old(url);
+        string destFile = Path.Combine(destDirectory, filename);
+
+        if (File.Exists(destFile))
+        {
+            // File exists. We're done!
+            return destFile;
+        }
+
+        await UrlHelper.DownloadUrl(url, destFile);
+        return destFile;
+    }
+
+    #endregion
+}
 
 
 public abstract class BaseVectorDataSource : BaseDataSource<VectorData>
 {
-    public override VectorData GetData(string destSrs)
-        => Reproject(GetData(), destSrs);
+    public override async Task<VectorData> GetData(string destSrs)
+        => Reproject(GetData().Result, destSrs);
 
-    public override VectorData GetData(Bounds boundsWgs84, string destSrs)
-        => Reproject(GetData(boundsWgs84), destSrs);
+    public override async Task<VectorData> GetData(Bounds boundsWgs84, string destSrs)
+        => Reproject(GetData(boundsWgs84).Result, destSrs);
 
     public VectorData Reproject(VectorData data, string destSrs)
     {

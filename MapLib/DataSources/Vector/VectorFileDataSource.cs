@@ -4,6 +4,7 @@ using MapLib.GdalSupport;
 using MapLib.Geometry;
 using OSGeo.GDAL;
 using System.IO;
+using System.Threading.Tasks;
 using Transformer = MapLib.GdalSupport.Transformer;
 
 namespace MapLib.DataSources.Vector;
@@ -44,10 +45,9 @@ public class VectorFileDataSource : BaseVectorDataSource
         }
     }
 
-    public override VectorData GetData()
-    {
-        return _reader.ReadFile(Filename);
-    }
+    public override Task<VectorData> GetData()
+        => Task.FromResult(_reader.ReadFile(Filename));
 
-    public override VectorData GetData(Bounds bounds) => GetData();
+    public override Task<VectorData> GetData(Bounds bounds)
+        => GetData();
 }

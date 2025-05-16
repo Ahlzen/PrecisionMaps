@@ -14,11 +14,11 @@ public class GdalDataSource2Fixture : BaseFixture
     [Test]
     [TestCase("MassGIS Aerial/19TCG390725.jp2")] // RGB imagery
     [TestCase("USGS Topo Quad 25k/q249882.tif")] // indexed
-    public void TestSaveAsPng(string filename)
+    public async void TestSaveAsPng(string filename)
     {
         filename = Path.Join(TestDataPath, filename);
         GdalDataSource2 ds = new(filename);
-        RasterData2 data = ds.GetData();
+        RasterData2 data = await ds.GetData();
         Assert.That(data, Is.TypeOf<ImageRasterData>());
         var imageData = data as ImageRasterData;
         Assert.That(imageData, Is.Not.Null);
@@ -30,12 +30,12 @@ public class GdalDataSource2Fixture : BaseFixture
     [Test]
     [TestCase("MassGIS Aerial/19TCG390725.jp2")] // RGB imagery
     [TestCase("USGS Topo Quad 25k/q249882.tif")] // indexed
-    public void TestWarpAndSaveAsPng(string filename)
+    public async void TestWarpAndSaveAsPng(string filename)
     {
         filename = Path.Join(TestDataPath, filename);
         string warpedFilename = GdalUtils.Warp(filename, GdalSupport.Transformer.WktWebMercator);
         GdalDataSource2 ds = new(warpedFilename);
-        RasterData2 data = ds.GetData();
+        RasterData2 data = await ds.GetData();
         Assert.That(data, Is.TypeOf<ImageRasterData>());
         var imageData = data as ImageRasterData;
         Assert.That(imageData, Is.Not.Null);
@@ -48,13 +48,13 @@ public class GdalDataSource2Fixture : BaseFixture
     [Test]
     [TestCase("MassGIS LiDAR/be_19TCG339672.tif")] // Float32 DEM
     [TestCase("USGS NED/USGS_OPR_MA_CentralEastern_2021_B21_be_19TCG339672.tif")]
-    public void TestGenerateHillshade(string filename)
+    public async void TestGenerateHillshade(string filename)
     {
         filename = Path.Join(TestDataPath, filename);
         
         // Load DEM (single-band raster)
         GdalDataSource2 ds = new(filename);
-        SingleBandRasterData? dem = ds.GetData() as SingleBandRasterData;
+        SingleBandRasterData? dem = await ds.GetData() as SingleBandRasterData;
         Assert.That(dem, Is.Not.Null);
 
         // Save DEM and hillshade as images

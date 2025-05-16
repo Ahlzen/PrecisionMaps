@@ -212,7 +212,7 @@ public class Map : IHasSrs, IBounded
         _offsetY = -ActualBoundsMapSrs.YMin * _scaleY;
     }
 
-    public void Render(Canvas canvas,
+    public async void Render(Canvas canvas,
         AspectRatioMismatchStrategy ratioMismatchStrategy = AspectRatioMismatchStrategy.CenterOnCanvas)
     {
         ComputeActualBounds(canvas, ratioMismatchStrategy);
@@ -241,7 +241,7 @@ public class Map : IHasSrs, IBounded
 
                 //VectorData layerDataSourceSrs = vectorDataSource.DataSource.GetData(dataSourceBounds);
 
-                VectorData data = vectorDataSource.DataSource.GetData(dataSourceBounds, this.Srs);
+                VectorData data = await vectorDataSource.DataSource.GetData(dataSourceBounds, this.Srs);
 
                 // Filter features?
                 //if (vectorLayer.Filter != null)
@@ -267,7 +267,7 @@ public class Map : IHasSrs, IBounded
                 var rasterLayer = (RasterMapLayer)layer;
 
                 //RasterData rasterData = rasterDataSource.DataSource.GetData();
-                RasterData data = rasterDataSource.DataSource.GetData(this.Srs);
+                RasterData data = await rasterDataSource.DataSource.GetData(this.Srs);
 
                 //DrawRaster(canvas, rasterLayer, rasterData);
                 DrawRaster(canvas, rasterLayer, data);
@@ -279,7 +279,7 @@ public class Map : IHasSrs, IBounded
                 var rasterLayer = (RasterMapLayer)layer;
 
                 //RasterData rasterData = rasterDataSource.DataSource.GetData();
-                RasterData2 data = rasterDataSource2.DataSource.GetData(this.Srs);
+                RasterData2 data = await rasterDataSource2.DataSource.GetData(this.Srs);
 
                 //DrawRaster(canvas, rasterLayer, rasterData);
                 DrawRaster(canvas, rasterLayer, data);

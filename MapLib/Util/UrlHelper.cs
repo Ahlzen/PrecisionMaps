@@ -17,6 +17,8 @@ public static class UrlHelper
     {
         try
         {
+            Console.WriteLine("Downloading: " + url);
+
             using HttpClient httpClient = new();
             using var stream = httpClient.GetStreamAsync(url);
             using var fs = new FileStream(destFilename, FileMode.OpenOrCreate);
@@ -27,5 +29,29 @@ public static class UrlHelper
             throw new ApplicationException(
                 $"Failed to download \"{url}\": {ex.Message}", ex);
         }
+    }
+
+    // TODO: Remove query and fragment
+    public static string GetFilenameFromUrl_old(string url) =>
+        url.Contains('/') ?
+        url.Substring(url.LastIndexOf('/')) : url;
+
+    /// <summary>
+    /// Returns the filename from an URL. 
+    /// </summary>
+    /// <remarks>
+    /// For example:
+    /// https://prd-tnm.s3.amazonaws.com/index.html?prefix=StagedProducts/
+    /// ->
+    /// index.html
+    /// </remarks>
+    public static string GetFilenameFromUrl(string url)
+    {
+        Uri uri = new Uri(url);
+        string[] segments = uri.Segments;
+        if (segments.Any())
+            return segments[^1];
+        else
+            return url;
     }
 }

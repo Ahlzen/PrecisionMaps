@@ -1,6 +1,7 @@
 ﻿using MapLib.FileFormats.Vector;
 using MapLib.Geometry;
 using MapLib.Util;
+using System.Threading.Tasks;
 
 namespace MapLib.DataSources.Vector;
 
@@ -26,22 +27,24 @@ public class OsmDataSource : BaseVectorDataSource
         _cacheManager = new(DefaultCacheDuration);
     }
 
-    public override VectorData GetData()
+    public override Task<VectorData> GetData()
     {
         throw new InvalidOperationException(
             "Must specify bounds with OSM data source.");
     }
 
-    public override VectorData GetData(Bounds bounds)
+    public override async Task<VectorData> GetData(Bounds bounds)
     {
         string baseFilename = $"osm_{bounds.XMin}_{bounds.YMin}_{bounds.XMax}_{bounds.YMax}";
-        string filename = _cacheManager.GetExistingCachedFile(baseFilename, ".osm") ?? DownloadData(bounds);
+        string? filename = _cacheManager.GetExistingCachedFile(baseFilename, ".osm");
+        if (filename == null)
+            filename = await DownloadData(bounds);
         OsmDataReader reader = new();
         VectorData data = reader.ReadFile(filename);
         return data;
     }
 
-    private string DownloadData(Bounds bounds)
+    private async Task<string> DownloadData(Bounds bounds)
     {
         // Overpass URL format:
         // https://overpass-api.de/api/map?bbox=-77.44984,25.04861,-77.39489,25.08342
@@ -51,7 +54,7 @@ public class OsmDataSource : BaseVectorDataSource
 
         // Download data
         string destFilename = FileSystemHelpers.GetTempFileName(".osm");
-        UrlHelper.DownloadUrl(overpassUrl, destFilename).Wait();
+        await UrlHelper.DownloadUrl(overpassUrl, destFilename);
         return destFilename;
     }
 }

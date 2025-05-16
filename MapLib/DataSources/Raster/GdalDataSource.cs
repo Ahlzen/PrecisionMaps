@@ -2,6 +2,7 @@
 using MapLib.Geometry;
 using OSGeo.GDAL;
 using System.Drawing;
+using System.Threading.Tasks;
 
 namespace MapLib.DataSources.Raster;
 
@@ -29,16 +30,16 @@ public class GdalDataSource : BaseRasterDataSource
         HeightPx = dataset.RasterYSize;
     }
 
-    public override RasterData GetData()
+    public override Task<RasterData> GetData()
     {
         using OSGeo.GDAL.Dataset dataset = GdalUtils.OpenDataset(Filename);
         int width = dataset.RasterXSize;
         int height = dataset.RasterYSize;
         Bitmap bitmap = GdalUtils.GetBitmap(dataset, 0, 0, width, height, width, height);
-        return new RasterData(Srs, Bounds!.Value, bitmap);
+        return Task.FromResult(new RasterData(Srs, Bounds!.Value, bitmap));
     }
 
-    public override RasterData GetData(string destSrs)
+    public override Task<RasterData> GetData(string destSrs)
     {
         string filename = Filename;
         if (Srs != destSrs)
@@ -50,13 +51,13 @@ public class GdalDataSource : BaseRasterDataSource
         using Dataset sourceDataset =
             GdalUtils.OpenDataset(filename);
         Console.WriteLine(GdalUtils.GetRasterBandSummary(sourceDataset));
-        return GetRasterData(sourceDataset);
+        return Task.FromResult(GetRasterData(sourceDataset));
     }
 
-    public override RasterData GetData(Bounds boundsWgs84)
+    public override Task<RasterData> GetData(Bounds boundsWgs84)
         => GetData(); // for now
 
-    public override RasterData GetData(Bounds boundsWgs84, string destSrs)
+    public override Task<RasterData> GetData(Bounds boundsWgs84, string destSrs)
         => GetData(destSrs); // for now
 
     private static RasterData GetRasterData(Dataset dataset)

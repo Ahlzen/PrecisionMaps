@@ -20,7 +20,7 @@ public class MapRenderFixture : BaseFixture
     }
 
     [Test]
-    [TestCaseSource("LetterSizeCanvases")]
+    [TestCaseSource(nameof(LetterSizeCanvases))]
     public void RenderSimpleOsmData(Canvas canvas)
     {
         Map map = new Map(
