@@ -22,7 +22,7 @@ public class GdalDataSource2Fixture : BaseFixture
         Assert.That(data, Is.TypeOf<ImageRasterData>());
         var imageData = data as ImageRasterData;
         Assert.That(imageData, Is.Not.Null);
-        string outFilename = FileSystemHelpers.GetTempFileName(
+        string outFilename = FileSystemHelpers.GetTempOutputFileName(
             ".png", Path.GetFileNameWithoutExtension(filename) + "_converted_");
         imageData!.Bitmap.Save(outFilename);
     }
@@ -39,7 +39,7 @@ public class GdalDataSource2Fixture : BaseFixture
         Assert.That(data, Is.TypeOf<ImageRasterData>());
         var imageData = data as ImageRasterData;
         Assert.That(imageData, Is.Not.Null);
-        string outFilename = FileSystemHelpers.GetTempFileName(
+        string outFilename = FileSystemHelpers.GetTempOutputFileName(
             ".png", Path.GetFileNameWithoutExtension(filename) + "_warped_");
         Console.WriteLine(imageData!.Bitmap.PixelFormat);
         imageData!.Bitmap.Save(outFilename, ImageFormat.Png);
@@ -58,13 +58,13 @@ public class GdalDataSource2Fixture : BaseFixture
         Assert.That(dem, Is.Not.Null);
 
         // Save DEM and hillshade as images
-        string demFilename = FileSystemHelpers.GetTempFileName(
+        string demFilename = FileSystemHelpers.GetTempOutputFileName(
             ".png", Path.GetFileNameWithoutExtension(filename) + "_dem_");
         dem!
             .ToImageRasterData(normalize: true)
             .Bitmap.Save(demFilename);
 
-        string hillshadeFilename = FileSystemHelpers.GetTempFileName(
+        string hillshadeFilename = FileSystemHelpers.GetTempOutputFileName(
             ".png", Path.GetFileNameWithoutExtension(filename) + "_hillshade_");
         dem!
             .GetHillshade_Basic() // appx [-3, 5]

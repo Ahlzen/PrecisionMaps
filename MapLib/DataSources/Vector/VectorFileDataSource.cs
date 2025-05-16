@@ -38,7 +38,8 @@ public class VectorFileDataSource : BaseVectorDataSource
                 {
                     using Dataset dataset = OgrUtils.GetVectorDataset(filename);
                     Srs = OgrUtils.GetSrsAsWkt(dataset);
-                    Bounds = OgrUtils.GetDatasetBounds(dataset);
+                    // TODO:
+                    //Bounds = OgrUtils.GetDatasetBounds(dataset);
                     _reader = new OgrDataReader();
                 }
                 break;

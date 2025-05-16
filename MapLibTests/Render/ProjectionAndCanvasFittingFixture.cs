@@ -80,7 +80,7 @@ public class ProjectionAndCanvasFittingFixture : BaseFixture
             Color.White, 2.0);
         sw4.Dispose();
 
-        string filename = FileSystemHelpers.GetTempFileName(canvas.DefaultFileExtension, prefix);
+        string filename = FileSystemHelpers.GetTempOutputFileName(canvas.DefaultFileExtension, prefix);
 
         var sw5 = new QuickStopwatch("Render");
         map.Render(canvas, strategy);

@@ -33,7 +33,7 @@ internal class Visualizer
 
     internal void Show()
     {
-        string filename = FileSystemHelpers.GetTempFileName(".png");
+        string filename = FileSystemHelpers.GetTempOutputFileName(".png");
         Save(filename);
         Process.Start(new ProcessStartInfo
         {
@@ -108,7 +108,7 @@ internal class Visualizer
 
     public static string SaveCanvas(Canvas canvas, bool show)
     {
-        string filename = FileSystemHelpers.GetTempFileName(canvas.DefaultFileExtension);
+        string filename = FileSystemHelpers.GetTempOutputFileName(canvas.DefaultFileExtension);
         canvas.SaveToFile(filename);
         Console.WriteLine("Saved image to: " + filename);
         if (show) ShowFile(filename);

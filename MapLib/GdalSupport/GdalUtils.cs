@@ -262,7 +262,7 @@ public static class GdalUtils
                 "-srcnodata", "-9999",
                 "-dstnodata", "-9999",
             });
-        string destFilename = FileSystemHelpers.GetTempFileName(".tif", "warped");
+        string destFilename = FileSystemHelpers.GetTempOutputFileName(".tif", "warped");
         using Dataset result = Gdal.Warp(destFilename,
             new Dataset[] { sourceDataset },
             appOptions,

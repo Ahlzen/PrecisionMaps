@@ -27,6 +27,7 @@ internal class TestDataManager
         // NOTE: Downloading directly from naturalearthdata.com returns a HTTP 500
         // (known limitation; intentional?) so we get the files from the NACIS CDN instead.
         {"Natural Earth/ne_10m_populated_places_simple.zip", "https://naciscdn.org/naturalearth/10m/cultural/ne_10m_populated_places_simple.zip" },
+        {"Natural Earth/ne_110m_admin_0_countries.zip", "https://naciscdn.org/naturalearth/110m/cultural/ne_110m_admin_0_countries.zip" },
         {"Natural Earth/ne_110m_land.zip", "https://naciscdn.org/naturalearth/110m/physical/ne_110m_land.zip" },
 
         // MassGIS Contour Lines
@@ -59,9 +60,6 @@ internal class TestDataManager
         
         // USGS National Elevation Dataset DEM
         {"USGS NED/USGS_OPR_MA_CentralEastern_2021_B21_be_19TCG339672.tif","https://prd-tnm.s3.amazonaws.com/StagedProducts/Elevation/OPR/Projects/MA_CentralEastern_2021_B21/MA_CentralEastern_1_2021/TIFF/USGS_OPR_MA_CentralEastern_2021_B21_be_19TCG339672.tif" }
-
-        // MassGIS Shaded Relief
-        // TODO
     };
 
     [Test]

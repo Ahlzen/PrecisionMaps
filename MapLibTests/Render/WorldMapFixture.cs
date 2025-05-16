@@ -32,10 +32,26 @@ public class WorldMapFixture : BaseFixture
             new Bounds(-180.0, 180.0, -80.0, 80.0),
             srs);
 
+        // Add data
         map.DataSources.Add(
             new VectorMapDataSource("land",
                 new VectorFileDataSource(Path.Join(TestDataPath, "Natural Earth/ne_110m_land.shp"))));
+        map.DataSources.Add(
+            new VectorMapDataSource("countries",
+                new VectorFileDataSource(Path.Join(TestDataPath, "Natural Earth/ne_110m_admin_0_countries.shp"))));
 
-        map.Layers.Add(new VectorMapLayer("landLayer", "land", null, Color.WhiteSmoke, Color.Navy, 0.1));
+        // Add styles
+        map.Layers.Add(new VectorMapLayer(
+            "landFill", "land", null, fillColor: Color.WhiteSmoke));
+        map.Layers.Add(new VectorMapLayer(
+            "borders", "countries", strokeColor: Color.Silver, strokeWidth: 0.2));
+        map.Layers.Add(new VectorMapLayer(
+            "coastline", "land", strokeColor: Color.Navy, strokeWidth: 0.15));
+
+        // Render and save
+        map.Render(canvas, ratioMismatchStrategy: AspectRatioMismatchStrategy.CenterOnCanvas);
+        string filename = FileSystemHelpers.GetTempOutputFileName(
+            canvas.DefaultFileExtension, "WorldCountries");
+        canvas.SaveToFile(filename);
     }
 }

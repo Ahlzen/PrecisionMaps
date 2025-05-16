@@ -38,7 +38,8 @@ public abstract class BaseFixture
 
     protected void SaveTempBitmap(Bitmap bitmap, string? prefix = null, string extension = ".png")
     {
-        string filename = FileSystemHelpers.GetTempFileName(extension, prefix);
+        string filename = FileSystemHelpers.GetTempOutputFileName(
+            extension, prefix);
         bitmap.Save(filename);
     }
 }

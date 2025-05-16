@@ -72,8 +72,8 @@ public abstract class BaseDataSource<TData>
 
     #region Data file caching
 
-    public static readonly string DataCachePath =
-        Path.Join(Path.GetTempPath(), "MapLib", "Cache");
+    //public static readonly string DataCachePath =
+        //;
 
     /// <summary>
     /// Downloads a file to the data cache, unless it already exists.
@@ -91,7 +91,8 @@ public abstract class BaseDataSource<TData>
         // TODO: Merge with DataFileCacheManager
 
         string destDirectory = subdirectory == null ?
-            DataCachePath : Path.Combine(DataCachePath, subdirectory);
+            FileSystemHelpers.DataCachePath :
+            Path.Combine(FileSystemHelpers.DataCachePath, subdirectory);
 
         if (!Directory.Exists(destDirectory))
         {

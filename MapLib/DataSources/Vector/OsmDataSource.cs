@@ -53,7 +53,7 @@ public class OsmDataSource : BaseVectorDataSource
             $"bbox={bounds.XMin},{bounds.YMin},{bounds.XMax},{bounds.YMax}";
 
         // Download data
-        string destFilename = FileSystemHelpers.GetTempFileName(".osm");
+        string destFilename = FileSystemHelpers.GetTempOutputFileName(".osm");
         await UrlHelper.DownloadUrl(overpassUrl, destFilename);
         return destFilename;
     }

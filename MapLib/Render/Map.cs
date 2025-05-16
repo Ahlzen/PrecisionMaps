@@ -208,8 +208,8 @@ public class Map : IHasSrs, IBounded
         _scaleX = usableCanvasWidth / ActualBoundsMapSrs.Width;
         _scaleY = usableCanvasHeight / ActualBoundsMapSrs.Height;
 
-        _offsetX = -ActualBoundsMapSrs.XMin * _scaleX;
-        _offsetY = -ActualBoundsMapSrs.YMin * _scaleY;
+        _offsetX = canvasOffsetX + -ActualBoundsMapSrs.XMin * _scaleX;
+        _offsetY = canvasOffsetY + -ActualBoundsMapSrs.YMin * _scaleY;
     }
 
     public async void Render(Canvas canvas,

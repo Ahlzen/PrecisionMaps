@@ -47,7 +47,7 @@ public class MapRenderFixture : BaseFixture
                 fillColor: Color.Tan));
 
         map.Render(canvas);
-        string filename = FileSystemHelpers.GetTempFileName(
+        string filename = FileSystemHelpers.GetTempOutputFileName(
             canvas.DefaultFileExtension, "RenderSimpleOsmData_");
         canvas.SaveToFile(filename);
         Console.WriteLine(filename);
@@ -123,7 +123,7 @@ public class MapRenderFixture : BaseFixture
 
         //Canvas canvas = new SvgCanvas(CanvasUnit.In, 11.0, 8.5, Color.White);
         map.Render(canvas);
-        string filename = FileSystemHelpers.GetTempFileName(
+        string filename = FileSystemHelpers.GetTempOutputFileName(
             canvas.DefaultFileExtension, "RenderSimpleOsmDataAndRaster_");
         canvas.SaveToFile(filename);
         Console.WriteLine(filename);
