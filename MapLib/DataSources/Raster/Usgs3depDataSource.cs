@@ -41,7 +41,18 @@ public class Usgs3depDataSource : BaseRasterDataSource2
         foreach (string url in GetDownloadUrls(boundsWgs84))
         {
             // TODO: Handle non-existent files
-            localFiles.Add(await DownloadAndCache(url, Subdirectory));
+            try
+            {
+                string filePath = await DownloadAndCache(url, Subdirectory);
+                Console.WriteLine("Including file: " + filePath);
+                localFiles.Add(filePath);
+            }
+            catch (ApplicationException ex)
+            {
+                // Download failed. This may be ok, for example if the
+                // request includes data beyond the bounds of the dataset.
+                Console.WriteLine(ex.Message);
+            }
         }
 
         // TODO: Turn all local files into RasterData2

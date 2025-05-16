@@ -21,4 +21,20 @@ public static class FileSystemHelpers
         while (Path.Exists(tempFileName));
         return tempFileName;
     }
+
+    /// <summary>
+    /// Attempts to delete a file. Returns true
+    /// on success, false otherwise. Does not throw.
+    /// </summary>
+    public static bool TryDelete(string filename)
+    {
+        try {
+            File.Delete(filename);
+            return true;
+        }
+        catch {
+            return false;
+        }
+        
+    }
 }

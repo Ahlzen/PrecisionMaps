@@ -26,15 +26,15 @@ public static class UrlHelper
         }
         catch (Exception ex)
         {
+            // If download failed, we might have created a file.
+            // In that case it should be deleted:
+            if (File.Exists(destFilename))
+                FileSystemHelpers.TryDelete(destFilename);
+
             throw new ApplicationException(
                 $"Failed to download \"{url}\": {ex.Message}", ex);
         }
     }
-
-    // TODO: Remove query and fragment
-    public static string GetFilenameFromUrl_old(string url) =>
-        url.Contains('/') ?
-        url.Substring(url.LastIndexOf('/')) : url;
 
     /// <summary>
     /// Returns the filename from an URL. 

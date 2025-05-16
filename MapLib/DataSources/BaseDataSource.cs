@@ -88,7 +88,7 @@ public abstract class BaseDataSource<TData>
     protected virtual async Task<string> DownloadAndCache(
         string url, string? subdirectory = null, string? filename = null)
     {
-        // TODO: Merge into DataFileCacheManager
+        // TODO: Merge with DataFileCacheManager
 
         string destDirectory = subdirectory == null ?
             DataCachePath : Path.Combine(DataCachePath, subdirectory);
@@ -107,17 +107,17 @@ public abstract class BaseDataSource<TData>
             }
         }
 
-        filename ??= UrlHelper.GetFilenameFromUrl_old(url);
-        string destFile = Path.Combine(destDirectory, filename);
+        filename ??= UrlHelper.GetFilenameFromUrl(url);
+        string destPath = Path.Combine(destDirectory, filename);
 
-        if (File.Exists(destFile))
+        if (File.Exists(destPath))
         {
             // File exists. We're done!
-            return destFile;
+            return destPath;
         }
 
-        await UrlHelper.DownloadUrl(url, destFile);
-        return destFile;
+        await UrlHelper.DownloadUrl(url, destPath);
+        return destPath;
     }
 
     #endregion
