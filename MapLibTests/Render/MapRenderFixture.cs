@@ -30,21 +30,25 @@ public class MapRenderFixture : BaseFixture
         map.DataSources.Add(
             new VectorMapDataSource("osmdata",
             new VectorFileDataSource(Path.Join(TestDataPath, "osm-xml/Weymouth Detail.osm"))));
+
         map.Layers.Add(
             new VectorMapLayer("Water", "osmdata",
-                filter: new TagFilter("natural", "water"),
-                fillColor: Color.CornflowerBlue,
-                strokeColor: Color.Blue,
-                strokeWidth: 0.005));
+                style: new VectorStyle {
+                    FillColor = Color.CornflowerBlue,
+                    LineColor = Color.Blue,
+                    LineWidth = 0.005 },
+                filter: new TagFilter("natural", "water")));
         map.Layers.Add(
             new VectorMapLayer("Highway", "osmdata",
-                filter: new TagFilter("highway"),
-                strokeColor: Color.Black,
-                strokeWidth: 0.02));
+                style: new VectorStyle {
+                    LineColor = Color.Black,
+                    LineWidth = 0.02 },
+                filter: new TagFilter("highway")));
         map.Layers.Add(
             new VectorMapLayer("Building", "osmdata",
-                filter: new TagFilter("building"),
-                fillColor: Color.Tan));
+                style: new VectorStyle {
+                    FillColor = Color.Tan },
+                filter: new TagFilter("building")));
 
         map.Render(canvas);
         string filename = FileSystemHelpers.GetTempOutputFileName(
@@ -79,47 +83,49 @@ public class MapRenderFixture : BaseFixture
 
         map.Layers.Add(
             new VectorMapLayer("Water", "osmdata",
-                filter: new TagFilter("natural", "water"),
-                fillColor: Color.CornflowerBlue,
-                strokeColor: Color.Blue,
-                strokeWidth: 0.005));
+                style: new VectorStyle {
+                    FillColor = Color.CornflowerBlue,
+                    LineColor = Color.Blue,
+                    LineWidth = 0.005 },
+                filter: new TagFilter("natural", "water")));
         
+        VectorStyle roadCasing = new() { LineColor = Color.Black };
         map.Layers.Add(
             new VectorMapLayer("Highway-1", "osmdata",
-                filter: new TagFilter(("highway", "motorway"), ("highway", "trunk"), ("highway", "primary")),
-                strokeColor: Color.Black,
-                strokeWidth: 0.04));
+                style: roadCasing with { LineWidth = 0.04 },
+                filter: new TagFilter(("highway", "motorway"), ("highway", "trunk"), ("highway", "primary"))));
         map.Layers.Add(
             new VectorMapLayer("Highway-2", "osmdata",
-                filter: new TagFilter(("highway", "secondary"), ("highway", "tertiary")),
-                strokeColor: Color.Black,
-                strokeWidth: 0.03));
+                style: roadCasing with { LineWidth = 0.03 },
+                filter: new TagFilter(("highway", "secondary"), ("highway", "tertiary"))));
         map.Layers.Add(
             new VectorMapLayer("Highway-3", "osmdata",
-                filter: new TagFilter(("highway", "residential"), ("highway", "unclassified")),
-                strokeColor: Color.Black,
-                strokeWidth: 0.02));
+                style: roadCasing with { LineWidth = 0.02 },
+                filter: new TagFilter(("highway", "residential"), ("highway", "unclassified"))));
 
         map.Layers.Add(
-            new VectorMapLayer("Highway-1-case", "osmdata",
-                filter: new TagFilter(("highway", "motorway"), ("highway", "trunk"), ("highway", "primary")),
-                strokeColor: ColorUtil.FromHex("#fe9"),
-                strokeWidth: 0.02));
+            new VectorMapLayer("Highway-1-fill", "osmdata",
+                style: new VectorStyle {
+                    LineColor = ColorUtil.FromHex("#fe9"),
+                    LineWidth = 0.02 },
+                filter: new TagFilter(("highway", "motorway"), ("highway", "trunk"), ("highway", "primary"))));
         map.Layers.Add(
-            new VectorMapLayer("Highway-2-case", "osmdata",
-                filter: new TagFilter(("highway", "secondary"), ("highway", "tertiary")),
-                strokeColor: ColorUtil.FromHex("#fb9"),
-                strokeWidth: 0.015));
+            new VectorMapLayer("Highway-2-fill", "osmdata",
+                style: new VectorStyle {
+                    LineColor = ColorUtil.FromHex("#fb9"),
+                    LineWidth = 0.015 },
+                filter: new TagFilter(("highway", "secondary"), ("highway", "tertiary"))));
         map.Layers.Add(
-            new VectorMapLayer("Highway-3-case", "osmdata",
-                filter: new TagFilter(("highway", "residential"), ("highway", "unclassified")),
-                strokeColor: ColorUtil.FromHex("#fee"),
-                strokeWidth: 0.01));
+            new VectorMapLayer("Highway-3-fill", "osmdata",
+                style: new VectorStyle {
+                    LineColor = ColorUtil.FromHex("#fee"),
+                    LineWidth = 0.01 },
+                filter: new TagFilter(("highway", "residential"), ("highway", "unclassified"))));
 
         map.Layers.Add(
             new VectorMapLayer("Building", "osmdata",
-                filter: new TagFilter("building"),
-                fillColor: Color.Tan));
+                style: new VectorStyle { FillColor = Color.Tan },
+                filter: new TagFilter("building"))); 
 
         //Canvas canvas = new SvgCanvas(CanvasUnit.In, 11.0, 8.5, Color.White);
         map.Render(canvas);

@@ -4,6 +4,7 @@ using MapLib.Output;
 using MapLib.Render;
 using MapLib.Util;
 using System.Drawing;
+using System.Globalization;
 using System.IO;
 
 namespace MapLib.Tests.Render;
@@ -56,19 +57,21 @@ public class ProjectionAndCanvasFittingFixture : BaseFixture
         var sw3 = new QuickStopwatch("Adding layers");
         map.Layers.Add(
             new VectorMapLayer("Water", "osmdata",
-                filter: new TagFilter("natural", "water"),
-                fillColor: Color.CornflowerBlue,
-                strokeColor: Color.Blue,
-                strokeWidth: 0.005));
+                style: new VectorStyle {
+                    FillColor = Color.CornflowerBlue,
+                    LineColor = Color.Blue,
+                    LineWidth = 0.005 },
+                filter: new TagFilter("natural", "water")));
         map.Layers.Add(
             new VectorMapLayer("Highway", "osmdata",
-                filter: new TagFilter("highway"),
-                strokeColor: Color.Black,
-                strokeWidth: 0.02));
+                style: new VectorStyle { 
+                    LineColor = Color.Black,
+                    LineWidth = 0.02 },
+                filter: new TagFilter("highway")));
         map.Layers.Add(
             new VectorMapLayer("Building", "osmdata",
-                filter: new TagFilter("building"),
-                fillColor: Color.Tan));
+                style: new VectorStyle { FillColor = Color.Tan },
+                filter: new TagFilter("building")));
         sw3.Dispose();
 
         string projectionSummary = projection.Replace(":", "");

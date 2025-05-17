@@ -32,6 +32,7 @@ public class VectorMapDataSource : MapDataSource
     }
 }
 
+[Obsolete]
 public class RasterMapDataSource : MapDataSource
 {
     public BaseRasterDataSource DataSource { get; }

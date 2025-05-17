@@ -238,23 +238,15 @@ public class Map : IHasSrs, IBounded
                 if (!(layer is VectorMapLayer))
                     throw new InvalidOperationException("Vector data source must use vector layer");
                 var vectorLayer = (VectorMapLayer)layer;
+                VectorData data = await vectorDataSource.DataSource.GetData(
+                    dataSourceBounds, this.Srs);
 
-                //VectorData layerDataSourceSrs = vectorDataSource.DataSource.GetData(dataSourceBounds);
-
-                VectorData data = await vectorDataSource.DataSource.GetData(dataSourceBounds, this.Srs);
-
-                // Filter features?
-                //if (vectorLayer.Filter != null)
-                //    layerDataSourceSrs = vectorLayer.Filter.Filter(layerDataSourceSrs);
+                // Filter features (if applicable)
                 if (vectorLayer.Filter != null)
                     data = vectorLayer.Filter.Filter(data);
 
-                // Transform layer data to map SRS/Projection
-                //VectorData layerDataMapSrs = layerDataSourceSrs.Transform(sourceToMapTransformer);
-
                 // Transform to canvas space
                 VectorData dataInCanvasSpace =
-                    //layerDataMapSrs.Transform(_scaleX, _scaleY, _offsetX, _offsetY);
                     data.Transform(_scaleX, _scaleY, _offsetX, _offsetY);
 
                 // Render data onto canvas
@@ -265,11 +257,7 @@ public class Map : IHasSrs, IBounded
                 if (!(layer is RasterMapLayer))
                     throw new InvalidOperationException("Raster data source must use raster layer");
                 var rasterLayer = (RasterMapLayer)layer;
-
-                //RasterData rasterData = rasterDataSource.DataSource.GetData();
                 RasterData data = await rasterDataSource.DataSource.GetData(this.Srs);
-
-                //DrawRaster(canvas, rasterLayer, rasterData);
                 DrawRaster(canvas, rasterLayer, data);
             }
             else if (layerDataSource is RasterMapDataSource2 rasterDataSource2)
@@ -277,11 +265,7 @@ public class Map : IHasSrs, IBounded
                 if (!(layer is RasterMapLayer))
                     throw new InvalidOperationException("Raster data source must use raster layer");
                 var rasterLayer = (RasterMapLayer)layer;
-
-                //RasterData rasterData = rasterDataSource.DataSource.GetData();
                 RasterData2 data = await rasterDataSource2.DataSource.GetData(this.Srs);
-
-                //DrawRaster(canvas, rasterLayer, rasterData);
                 DrawRaster(canvas, rasterLayer, data);
             }
         }
@@ -292,9 +276,11 @@ public class Map : IHasSrs, IBounded
         // TEST CODE (placeholder for real rendering)
 
         CanvasLayer layer = canvas.AddNewLayer(mapLayer.Name);
-        Color? strokeColor = mapLayer.StrokeColor;
-        Color? fillColor = mapLayer.FillColor;
-        double? strokeWidth = mapLayer.StrokeWidth;
+        VectorStyle style = mapLayer.Style;
+
+        Color? strokeColor = style.LineColor;
+        Color? fillColor = style.FillColor;
+        double? strokeWidth = style.LineWidth;
 
         // Fill
         if (fillColor != null)

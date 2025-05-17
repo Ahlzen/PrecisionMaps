@@ -31,3 +31,11 @@ public enum TextHAlign
     Center,
     Right
 }
+
+public enum SymbolType
+{
+    Circle,
+    Square,
+    Star,
+    Image,
+}

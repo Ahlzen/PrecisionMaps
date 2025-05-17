@@ -26,7 +26,7 @@ public class WorldMapFixture : BaseFixture
     public void RenderWorldCountriesMap(Canvas canvas)
     {
         // Try something different: Van Der Grinten projection
-        // (not that uncommon for world maps)
+        // (not uncommon for world maps)
         string srs = Transformer.WktVanDerGrinten;
         Map map = new Map(
             new Bounds(-180.0, 180.0, -80.0, 80.0),
@@ -35,18 +35,28 @@ public class WorldMapFixture : BaseFixture
         // Add data
         map.DataSources.Add(
             new VectorMapDataSource("land",
-                new VectorFileDataSource(Path.Join(TestDataPath, "Natural Earth/ne_110m_land.shp"))));
+                new VectorFileDataSource(Path.Join(TestDataPath,
+                "Natural Earth/ne_110m_land.shp"))));
         map.DataSources.Add(
             new VectorMapDataSource("countries",
-                new VectorFileDataSource(Path.Join(TestDataPath, "Natural Earth/ne_110m_admin_0_countries.shp"))));
+                new VectorFileDataSource(Path.Join(TestDataPath,
+                "Natural Earth/ne_110m_admin_0_countries.shp"))));
 
         // Add styles
         map.Layers.Add(new VectorMapLayer(
-            "landFill", "land", null, fillColor: Color.WhiteSmoke));
+            "landFill", "land", new VectorStyle {
+                FillColor = Color.WhiteSmoke,
+            }));
         map.Layers.Add(new VectorMapLayer(
-            "borders", "countries", strokeColor: Color.Silver, strokeWidth: 0.2));
+            "borders", "countries", new VectorStyle {
+                LineColor = Color.Silver,
+                LineWidth = 0.2
+            }));
         map.Layers.Add(new VectorMapLayer(
-            "coastline", "land", strokeColor: Color.Navy, strokeWidth: 0.15));
+            "coastline", "land", new VectorStyle {
+                LineColor = Color.Navy,
+                LineWidth = 0.15
+            }));
 
         // Render and save
         map.Render(canvas, ratioMismatchStrategy: AspectRatioMismatchStrategy.CenterOnCanvas);
