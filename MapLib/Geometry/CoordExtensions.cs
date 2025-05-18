@@ -1,4 +1,6 @@
-﻿namespace MapLib.Geometry;
+﻿using System.Diagnostics.Contracts;
+
+namespace MapLib.Geometry;
 
 public static class CoordExtensions
 {
@@ -49,6 +51,68 @@ public static class CoordExtensions
     /// Returns the winding of the polygon (false if CW, true if CCW).
     /// </summary>
     public static bool IsCounterClockwise(this Coord[] coords) => CalculatePolygonArea(coords) > 0;
+
+    #endregion
+
+    #region Line calculations
+
+    /// <summary>
+    /// Calculates the length of the line (in the units of the line's
+    /// coordinates).
+    /// </summary>
+    public static double GetLength(this Coord[] coords)
+    {
+        if (coords.Length < 2)
+            return 0;
+        double totalLength = 0;
+        Coord prev = coords[0];
+        for (int i = 1; i < coords.Length; i++)
+        {
+            Coord next = coords[i];
+            totalLength += prev.DistanceTo(next);
+            prev = next;
+        }
+        return totalLength;
+    }
+
+    /// <summary>
+    /// Returns the coordinates at a point along the line between
+    /// the start and end. Relative distance is [0,1], where
+    /// 0 is the start and 1 is the end.
+    /// </summary>
+    public static Coord GetPointAlongLine(this Coord[] coords, double relativeDistance)
+    {
+        if (coords.Length == 0)
+            throw new InvalidOperationException("Line has no points");
+        if (coords.Length == 1)
+            return coords[0];
+        double totalLength = coords.GetLength();
+        relativeDistance = Math.Clamp(relativeDistance, 0, 1);
+        double absoluteDistance = totalLength * relativeDistance;
+
+        Coord prev = coords[0];
+        double prevDistance = 0;
+        for (int i = 1; i < coords.Length; i++)
+        {
+            Coord next = coords[i];
+            double segmentLength = prev.DistanceTo(next);
+            if ((prevDistance + segmentLength) <= absoluteDistance)
+            {
+                // The point is along this segment
+                double remainder = absoluteDistance - prevDistance;
+                double t = remainder / segmentLength;
+                return Coord.Lerp(prev, next, t);
+            }
+            else
+            {
+                prevDistance += segmentLength;
+                prev = next;
+            }
+        }
+        return coords[^1];
+    }
+    public static Coord GetMidpoint(this Coord[] coords)
+        => coords.GetPointAlongLine(0.5);
 
     #endregion
 }

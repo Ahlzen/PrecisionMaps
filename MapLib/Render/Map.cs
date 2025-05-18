@@ -1,6 +1,7 @@
 ﻿using MapLib.GdalSupport;
 using MapLib.Geometry;
 using MapLib.Output;
+using System.ComponentModel.Design;
 using System.Diagnostics;
 using System.Drawing;
 using System.Security.Cryptography;
@@ -278,9 +279,24 @@ public class Map : IHasSrs, IBounded
         CanvasLayer layer = canvas.AddNewLayer(mapLayer.Name);
         VectorStyle style = mapLayer.Style;
 
-        Color? strokeColor = style.LineColor;
+        Color? lineColor = style.LineColor;
         Color? fillColor = style.FillColor;
-        double? strokeWidth = style.LineWidth;
+        double? lineWidth = style.LineWidth;
+
+        // TODO: Only enumerate these if we really need them
+        // TODO: Use better polygon centroid algorithm (at least
+        // some form of point-in-polygon!)
+        IEnumerable<Coord> pointCoords =
+            data.Points.Select(p => p.Coord)
+            .Union(data.MultiPoints.SelectMany(mp => mp.Coords));
+        IEnumerable<Coord> lineMidpoints =
+            data.Lines.Select(l => l.GetMidpoint())
+            .Union(data.MultiLines.SelectMany(ml => ml.Select(cs => cs.GetMidpoint())));
+        IEnumerable<Coord> polygonCentroids =
+            data.Polygons.Select(p => p.GetCenter())
+            .Union(data.MultiPolygons.SelectMany(mp => mp.Select(cs => Bounds.FromCoords(cs).Center)));
+        IEnumerable<Coord> allPoints =
+            pointCoords.Union(lineMidpoints).Union(polygonCentroids);
 
         // Fill
         if (fillColor != null)
@@ -292,35 +308,64 @@ public class Map : IHasSrs, IBounded
         }
 
         // Stroke
-        if (strokeColor != null && strokeWidth != null)
+        if (lineColor != null && lineWidth != null)
         {
             // Points
-            layer.DrawFilledCircles(data.Points.Select(p => p.Coord),
-                strokeWidth.Value, strokeColor.Value);
+            layer.DrawFilledCircles(pointCoords,
+                lineWidth.Value, lineColor.Value);
             foreach (MultiPoint mp in data.MultiPoints)
                 layer.DrawFilledCircles(mp.Coords,
-                    strokeWidth.Value, strokeColor.Value);
+                    lineWidth.Value, lineColor.Value);
 
             // Lines
             foreach (Line l in data.Lines)
-                layer.DrawLine(l.Coords, strokeWidth.Value, strokeColor.Value);
+                layer.DrawLine(l.Coords, lineWidth.Value, lineColor.Value);
             foreach (MultiLine ml in data.MultiLines)
-                layer.DrawLines(ml.Coords, strokeWidth.Value, strokeColor.Value);
+                layer.DrawLines(ml.Coords, lineWidth.Value, lineColor.Value);
 
             // Polygons
             foreach (Polygon p in data.Polygons)
-                layer.DrawLine(p.Coords, strokeWidth.Value, strokeColor.Value);
+                layer.DrawLine(p.Coords, lineWidth.Value, lineColor.Value);
             foreach (MultiPolygon mp in data.MultiPolygons)
-                layer.DrawLines(mp.Coords, strokeWidth.Value, strokeColor.Value);
+                layer.DrawLines(mp.Coords, lineWidth.Value, lineColor.Value);
         }
-    }
 
-    private void ProjectAndDrawRaster(Canvas canvas, RasterMapLayer mapLayer, RasterData data)
-    {
-        if (data.Srs != this.Srs)
+        // Symbol
+        if (style.Symbol != null)
         {
-            // reproject
+            SymbolType symbolType = style.Symbol.Value;
+            double symbolSize = style.SymbolSize ?? canvas.Width * 0.001;
+            Color symbolFillColor = fillColor ?? Color.Black;
 
+            switch (style.Symbol)
+            {
+                case SymbolType.Circle:
+                    layer.DrawFilledCircles(allPoints, symbolSize, symbolFillColor);
+                    break;
+                case SymbolType.Square:
+                    throw new NotImplementedException();
+                    break;
+                case SymbolType.Star:
+                    throw new NotImplementedException();
+                    break;
+                case SymbolType.Image:
+                    throw new NotImplementedException();
+                    break;
+            }
+        }
+        
+        // Text label
+        if (style.TextTag != null)
+        {
+            Color textColor = style.TextColor ?? Color.Black;
+            string fontName = style.TextFont ?? "Calibri";
+            double fontSize = style.TextSize ?? canvas.Width * 0.003;
+            foreach (Coord point in allPoints)
+            {
+                // TODO: fix
+                // TODO: check units, etc
+                layer.DrawText("Label", point, textColor, fontName, fontSize, TextHAlign.Left);
+            }
         }
     }
 

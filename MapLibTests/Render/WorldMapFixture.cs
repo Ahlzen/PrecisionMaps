@@ -57,6 +57,12 @@ public class WorldMapFixture : BaseFixture
                 LineColor = Color.Navy,
                 LineWidth = 0.15
             }));
+        map.Layers.Add(new VectorMapLayer(
+            "country labels", "countries", new VectorStyle {
+                TextColor = Color.Black,
+                TextSize = 8,
+                TextTag = "Name" // todo
+            }));
 
         // Render and save
         map.Render(canvas, ratioMismatchStrategy: AspectRatioMismatchStrategy.CenterOnCanvas);

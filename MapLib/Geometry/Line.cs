@@ -112,6 +112,24 @@ public class Line : Shape, IEnumerable<Coord>
         => AsMultiLine().Buffer(radius);
 
     /// <summary>
+    /// Calculates the length of the line (in the units of the line's
+    /// coordinates).
+    /// </summary>
+    public double GetLength()
+        => Coords.GetLength();
+
+    /// <summary>
+    /// Returns the coordinates at a point along the line between
+    /// the start and end. Relative distance is [0,1], where
+    /// 0 is the start and 1 is the end.
+    /// </summary>
+    public Coord GetPointAlongLine(double relativeDistance)
+        => Coords.GetPointAlongLine(relativeDistance);
+
+    public Coord GetMidpoint()
+        => Coords.GetMidpoint();
+
+    /// <summary>
     /// Finds intersection between lines a1-a2 and b1-b2.
     /// Returns Coord.None if lines do not intersect.
     /// </summary>

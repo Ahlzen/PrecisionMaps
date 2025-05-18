@@ -1,4 +1,5 @@
-﻿using System.Drawing;
+﻿using MapLib.Output;
+using System.Drawing;
 
 namespace MapLib.Render;
 
@@ -9,13 +10,17 @@ public record class VectorStyle
 
     // Polygon or line stroke
     public Color? LineColor { get; set; } = null; // CartoCSS: line-color
-    public double? LineWidth { get; set; } = null; // CartoCSS: line-width
+    public double? LineWidth { get; set; } = null; // in map units. CartoCSS: line-width
+
+    // Symbols
+    public SymbolType? Symbol { get; set; } = null;
+    public double? SymbolSize { get; set; } = null; // in map units.
+    // TODO: symbol styling
+    // TODO: symbol image path
 
     // Text labels
     public string? TextTag { get; set; } = null; // CartoCSS: text-name
     public string? TextFont { get; set; } = null; // CartoCSS: text-face-name
-    public double? TextSize { get; set; } = null; // CartoCSS: text-size
-
-    // Symbols
-    public string? Symbol { get; set; } = null;
+    public double? TextSize { get; set; } = null; // in map units. CartoCSS: text-size
+    public Color? TextColor { get; set; } = null; // CartoCSS: text-fill
 }
