@@ -15,6 +15,7 @@ public record class VectorStyle
     // Symbols
     public SymbolType? Symbol { get; set; } = null;
     public double? SymbolSize { get; set; } = null; // in map units.
+    public Color? SymbolColor { get; set; } = null; 
     // TODO: symbol styling
     // TODO: symbol image path
 

@@ -335,12 +335,12 @@ public class Map : IHasSrs, IBounded
         {
             SymbolType symbolType = style.Symbol.Value;
             double symbolSize = style.SymbolSize ?? canvas.Width * 0.001;
-            Color symbolFillColor = fillColor ?? Color.Black;
+            Color symbolFillColor = style.SymbolColor ?? Color.Black;
 
             switch (style.Symbol)
             {
                 case SymbolType.Circle:
-                    layer.DrawFilledCircles(allPoints, symbolSize, symbolFillColor);
+                    layer.DrawFilledCircles(allPoints, symbolSize/2, symbolFillColor);
                     break;
                 case SymbolType.Square:
                     throw new NotImplementedException();

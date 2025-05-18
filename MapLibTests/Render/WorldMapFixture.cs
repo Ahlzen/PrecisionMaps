@@ -59,10 +59,12 @@ public class WorldMapFixture : BaseFixture
             }));
         map.Layers.Add(new VectorMapLayer(
             "country labels", "countries", new VectorStyle {
+                Symbol = SymbolType.Circle,
+                SymbolSize = 8,
                 TextColor = Color.Black,
-                TextSize = 8,
-                TextTag = "Name" // todo
-            }));
+                TextSize = 6,
+                TextTag = "Country" // todo
+            }));;
 
         // Render and save
         map.Render(canvas, ratioMismatchStrategy: AspectRatioMismatchStrategy.CenterOnCanvas);
