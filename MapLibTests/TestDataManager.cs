@@ -36,6 +36,10 @@ internal class TestDataManager
         {"MassGIS Contours/contour_1ft_19TCG339672.zip", "https://s3.us-east-1.amazonaws.com/download.massgis.digital.mass.gov/lidar/2021_LIDAR/contours/contour_1ft_19TCG339672.zip" },
         {"MassGIS Contours/contour_1ft_19TCG340672.zip", "https://s3.us-east-1.amazonaws.com/download.massgis.digital.mass.gov/lidar/2021_LIDAR/contours/contour_1ft_19TCG340672.zip" },
 
+        // Aaron River Reservoir multipolygon converted to
+        // various formats (get directly from this project)
+        {"Aaron River/Aaron River Reservoir.geojson", "https://github.com/Ahlzen/PrecisionMaps/raw/refs/heads/main/TestData/Aaron%20River/Aaron%20River%20Reservoir.geojson"},
+        {"Aaron River/Aaron River Reservoir.kml", "https://github.com/Ahlzen/PrecisionMaps/raw/refs/heads/main/TestData/Aaron%20River/Aaron%20River%20Reservoir.kml"},
 
         ///// Raster data sets
 
@@ -59,7 +63,13 @@ internal class TestDataManager
         {"USGS Topo Quad 25k/q249882.zip","https://s3.us-east-1.amazonaws.com/download.massgis.digital.mass.gov/images/usgs_topo25k_tiff/q249882.zip" },
         
         // USGS National Elevation Dataset DEM
-        {"USGS NED/USGS_OPR_MA_CentralEastern_2021_B21_be_19TCG339672.tif","https://prd-tnm.s3.amazonaws.com/StagedProducts/Elevation/OPR/Projects/MA_CentralEastern_2021_B21/MA_CentralEastern_1_2021/TIFF/USGS_OPR_MA_CentralEastern_2021_B21_be_19TCG339672.tif" }
+        {"USGS NED/USGS_OPR_MA_CentralEastern_2021_B21_be_19TCG339672.tif","https://prd-tnm.s3.amazonaws.com/StagedProducts/Elevation/OPR/Projects/MA_CentralEastern_2021_B21/MA_CentralEastern_1_2021/TIFF/USGS_OPR_MA_CentralEastern_2021_B21_be_19TCG339672.tif" },
+
+
+        ///// Misc
+
+        // Picture of me (for canvas test)
+        {"Misc/me.jpg", "https://avatars.githubusercontent.com/u/1075471" },
     };
 
     [Test]

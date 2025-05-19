@@ -5,15 +5,19 @@ using MapLib.Output;
 using System.Text;
 using System.IO;
 using MapLib.Util;
+using NUnit.Framework.Internal;
 
 namespace MapLib.Tests;
 
 [SupportedOSPlatform("windows")]
 internal class Visualizer
 {
+    private static string TestName = TestContext.CurrentContext.Test.Name;
+
     private List<Shape> _shapes = new List<Shape>();
     private int _width, _height;
     private float _scale;
+    private string _prefix;
 
     /// <summary>
     /// Margin on each side of bbox. 0.05 = 5% of bbox size
@@ -33,7 +37,8 @@ internal class Visualizer
 
     internal void Show()
     {
-        string filename = FileSystemHelpers.GetTempOutputFileName(".png");
+        string filename = FileSystemHelpers
+            .GetTempOutputFileName(".png", TestName);
         Save(filename);
         Process.Start(new ProcessStartInfo
         {
@@ -108,7 +113,8 @@ internal class Visualizer
 
     public static string SaveCanvas(Canvas canvas, bool show)
     {
-        string filename = FileSystemHelpers.GetTempOutputFileName(canvas.DefaultFileExtension);
+        string filename = FileSystemHelpers.GetTempOutputFileName(
+            canvas.DefaultFileExtension, TestName);
         canvas.SaveToFile(filename);
         Console.WriteLine("Saved image to: " + filename);
         if (show) ShowFile(filename);

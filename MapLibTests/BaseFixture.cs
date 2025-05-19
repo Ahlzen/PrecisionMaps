@@ -23,7 +23,8 @@ public abstract class BaseFixture
 
 
     public static string TestDataPath =>
-        "../../../../TestData";
+        //"../../../../TestData";
+        FileSystemHelpers.TestDataPath;
 
     [OneTimeSetUp]
     public void OneTimeSetUp()

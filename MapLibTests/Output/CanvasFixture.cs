@@ -11,18 +11,23 @@ public class CanvasFixture : BaseFixture
 {
     #region Artificial tests
 
+    public static IEnumerable<Canvas> TestCanvasFactory()
+    {
+        int width = 1600;
+        int height = 800;
+        yield return new BitmapCanvas(CanvasUnit.Pixel, width, height, Color.Transparent, 1.0);
+        yield return new BitmapCanvas(CanvasUnit.Pixel, width, height, Color.Transparent, 5.0);
+        yield return new SvgCanvas(CanvasUnit.Pixel, width, height, Color.Transparent);
+    }
+
     /// <summary>
     /// Test that renders a canvas with many different kinds of drawing
     /// primitives, to visually check that they work.
     /// </summary>
     [Test]
-    public void DrawTestCanvas()
+    [TestCaseSource("TestCanvasFactory")]
+    public void DrawTestCanvas(Canvas canvas)
     {
-        int width = 1600;
-        int height = 800;
-        using BitmapCanvas bitmapCanvas = new(CanvasUnit.Pixel, width, height, Color.Transparent);
-        using SvgCanvas svgCanvas = new(CanvasUnit.Pixel, width, height, Color.Transparent);
-
         OgrDataReader reader = new();
 
         string path = Path.Join(TestDataPath, "Aaron River/Aaron River Reservoir.geojson");
@@ -37,39 +42,57 @@ public class CanvasFixture : BaseFixture
         Assert.That(reservoirPolygon.Count(cs => cs.IsCounterClockwise()), Is.EqualTo(1)); // outer ring (perimeter)
         Assert.That(reservoirPolygon.Count(cs => cs.IsClockwise()), Is.GreaterThan(1)); // inner rings (islands)
 
-        foreach (Canvas canvas in new Canvas[] { bitmapCanvas, svgCanvas })
-        {
-            CanvasLayer layer = canvas.AddNewLayer("main");
+        CanvasLayer layer = canvas.AddNewLayer("main");
 
-            // Try polygon styles
+        ///// Polygon styles
 
-            // Solid light blue fill
-            layer.DrawFilledPolygons(reservoirPolygon.Transform(1.0, 10, 10).Coords, Color.CadetBlue);
+        // Solid light blue fill
+        layer.DrawFilledPolygons(reservoirPolygon.Transform(1.0, 10, 10).Coords, Color.CadetBlue);
 
-            // Transparent dark green fill
-            layer.DrawFilledPolygons(reservoirPolygon.Transform(1.0, 210, 10).Coords, Color.FromArgb(128, Color.DarkGreen));
+        // Transparent dark green fill
+        layer.DrawFilledPolygons(reservoirPolygon.Transform(1.0, 210, 10).Coords, Color.FromArgb(128, Color.DarkGreen));
 
-            // Transparent dark green fill
-            layer.DrawFilledMultiPolygon(reservoirPolygon.Transform(1.0, 410, 10).Coords, Color.FromArgb(128, Color.DarkGreen));
+        // Transparent dark green fill
+        layer.DrawFilledMultiPolygon(reservoirPolygon.Transform(1.0, 410, 10).Coords, Color.FromArgb(128, Color.DarkGreen));
 
-            // Line thicknesses
-            layer.DrawLines(reservoirPolygon.Transform(1.0, 610, 10).Coords, 2, Color.Navy);
-            layer.DrawLines(reservoirPolygon.Transform(1.0, 610, 10).Offset(-8) .Coords, 1, Color.Navy);
-            layer.DrawLines(reservoirPolygon.Transform(1.0, 610, 10).Offset(-16).Coords, 0.5, Color.Navy);
-            layer.DrawLines(reservoirPolygon.Transform(1.0, 610, 10).Offset(-24).Coords, 0.25, Color.Navy);
+        // Line thicknesses
+        layer.DrawLines(reservoirPolygon.Transform(1.0, 610, 10).Coords, 2, Color.Navy);
+        layer.DrawLines(reservoirPolygon.Transform(1.0, 610, 10).Offset(-8) .Coords, 1, Color.Navy);
+        layer.DrawLines(reservoirPolygon.Transform(1.0, 610, 10).Offset(-16).Coords, 0.5, Color.Navy);
+        layer.DrawLines(reservoirPolygon.Transform(1.0, 610, 10).Offset(-24).Coords, 0.25, Color.Navy);
 
-            // Line dasharrays and joins/caps
-            layer.DrawLines(reservoirPolygon.Transform(1.0, 810, 10).Coords, 3, Color.DarkOliveGreen,
-                LineCap.Round, LineJoin.Round);
-            layer.DrawLines(reservoirPolygon.Transform(1.0, 810, 10).Offset(-6).Coords, 3, Color.DarkOliveGreen,
-                LineCap.Square, LineJoin.Miter);
-            layer.DrawLines(reservoirPolygon.Transform(1.0, 810, 10).Offset(-12).Coords, 1, Color.DarkOliveGreen,
-                LineCap.Butt, LineJoin.Miter, [6, 2, 2, 2]);
-            layer.DrawLines(reservoirPolygon.Transform(1.0, 810, 10).Offset(-18).Coords, 1, Color.DarkOliveGreen,
-                LineCap.Butt, LineJoin.Miter, [10, 10]);
+        // Line dasharrays and joins/caps
+        layer.DrawLines(reservoirPolygon.Transform(1.0, 810, 10).Coords, 3, Color.DarkOliveGreen,
+            LineCap.Round, LineJoin.Round);
+        layer.DrawLines(reservoirPolygon.Transform(1.0, 810, 10).Offset(-6).Coords, 3, Color.DarkOliveGreen,
+            LineCap.Square, LineJoin.Miter);
+        layer.DrawLines(reservoirPolygon.Transform(1.0, 810, 10).Offset(-12).Coords, 1, Color.DarkOliveGreen,
+            LineCap.Butt, LineJoin.Miter, [6, 2, 2, 2]);
+        layer.DrawLines(reservoirPolygon.Transform(1.0, 810, 10).Offset(-18).Coords, 1, Color.DarkOliveGreen,
+            LineCap.Butt, LineJoin.Miter, [10, 10]);
 
-            Visualizer.SaveCanvas(canvas, false);
-        }
+        ///// Filled circles
+
+        layer.DrawFilledCircles(reservoirPolygon
+            .Transform(1.0, 10, 210)
+            .Coords
+            .SelectMany(cs => cs),
+            2, Color.Red);
+
+        ///// Text
+
+        layer.DrawText("Label Left", (300, 380), Color.DarkOliveGreen, "Calibri", 8, TextHAlign.Left);
+        layer.DrawText("Label Center", (300, 360), Color.DarkOliveGreen, "Calibri", 8, TextHAlign.Center);
+        layer.DrawText("Label Right", (300, 340), Color.DarkOliveGreen, "Calibri", 8, TextHAlign.Right);
+
+        ///// Bitmap
+        
+        string bitmapPath = Path.Join(TestDataPath, "Misc", "me.jpg");
+        Bitmap bitmap = (Bitmap) Bitmap.FromFile(bitmapPath);
+        layer.DrawBitmap(bitmap, 400, 200, 200, 200, 1.0);
+
+        Visualizer.SaveCanvas(canvas, false);
+        canvas.Dispose();
     }
 
     #endregion

@@ -104,6 +104,9 @@ public class BitmapCanvas : Canvas, IDisposable
 /// NOTE: Since the GDI+ coordinate system has positive Y down,
 /// and our coordinates are positive Y up, the Y-coordinate needs
 /// top be flipped (offset and negate).
+/// However, we can't use a transform to flip, because then
+/// images and (worse) text are drawn upside down. Instead, we
+/// flip the Y coordinate manually when drawing.
 /// </remarks>
 internal class BitmapCanvasLayer : CanvasLayer, IDisposable
 {

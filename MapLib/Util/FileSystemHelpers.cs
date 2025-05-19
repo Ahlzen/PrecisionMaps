@@ -15,6 +15,11 @@ public static class FileSystemHelpers
     public static string DataCachePath =>
         Path.Combine(RootTempPath, DataCacheFolder);
 
+    public static string TestDataFolder => "TestData";
+    public static string TestDataPath =>
+        Path.Combine(RootTempPath, TestDataFolder);
+
+
     public static string GetTempOutputFileName(
         string extension, string? prefix = null)
     {

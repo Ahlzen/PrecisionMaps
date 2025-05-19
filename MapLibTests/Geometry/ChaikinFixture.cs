@@ -59,7 +59,6 @@ internal class ChaikinFixture : BaseFixture
         Line chaikin2 = TestLine1.Smooth_ChaikinAdaptive(10).Transform(1, 20, 0);
         Line chaikin3 = TestLine1.Smooth_ChaikinAdaptive(2).Transform(1, 30, 0);
         Visualizer.RenderAndShow(1600, 400,
-            TestLine1, chaikin1, chaikin2, chaikin3,
             // highlight vertices
             new MultiPoint(TestLine1.Coords, null),
             new MultiPoint(chaikin1.Coords, null),
@@ -87,7 +86,7 @@ internal class ChaikinFixture : BaseFixture
     // Examples with some real data
 
     [Test]
-    public void TestSmooth_FixedChaikin_RealData()
+    public void TestSmooth_ChaikinFixed_RealData()
     {
         Visualizer.LoadOgrDataAndDrawPolygons(
             Path.Join(TestDataPath, "GeoJSON/Aaron River Reservoir.geojson"),

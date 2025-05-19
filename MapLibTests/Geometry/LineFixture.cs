@@ -47,8 +47,8 @@ internal class LineFixture : BaseFixture
         Coord i1 = Line.LineSegmentIntersection(l1[0], l1[1], l2[0], l2[1]);
         Coord i2 = Line.LineSegmentIntersection(l1[0], l1[1], l3[0], l3[1]);
         Coord i3 = Line.LineSegmentIntersection(l2[0], l2[1], l3[0], l3[1]);
-        Visualizer.RenderAndShow(800, 500, l1, l2, l3,
-            (Point)i1, (Point)i2, (Point)i3);
+        Visualizer.RenderAndShow(800, 500,
+            l1, l2, l3, (Point)i1, (Point)i2, (Point)i3);
     }
 
     [Test]
