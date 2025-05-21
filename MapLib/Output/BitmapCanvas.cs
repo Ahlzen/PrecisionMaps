@@ -104,9 +104,6 @@ public class BitmapCanvas : Canvas, IDisposable
 /// NOTE: Since the GDI+ coordinate system has positive Y down,
 /// and our coordinates are positive Y up, the Y-coordinate needs
 /// top be flipped (offset and negate).
-/// However, we can't use a transform to flip, because then
-/// images and (worse) text are drawn upside down. Instead, we
-/// flip the Y coordinate manually when drawing.
 /// </remarks>
 internal class BitmapCanvasLayer : CanvasLayer, IDisposable
 {
@@ -129,60 +126,15 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
         _graphics.SmoothingMode = SmoothingMode.HighQuality;
 
         // Offset and invert Y, and scale drawing ops. (see remarks)
-        _graphics.TranslateTransform(0, (float)(height*scaleFactor));
-        _graphics.ScaleTransform((float)scaleFactor, -(float)scaleFactor);
+        //_graphics.TranslateTransform(0, (float)(height*scaleFactor));
+        //_graphics.ScaleTransform((float)scaleFactor, -(float)scaleFactor);
+        _graphics.ScaleTransform((float)scaleFactor, (float)scaleFactor);
     }
 
     public override void Dispose()
     {
         _graphics.Dispose();
         Bitmap.Dispose();
-    }
-
-    internal Bitmap Bitmap { get; }
-
-    public override void DrawBitmap(Bitmap srcBitmap,
-        double x, double y, double width, double height, double opacity)
-    {
-        // Since our Y-coordinate is flipped, but the
-        // bitmap contents is not, we need to paint it upside down.
-        // Quick-and-dirty solution: Flip the contents.
-        // TODO: Find more efficient solution.
-        // TODO: Also, this seems to break the alpha channel in ARGB/RGBA images.
-        using var flippedBitmap = Bitmap.FromHbitmap(srcBitmap.GetHbitmap());
-        flippedBitmap.RotateFlip(RotateFlipType.RotateNoneFlipY);
-
-        if (opacity < 1.0)
-        {
-            float[][] colorMatrixElements = {
-                   [1, 0, 0, 0, 0],
-                   [0, 1, 0, 0, 0],
-                   [0, 0, 1, 0, 0],
-                   [0, 0, 0, (float)opacity, 0],
-                   [0, 0, 0, 0, 1]};
-            var colorMatrix = new ColorMatrix(colorMatrixElements);
-            var imageAttributes = new ImageAttributes();
-            imageAttributes.SetColorMatrix(
-               colorMatrix,
-               ColorMatrixFlag.Default,
-               ColorAdjustType.Bitmap);
-            GraphicsUnit unit = GraphicsUnit.Pixel;
-
-            _graphics.DrawImage(flippedBitmap, [
-                    new PointF((float)x, (float)(_layerHeight-y)),
-                    new PointF((float)(x+width), (float)(_layerHeight-y)),
-                    new PointF((float)x, (float)(_layerHeight - y + height))],
-                srcBitmap.GetBounds(ref unit),
-                GraphicsUnit.Pixel,
-                imageAttributes);
-        }
-        else
-        {
-            _graphics.DrawImage(flippedBitmap, new[] {
-                new PointF((float)x, (float)(y)),
-                new PointF((float)(x+width), (float)(y)),
-                new PointF((float)x, (float)(y + height))});
-        }
     }
 
     public override void DrawLine(Coord[] coords,
@@ -219,7 +171,8 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
     {
         foreach (Coord point in points)
             _graphics.FillEllipse(new SolidBrush(color),
-                new RectangleF((float)(point.X - radius / 2), (float)(point.Y - radius / 2),
+                new RectangleF((float)(point.X - radius / 2),
+                    _layerHeight - (float)(point.Y - radius / 2),
                     (int)radius, (int)radius));
     }
 
@@ -290,9 +243,54 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
                 coords,],
                 1, DebugColor);
 #endif
+        
+        //_graphics.DrawString(s, font, brush,
+        //    new PointF((float)(coord.X + offsetX), (float)(coord.Y - baseline)));
 
+        //var matrix = _graphics.Transform;
+        //_graphics.MultiplyTransform(new Matrix(1, 0, 0, -1, 0, 0));
         _graphics.DrawString(s, font, brush,
-            new PointF((float)(coord.X + offsetX), (float)(coord.Y - baseline)));
+            new PointF((float)(coord.X + offsetX),
+            _layerHeight - (float)(coord.Y - baseline)));
+        //_graphics.Transform = matrix;
+
+    }
+
+    internal Bitmap Bitmap { get; }
+
+    public override void DrawBitmap(Bitmap srcBitmap,
+        double x, double y, double width, double height, double opacity)
+    {
+        PointF[] cornerPoints = [ // order: [UL, UR, LL]
+            new PointF((float)x, (float)(_layerHeight - y - height)), // UL
+            new PointF((float)(x + width), (float)(_layerHeight - y - height)), // UR
+            new PointF((float)x, (float)(_layerHeight - y)) // LL
+        ];
+
+        if (opacity < 1.0)
+        {
+            float[][] colorMatrixElements = {
+                   [1, 0, 0, 0, 0],
+                   [0, 1, 0, 0, 0],
+                   [0, 0, 1, 0, 0],
+                   [0, 0, 0, (float)opacity, 0],
+                   [0, 0, 0, 0, 1]};
+            var colorMatrix = new ColorMatrix(colorMatrixElements);
+            var imageAttributes = new ImageAttributes();
+            imageAttributes.SetColorMatrix(
+               colorMatrix,
+               ColorMatrixFlag.Default,
+               ColorAdjustType.Bitmap);
+            GraphicsUnit unit = GraphicsUnit.Pixel;
+            _graphics.DrawImage(srcBitmap, cornerPoints,
+                srcBitmap.GetBounds(ref unit),
+                GraphicsUnit.Pixel,
+                imageAttributes);
+        }
+        else
+        {
+            _graphics.DrawImage(srcBitmap, cornerPoints);
+        }
     }
 
     #region Helpers
@@ -353,10 +351,12 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
         {
             points[i] = new PointF(
                 (float)coords[i].X,
-                (float)coords[i].Y);
+                // Invert Y coordinate (see class remarks)
+                _layerHeight - (float)coords[i].Y);
         }
         return points;
     }
 
     #endregion
 }
+

@@ -84,12 +84,18 @@ public class CanvasFixture : BaseFixture
         layer.DrawText("Label Left", (300, 380), Color.DarkOliveGreen, "Calibri", 8, TextHAlign.Left);
         layer.DrawText("Label Center", (300, 360), Color.DarkOliveGreen, "Calibri", 8, TextHAlign.Center);
         layer.DrawText("Label Right", (300, 340), Color.DarkOliveGreen, "Calibri", 8, TextHAlign.Right);
+        layer.DrawFilledCircles([(300, 380), (300, 360), (300, 340)], 3, Color.Magenta);
 
         ///// Bitmap
-        
+
         string bitmapPath = Path.Join(TestDataPath, "Misc", "me.jpg");
         Bitmap bitmap = (Bitmap) Bitmap.FromFile(bitmapPath);
-        layer.DrawBitmap(bitmap, 400, 200, 200, 200, 1.0);
+        
+        // Fully opaque bitmap
+        layer.DrawBitmap(bitmap, 410, 210, 180, 180, 1.0);
+
+        // Semi-transparent bitmap
+        layer.DrawBitmap(bitmap, 610, 210, 180, 180, 0.3);
 
         Visualizer.SaveCanvas(canvas, false);
         canvas.Dispose();
