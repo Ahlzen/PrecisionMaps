@@ -1,4 +1,5 @@
 ﻿using MapLib.DataSources;
+using MapLib.DataSources.Vector;
 
 namespace MapLib.Render;
 
@@ -56,3 +57,13 @@ public class RasterMapDataSource2 : MapDataSource
         DataSource = dataSource;
     }
 }
+
+//public class GraticuleMapDataSource : MapDataSource
+//{
+//    public BaseVectorDataSource DataSource { get; }
+
+//    public GraticuleDataSource(string name) : base(name)
+//    {
+//        DataSource = new GraticuleDataSource();
+//    }
+//}

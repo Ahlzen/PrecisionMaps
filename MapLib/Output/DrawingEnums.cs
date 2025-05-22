@@ -32,6 +32,14 @@ public enum TextHAlign
     Right
 }
 
+public enum TextVAlign
+{
+    Top,
+    Center,
+    Baseline,
+    Bottom
+}
+
 public enum SymbolType
 {
     Circle,

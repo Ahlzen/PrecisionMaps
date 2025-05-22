@@ -41,8 +41,16 @@ public class WorldMapFixture : BaseFixture
             new VectorMapDataSource("countries",
                 new VectorFileDataSource(Path.Join(TestDataPath,
                 "Natural Earth/ne_110m_admin_0_countries.shp"))));
+        map.DataSources.Add(
+            new VectorMapDataSource("graticule",
+                new GraticuleDataSource { XInterval = 10, YInterval = 10 }));
 
         // Add styles
+        map.Layers.Add(new VectorMapLayer(
+            "graticule", "graticule", new VectorStyle {
+                LineColor = Color.Navy,
+                LineWidth = 0.15
+            }));
         map.Layers.Add(new VectorMapLayer(
             "landFill", "land", new VectorStyle {
                 FillColor = Color.WhiteSmoke,

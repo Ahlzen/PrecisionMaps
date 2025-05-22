@@ -17,7 +17,6 @@ internal class Visualizer
     private List<Shape> _shapes = new List<Shape>();
     private int _width, _height;
     private float _scale;
-    private string _prefix;
 
     /// <summary>
     /// Margin on each side of bbox. 0.05 = 5% of bbox size

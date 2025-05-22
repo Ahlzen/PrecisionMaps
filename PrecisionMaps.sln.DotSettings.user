@@ -14,5 +14,6 @@
     &lt;TestId&gt;NUnit3x::4CBA79BC-D8C5-47A6-A8CB-CF4EED751AA4::net8.0-windows::MapLib.Tests.DataSources.GdalDataSource2Fixture.TestGenerateHillshade&lt;/TestId&gt;&#xD;
     &lt;TestId&gt;NUnit3x::4CBA79BC-D8C5-47A6-A8CB-CF4EED751AA4::net8.0-windows::MapLib.Tests.DataSources.GdalDataSource2Fixture.TestGenerateHillshade("MassGIS LiDAR/be_19TCG339672.tif")&lt;/TestId&gt;&#xD;
     &lt;TestId&gt;NUnit3x::4CBA79BC-D8C5-47A6-A8CB-CF4EED751AA4::net8.0-windows::MapLib.Tests.DataSources.GdalDataSource2Fixture.TestGenerateHillshade("USGS NED/USGS_OPR_MA_CentralEastern_2021_B21_be_19TCG339672.tif")&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::4CBA79BC-D8C5-47A6-A8CB-CF4EED751AA4::net8.0-windows::MapLib.Tests.Render.WorldMapFixture.RenderWorldCountriesMap&lt;/TestId&gt;&#xD;
   &lt;/TestAncestor&gt;&#xD;
 &lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>

@@ -347,7 +347,6 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
             points[i] = new PointF(
                 (float)coords[i].X,
                 // Invert Y coordinate (see class remarks)
-                //_layerHeight - (float)coords[i].Y);
                 _height - (float)coords[i].Y);
         }
         return points;
