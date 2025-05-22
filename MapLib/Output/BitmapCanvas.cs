@@ -110,8 +110,11 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
     private static readonly Color DebugColor = Color.Red;
 
     private readonly Graphics _graphics;
-    private int _layerHeight;
-    private int _layerWidth;
+    private int _pixelsX;
+    private int _pixelsY;
+    private float _height; // in canvas units
+
+    private double _yFlipOffset;
     
     /// <param name="height">Height in canvas units.</param>
     internal BitmapCanvasLayer(
@@ -120,8 +123,9 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
     {
         Bitmap = new Bitmap(pixelsX, pixelsY, PixelFormat.Format32bppArgb);
         Bitmap.MakeTransparent(Bitmap.GetPixel(0, 0));
-        _layerWidth = pixelsX;
-        _layerHeight = pixelsY;
+        _height = (float)height;
+        _pixelsY = pixelsX;
+        _pixelsX = pixelsY;
         _graphics = Graphics.FromImage(Bitmap);
         _graphics.SmoothingMode = SmoothingMode.HighQuality;
 
@@ -172,7 +176,7 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
         foreach (Coord point in points)
             _graphics.FillEllipse(new SolidBrush(color),
                 new RectangleF((float)(point.X - radius / 2),
-                    _layerHeight - (float)(point.Y - radius / 2),
+                    _height - (float)(point.Y - radius / 2),
                     (int)radius, (int)radius));
     }
 
@@ -236,24 +240,15 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
 
 #if EXTRADEBUG
         DrawFilledCircles([coord], 3, DebugColor);
-        Coord[] coords = [new Coord(coord.X + offsetX, coord.Y), new Coord(coord.X + offsetX + stringSize.Width, coord.Y)];
         DrawLines([
-                [new Coord(coord.X + offsetX, coord.Y- baseline), new Coord(coord.X + offsetX + stringSize.Width, coord.Y- baseline)],
-                [new Coord(coord.X + offsetX, coord.Y+ stringSize.Height - baseline), new Coord(coord.X + offsetX + stringSize.Width, coord.Y+ stringSize.Height- baseline)],
-                coords,],
+                [new Coord(coord.X + offsetX, coord.Y - baseline), new Coord(coord.X + offsetX + stringSize.Width, coord.Y - baseline)],
+                [new Coord(coord.X + offsetX, coord.Y + stringSize.Height - baseline), new Coord(coord.X + offsetX + stringSize.Width, coord.Y+ stringSize.Height- baseline)],
+                [new Coord(coord.X + offsetX, coord.Y), new Coord(coord.X + offsetX + stringSize.Width, coord.Y)]],
                 1, DebugColor);
 #endif
-        
-        //_graphics.DrawString(s, font, brush,
-        //    new PointF((float)(coord.X + offsetX), (float)(coord.Y - baseline)));
-
-        //var matrix = _graphics.Transform;
-        //_graphics.MultiplyTransform(new Matrix(1, 0, 0, -1, 0, 0));
         _graphics.DrawString(s, font, brush,
             new PointF((float)(coord.X + offsetX),
-            _layerHeight - (float)(coord.Y - baseline)));
-        //_graphics.Transform = matrix;
-
+            _height - (float)(coord.Y + stringSize.Height - baseline)));
     }
 
     internal Bitmap Bitmap { get; }
@@ -262,9 +257,9 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
         double x, double y, double width, double height, double opacity)
     {
         PointF[] cornerPoints = [ // order: [UL, UR, LL]
-            new PointF((float)x, (float)(_layerHeight - y - height)), // UL
-            new PointF((float)(x + width), (float)(_layerHeight - y - height)), // UR
-            new PointF((float)x, (float)(_layerHeight - y)) // LL
+            new PointF((float)x, (float)(_height - y - height)), // UL
+            new PointF((float)(x + width), (float)(_height - y - height)), // UR
+            new PointF((float)x, (float)(_height - y)) // LL
         ];
 
         if (opacity < 1.0)
@@ -352,7 +347,8 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
             points[i] = new PointF(
                 (float)coords[i].X,
                 // Invert Y coordinate (see class remarks)
-                _layerHeight - (float)coords[i].Y);
+                //_layerHeight - (float)coords[i].Y);
+                _height - (float)coords[i].Y);
         }
         return points;
     }
