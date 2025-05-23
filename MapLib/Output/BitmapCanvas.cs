@@ -107,7 +107,7 @@ public class BitmapCanvas : Canvas, IDisposable
 /// </remarks>
 internal class BitmapCanvasLayer : CanvasLayer, IDisposable
 {
-    private static readonly Color DebugColor = Color.Red;
+    private static readonly Color DebugColor = Color.Magenta;
 
     private readonly Graphics _graphics;
     private int _pixelsX;
@@ -222,33 +222,57 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
     /// <param name="emSizePt">Text em-size, in points</param>
     public override void DrawText(string s, Coord coord,
         Color color, string fontName, double emSizePt,
-        TextHAlign hAlign)
+        TextHAlign hAlign, TextVAlign vAlign)
     {
         using Font font = new Font(fontName, (float)emSizePt);
         using Brush brush = new SolidBrush(color);
 
         SizeF stringSize = _graphics.MeasureString(s, font);
-        double baseline = GetBaseline(font);
+        float baseline = GetBaseline(font); // Top<->Baseline distance
 
-        double offsetX = 0;
-        switch (hAlign)
-        {
+        float x = (float)(coord.X);
+        float y = (float)(_height - coord.Y);
+
+        // Graphics.DrawString coordinates are for top left corner.
+        // Adjust location depending on selected alignment:
+        switch (hAlign) {
             case TextHAlign.Left: break; // no extra offset
-            case TextHAlign.Center: offsetX = -stringSize.Width / 2.0; break;
-            case TextHAlign.Right: offsetX = -stringSize.Width; break;
+            case TextHAlign.Center: x -= stringSize.Width / 2.0f; break;
+            case TextHAlign.Right: x -= stringSize.Width; break;
+        }
+        switch (vAlign) {
+            case TextVAlign.Top: break; // no extra offset
+            case TextVAlign.Center: y -= stringSize.Height / 2; break;
+            case TextVAlign.Baseline: y -= baseline; break;
+            case TextVAlign.Bottom: y -= stringSize.Height; break;
         }
 
 #if EXTRADEBUG
-        DrawFilledCircles([coord], 3, DebugColor);
-        DrawLines([
-                [new Coord(coord.X + offsetX, coord.Y - baseline), new Coord(coord.X + offsetX + stringSize.Width, coord.Y - baseline)],
-                [new Coord(coord.X + offsetX, coord.Y + stringSize.Height - baseline), new Coord(coord.X + offsetX + stringSize.Width, coord.Y+ stringSize.Height- baseline)],
-                [new Coord(coord.X + offsetX, coord.Y), new Coord(coord.X + offsetX + stringSize.Width, coord.Y)]],
-                1, DebugColor);
+        float lineWidth = (float)emSizePt * 0.03f;
+        float pointRadius = (float)emSizePt * 0.15f;
+        using Brush debugBrush = new SolidBrush(DebugColor);
+        using Pen debugPen = new Pen(DebugColor, lineWidth);
+        // text coordinate
+        _graphics.FillEllipse(debugBrush, new RectangleF(
+            (float)(coord.X) - pointRadius,
+            (float)(_height - coord.Y) - pointRadius,
+            pointRadius * 2,
+            pointRadius * 2));
+        // bbox
+        _graphics.DrawLines(debugPen, new PointF[] {
+            new PointF(x, y),
+            new PointF(x + stringSize.Width, y),
+            new PointF(x + stringSize.Width, y + stringSize.Height),
+            new PointF(x, y + stringSize.Height),
+            new PointF(x, y)
+            });
+        // baseline
+        _graphics.DrawLines(debugPen, new PointF[] {
+            new PointF(x, y + baseline),
+            new PointF(x + stringSize.Width, y + baseline)});
 #endif
         _graphics.DrawString(s, font, brush,
-            new PointF((float)(coord.X + offsetX),
-            _height - (float)(coord.Y + stringSize.Height - baseline)));
+            new PointF(x, y));
     }
 
     internal Bitmap Bitmap { get; }
@@ -330,7 +354,7 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
         return pen;
     }
 
-    private double GetBaseline(Font font)
+    private float GetBaseline(Font font)
     {
         FontFamily ff = font.FontFamily;
         float lineSpace = ff.GetLineSpacing(font.Style);

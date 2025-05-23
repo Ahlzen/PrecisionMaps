@@ -196,7 +196,7 @@ public class SvgCanvasLayer : CanvasLayer, IDisposable
 
     public override void DrawText(string s, Coord coord,
         Color color, string font, double size,
-        TextHAlign hAlign)
+        TextHAlign hAlign, TextVAlign vAlign)
     {
         string? anchorStr = null;
         switch (hAlign)
@@ -206,6 +206,8 @@ public class SvgCanvasLayer : CanvasLayer, IDisposable
             case TextHAlign.Right: anchorStr = "end"; break;
         }
         string sizeStr = size.ToString();
+
+        // TODO: vAlign
 
         _objects.Add(new XElement(SvgCanvas.XmlNs + "text",
             new XAttribute("font", font),

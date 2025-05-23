@@ -86,5 +86,5 @@ public abstract class CanvasLayer : IDisposable
 
     public abstract void DrawText(string s, Coord coord,
         Color color, string font, double emSizePt,
-        TextHAlign hAlign);
+        TextHAlign hAlign, TextVAlign vAlign);
 }

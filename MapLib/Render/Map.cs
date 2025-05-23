@@ -364,7 +364,8 @@ public class Map : IHasSrs, IBounded
             {
                 // TODO: fix
                 // TODO: check units, etc
-                layer.DrawText("Label", point, textColor, fontName, fontSize, TextHAlign.Left);
+                layer.DrawText("Label", point, textColor, fontName, fontSize,
+                    TextHAlign.Left, TextVAlign.Bottom);
             }
         }
     }
