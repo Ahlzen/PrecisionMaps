@@ -194,8 +194,9 @@ public class SvgCanvasLayer : CanvasLayer, IDisposable
             points.Select(point => GetSvgCircle(point, radius))));
     }
 
+    /// <param name="emSizePt">Text em-size, in canvas units</param>
     public override void DrawText(string s, Coord coord,
-        Color color, string font, double size,
+        Color color, string font, double emSize,
         TextHAlign hAlign, TextVAlign vAlign)
     {
         string? anchorStr = null;
@@ -205,7 +206,7 @@ public class SvgCanvasLayer : CanvasLayer, IDisposable
             case TextHAlign.Center: anchorStr = "middle"; break;
             case TextHAlign.Right: anchorStr = "end"; break;
         }
-        string sizeStr = size.ToString();
+        string sizeStr = emSize.ToString(); // TODO: Check units in spec
 
         // TODO: vAlign
 

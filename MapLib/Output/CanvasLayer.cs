@@ -84,7 +84,10 @@ public abstract class CanvasLayer : IDisposable
     public abstract void DrawFilledCircles(
         IEnumerable<Coord> points, double radius, Color color);
 
+    /// <param name="emSizePt">
+    /// Text em-size (total body height), in canvas units.
+    /// </param>
     public abstract void DrawText(string s, Coord coord,
-        Color color, string font, double emSizePt,
+        Color color, string font, double emSize,
         TextHAlign hAlign, TextVAlign vAlign);
 }

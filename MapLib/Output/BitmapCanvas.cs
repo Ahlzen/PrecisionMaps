@@ -4,15 +4,16 @@ using MapLib.Geometry;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.Drawing;
+using OSGeo.GDAL;
 
 namespace MapLib.Output;
 
 public class BitmapCanvas : Canvas, IDisposable
 {
-    private readonly double _width; // canvas width in canvas units
-    private readonly double _height; // canvas height in canvas units
-    private readonly int _pixelsX; // canvas width in pixels
-    private readonly int _pixelsY; // canvas height in pixels
+    internal readonly double _width; // canvas width in canvas units
+    internal readonly double _height; // canvas height in canvas units
+    internal readonly int _pixelsX; // canvas width in pixels
+    internal readonly int _pixelsY; // canvas height in pixels
     
     /// <summary>
     /// Scale to convert canvas units to pixels.
@@ -27,7 +28,7 @@ public class BitmapCanvas : Canvas, IDisposable
     /// <summary>
     /// The total scale factor at which the graphics is to be rendered.
     /// </summary>
-    private double ScaleFactor => _pixelScaleFactor * _userScaleFactor;
+    internal double ScaleFactor => _pixelScaleFactor * _userScaleFactor;
 
     private readonly Color _backgroundColor;
     private readonly List<BitmapCanvasLayer> _layers = new List<BitmapCanvasLayer>();
@@ -62,7 +63,7 @@ public class BitmapCanvas : Canvas, IDisposable
 
     public override CanvasLayer AddNewLayer(string name)
     {
-        var layer = new BitmapCanvasLayer(_pixelsX, _pixelsY, _height, ScaleFactor);
+        var layer = new BitmapCanvasLayer(this);
         layer.Name = name;
         _layers.Add(layer);
         return layer;
@@ -109,29 +110,38 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
 {
     private static readonly Color DebugColor = Color.Magenta;
 
+    private readonly BitmapCanvas _canvas;
     private readonly Graphics _graphics;
-    private int _pixelsX;
-    private int _pixelsY;
-    private float _height; // in canvas units
+    //private int _pixelsX;
+    //private int _pixelsY;
+    //private float _height; // in canvas units
+    private int pixelsX => _canvas._pixelsX;
+    private int pixelsY => _canvas._pixelsY;
+    private double _height => _canvas.Height;
 
-    private double _yFlipOffset;
-    
-    /// <param name="height">Height in canvas units.</param>
+    private double scaleFactor => _canvas.ScaleFactor;
+
+    /// <param name="height">Height, in canvas units.</param>
     internal BitmapCanvasLayer(
-        int pixelsX, int pixelsY,
-        double height, double scaleFactor)
+        //int pixelsX, int pixelsY,
+        //double height, double scaleFactor
+        BitmapCanvas canvas)
     {
+        _canvas = canvas;
+
         Bitmap = new Bitmap(pixelsX, pixelsY, PixelFormat.Format32bppArgb);
         Bitmap.MakeTransparent(Bitmap.GetPixel(0, 0));
-        _height = (float)height;
-        _pixelsY = pixelsX;
-        _pixelsX = pixelsY;
+        //_height = (float)height;
+        //_pixelsY = pixelsX;
+        //_pixelsX = pixelsY;
         _graphics = Graphics.FromImage(Bitmap);
         _graphics.SmoothingMode = SmoothingMode.HighQuality;
 
-        // Offset and invert Y, and scale drawing ops. (see remarks)
+        // Offset and invert Y (see remarks)
         //_graphics.TranslateTransform(0, (float)(height*scaleFactor));
         //_graphics.ScaleTransform((float)scaleFactor, -(float)scaleFactor);
+
+        // Scale drawing ops
         _graphics.ScaleTransform((float)scaleFactor, (float)scaleFactor);
     }
 
@@ -176,7 +186,7 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
         foreach (Coord point in points)
             _graphics.FillEllipse(new SolidBrush(color),
                 new RectangleF((float)(point.X - radius / 2),
-                    _height - (float)(point.Y - radius / 2),
+                    (float)_height - (float)(point.Y - radius / 2),
                     (int)radius, (int)radius));
     }
 
@@ -219,18 +229,19 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
         }
     }
 
-    /// <param name="emSizePt">Text em-size, in points</param>
+    /// <param name="emSizePt">Text em-size, in canvas units</param>
     public override void DrawText(string s, Coord coord,
-        Color color, string fontName, double emSizePt,
+        Color color, string fontName, double emSize,
         TextHAlign hAlign, TextVAlign vAlign)
     {
+        float emSizePt = (float)(_canvas.ToPt(emSize));
         using Font font = new Font(fontName, (float)emSizePt);
         using Brush brush = new SolidBrush(color);
 
         SizeF stringSize = _graphics.MeasureString(s, font);
         float baseline = GetBaseline(font); // Top<->Baseline distance
 
-        float x = (float)(coord.X);
+        float x = (float)coord.X;
         float y = (float)(_height - coord.Y);
 
         // Graphics.DrawString coordinates are for top left corner.
@@ -371,7 +382,7 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
             points[i] = new PointF(
                 (float)coords[i].X,
                 // Invert Y coordinate (see class remarks)
-                _height - (float)coords[i].Y);
+                (float)_height - (float)coords[i].Y);
         }
         return points;
     }
