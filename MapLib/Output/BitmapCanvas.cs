@@ -264,11 +264,11 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
         using Brush debugBrush = new SolidBrush(DebugColor);
         using Pen debugPen = new Pen(DebugColor, lineWidth);
         // text coordinate
-        _graphics.FillEllipse(debugBrush, new RectangleF(
-            (float)(coord.X) - pointRadius,
-            (float)(_height - coord.Y) - pointRadius,
-            pointRadius * 2,
-            pointRadius * 2));
+        //_graphics.FillEllipse(debugBrush, new RectangleF(
+        //    (float)(coord.X) - pointRadius,
+        //    (float)(_height - coord.Y) - pointRadius,
+        //    pointRadius * 2,
+        //    pointRadius * 2));
         // bbox
         _graphics.DrawLines(debugPen, new PointF[] {
             new PointF(x, y),
@@ -282,8 +282,9 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
             new PointF(x, y + baseline),
             new PointF(x + stringSize.Width, y + baseline)});
 #endif
+        // point is top left corner
         _graphics.DrawString(s, font, brush,
-            new PointF(x, y));
+            point: new PointF(x, y));
     }
 
     internal Bitmap Bitmap { get; }

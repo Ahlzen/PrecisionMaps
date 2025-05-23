@@ -199,6 +199,11 @@ public class SvgCanvasLayer : CanvasLayer, IDisposable
         Color color, string font, double emSize,
         TextHAlign hAlign, TextVAlign vAlign)
     {
+        // Presumably, with no units, font-size is the em size
+        // in canvas units:
+        string sizeStr = emSize.ToString();
+
+        // hAlign
         string? anchorStr = null;
         switch (hAlign)
         {
@@ -206,16 +211,24 @@ public class SvgCanvasLayer : CanvasLayer, IDisposable
             case TextHAlign.Center: anchorStr = "middle"; break;
             case TextHAlign.Right: anchorStr = "end"; break;
         }
-        string sizeStr = emSize.ToString(); // TODO: Check units in spec
 
-        // TODO: vAlign
+        // vAlign
+        string? dominantBaselineStr = null;
+        switch (vAlign)
+        {
+            case TextVAlign.Top: dominantBaselineStr = "hanging"; break;
+            case TextVAlign.Center: dominantBaselineStr = "central"; break; // or "middle"
+            case TextVAlign.Baseline: dominantBaselineStr = "auto"; break;
+            case TextVAlign.Bottom: dominantBaselineStr = "ideographic"; break;
+        }
 
+        // x/y are at baseline, according to the specified anchor
         _objects.Add(new XElement(SvgCanvas.XmlNs + "text",
             new XAttribute("font", font),
             new XAttribute("fill", color.ToHexCode()),
             new XAttribute("x", coord.X.ToString(_canvas.SvgCoordFormat)),
-            new XAttribute("y", coord.Y.ToString(_canvas.SvgCoordFormat)),
-            new XAttribute("style", $"font-size: {sizeStr}; text-anchor: {anchorStr};"),
+            new XAttribute("y", (_layerHeight-coord.Y).ToString(_canvas.SvgCoordFormat)),
+            new XAttribute("style", $"font-size: {sizeStr}; text-anchor: {anchorStr}; dominant-baseline: {dominantBaselineStr};"),
             new XText(s)
             ));
     }

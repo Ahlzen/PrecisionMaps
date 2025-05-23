@@ -85,12 +85,13 @@ public class CanvasFixture : BaseFixture
         layer.DrawText("Label Left", (300, 380), Color.DarkOliveGreen, "Calibri", 8, TextHAlign.Left, TextVAlign.Center);
         layer.DrawText("Label Center", (300, 360), Color.DarkOliveGreen, "Calibri", 8, TextHAlign.Center, TextVAlign.Center);
         layer.DrawText("Label Right", (300, 340), Color.DarkOliveGreen, "Calibri", 8, TextHAlign.Right, TextVAlign.Center);
-        //layer.DrawFilledCircles([(300, 380), (300, 360), (300, 340)], 3, Color.Magenta);
+        layer.DrawFilledCircles([(300, 380), (300, 360), (300, 340)], 3, Color.Magenta);
         // VAlign
         layer.DrawText("Label Bottom", (300, 300), Color.DarkOliveGreen, "Calibri", 8, TextHAlign.Center, TextVAlign.Bottom);
         layer.DrawText("Label Baseline", (300, 280), Color.DarkOliveGreen, "Calibri", 8, TextHAlign.Center, TextVAlign.Baseline);
         layer.DrawText("Label Center", (300, 260), Color.DarkOliveGreen, "Calibri", 8, TextHAlign.Center, TextVAlign.Center);
         layer.DrawText("Label Top", (300, 240), Color.DarkOliveGreen, "Calibri", 8, TextHAlign.Center, TextVAlign.Top);
+        layer.DrawFilledCircles([(300, 300), (300, 280), (300, 260), (300, 240)], 3, Color.Magenta);
 
         ///// Bitmap
 
