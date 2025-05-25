@@ -40,6 +40,9 @@ public struct Bounds : IEquatable<Bounds>
     public Polygon AsPolygon() => new Polygon(
         [(XMin, YMin), (XMin, YMax), (XMax, YMax), (XMax, YMin), (XMin, YMin)], null);
 
+    public Line AsLine() => new Line(
+        [(XMin, YMin), (XMin, YMax), (XMax, YMax), (XMax, YMin), (XMin, YMin)], null);
+
     public static Bounds FromCoords(IEnumerable<Coord> srcCoords)
     {
         if (!srcCoords.Any()) throw new InvalidOperationException();

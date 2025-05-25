@@ -185,9 +185,9 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
     {
         foreach (Coord point in points)
             _graphics.FillEllipse(new SolidBrush(color),
-                new RectangleF((float)(point.X - radius / 2),
-                    (float)_height - (float)(point.Y - radius / 2),
-                    (int)radius, (int)radius));
+                new RectangleF((float)(point.X - radius),
+                    (float)_height - (float)point.Y - (float)radius,
+                    (int)radius*2, (int)radius*2));
     }
 
     public override void DrawFilledPolygon(Coord[] polygon, Color color)
@@ -285,6 +285,7 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
         // point is top left corner
         _graphics.DrawString(s, font, brush,
             point: new PointF(x, y));
+        _graphics.DrawEllipse(debugPen, new RectangleF(x - 2, y - 2, 4, 4));
     }
 
     internal Bitmap Bitmap { get; }
