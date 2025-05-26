@@ -30,6 +30,8 @@ public abstract class CanvasLayer : IDisposable
         LineJoin join = LineJoin.Miter, // TODO: miter limit
         double[]? dasharray = null);
 
+    
+
     /// <summary>
     /// Draws the outline of a polygon.
     /// This is similar to DrawLine with equal start and end point,
@@ -77,13 +79,32 @@ public abstract class CanvasLayer : IDisposable
         IEnumerable<IEnumerable<Coord[]>> multiPolygons,
         Color color);
 
-    public abstract void DrawFilledCircles(
-        IEnumerable<Coord> points, double radius, Color color);
+
+    public abstract void DrawCircles(IEnumerable<Coord> coords,
+        double radius, double lineWidth, Color color);
+    public virtual void DrawCircle(Coord coord,
+        double radius, double lineWidth, Color color)
+        => DrawCircles([coord], radius, lineWidth, color);
+
+    public abstract void DrawFilledCircles(IEnumerable<Coord> coords,
+        double radius, Color color);
+    public virtual void DrawFilledCircle(Coord coord,
+        double radius, Color color)
+        => DrawFilledCircles([coord], radius, color);
 
     /// <param name="emSizePt">
     /// Text em-size (total body height), in canvas units.
     /// </param>
+    [Obsolete]
     public abstract void DrawText(string s, Coord coord,
         Color color, string font, double emSize,
         TextHAlign hAlign, TextVAlign vAlign);
+
+
+    /// <returns>Measured width and height of the string (in canvas units)</returns>
+    public abstract Coord GetTextSize(string font, double emSize, string s);
+
+    public abstract void DrawText(
+        string fontName, double emSize, string s,
+        Coord centerCoord, Color color);
 }

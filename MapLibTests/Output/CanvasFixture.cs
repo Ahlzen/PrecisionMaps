@@ -81,17 +81,22 @@ public class CanvasFixture : BaseFixture
 
         ///// Text
 
+
+
         // HAlign
-        layer.DrawText("Label Left", (300, 380), Color.DarkOliveGreen, "Calibri", 8, TextHAlign.Left, TextVAlign.Center);
-        layer.DrawText("Label Center", (300, 360), Color.DarkOliveGreen, "Calibri", 8, TextHAlign.Center, TextVAlign.Center);
-        layer.DrawText("Label Right", (300, 340), Color.DarkOliveGreen, "Calibri", 8, TextHAlign.Right, TextVAlign.Center);
-        layer.DrawFilledCircles([(300, 380), (300, 360), (300, 340)], 2, Color.Magenta);
+        //layer.DrawText("Label Left", (300, 380), Color.DarkOliveGreen, "Calibri", 8, TextHAlign.Left, TextVAlign.Center);
+        //layer.DrawText("Label Center", (300, 360), Color.DarkOliveGreen, "Calibri", 8, TextHAlign.Center, TextVAlign.Center);
+        //layer.DrawText("Label Right", (300, 340), Color.DarkOliveGreen, "Calibri", 8, TextHAlign.Right, TextVAlign.Center);
+        //layer.DrawFilledCircles([(300, 380), (300, 360), (300, 340)], 2, Color.Magenta);
         // VAlign
-        layer.DrawText("Label Bottom", (300, 300), Color.DarkOliveGreen, "Calibri", 8, TextHAlign.Center, TextVAlign.Bottom);
-        layer.DrawText("Label Baseline", (300, 280), Color.DarkOliveGreen, "Calibri", 8, TextHAlign.Center, TextVAlign.Baseline);
-        layer.DrawText("Label Center", (300, 260), Color.DarkOliveGreen, "Calibri", 8, TextHAlign.Center, TextVAlign.Center);
-        layer.DrawText("Label Top", (300, 240), Color.DarkOliveGreen, "Calibri", 8, TextHAlign.Center, TextVAlign.Top);
-        layer.DrawFilledCircles([(300, 300), (300, 280), (300, 260), (300, 240)], 2, Color.Magenta);
+        //layer.DrawText("Label Bottom", (300, 300), Color.DarkOliveGreen, "Calibri", 8, TextHAlign.Center, TextVAlign.Bottom);
+        //layer.DrawText("Label Baseline", (300, 280), Color.DarkOliveGreen, "Calibri", 8, TextHAlign.Center, TextVAlign.Baseline);
+        //layer.DrawText("Label Center", (300, 260), Color.DarkOliveGreen, "Calibri", 8, TextHAlign.Center, TextVAlign.Center);
+        //layer.DrawText("Label Top", (300, 240), Color.DarkOliveGreen, "Calibri", 8, TextHAlign.Center, TextVAlign.Top);
+        //layer.DrawFilledCircles([(300, 300), (300, 280), (300, 260), (300, 240)], 2, Color.Magenta);
+
+        DrawTextWithBbox(layer, "Calibri", 8, "Test Text", (300, 300), Color.Cyan);
+
 
         ///// Bitmap
 
@@ -106,6 +111,24 @@ public class CanvasFixture : BaseFixture
 
         Visualizer.SaveCanvas(canvas, false);
         canvas.Dispose();
+    }
+
+    private void DrawTextWithBbox(CanvasLayer layer, string fontName, double emSize,
+        string s, Coord centerCoord, Color color)
+    {
+        Coord textSize = layer.GetTextSize(fontName, emSize, s);
+
+        // Outline
+        var bottomLeftCoord = centerCoord - textSize * 0.5;
+        var topRightCoord = centerCoord + textSize * 0.5;
+        Bounds bounds = new Bounds(bottomLeftCoord, topRightCoord);
+        layer.DrawPolygon(bounds.AsLine().Coords, emSize * 0.05, Color.Red);
+
+        // Point
+        layer.DrawFilledCircle(centerCoord, emSize * 0.3, Color.Red);
+
+        // Text
+        layer.DrawText(fontName, emSize, s, centerCoord, color);
     }
 
     #endregion

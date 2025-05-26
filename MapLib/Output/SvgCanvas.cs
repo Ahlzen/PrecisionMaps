@@ -4,6 +4,7 @@ using System.Drawing;
 using System.IO;
 using System.Text;
 using System.Xml.Linq;
+using System.Drawing.Drawing2D;
 
 namespace MapLib.Output;
 
@@ -99,15 +100,27 @@ public class SvgCanvasLayer : CanvasLayer, IDisposable
     private double _layerHeight;
     private double _layerWidth;
 
+    /// <summary>
+    /// Hack! Needed for certain operations, like measuring text.
+    /// </summary>
+    private readonly Graphics _graphics;
+    private readonly Bitmap _bitmap;
 
     internal SvgCanvasLayer(SvgCanvas canvas)
     {
         _canvas = canvas;
         _layerWidth = canvas.Width;
         _layerHeight = canvas.Height;
+
+        _bitmap = new Bitmap(1, 1, PixelFormat.Format32bppArgb);
+        _graphics = Graphics.FromImage(_bitmap);
+        _graphics.SmoothingMode = SmoothingMode.HighQuality;
     }
 
-    public override void Dispose() {}
+    public override void Dispose() {
+        _bitmap.Dispose();
+        _graphics.Dispose();
+    }
 
     internal XElement GetSvgData()
     {
@@ -187,14 +200,25 @@ public class SvgCanvasLayer : CanvasLayer, IDisposable
                 multipolygon, areClosedPaths: true))));
     }
 
-    public override void DrawFilledCircles(IEnumerable<Coord> points, double radius, Color color)
+    public override void DrawCircles(IEnumerable<Coord> coords,
+        double radius, double lineWidth, Color color)
+    {
+        _objects.Add(new XElement(SvgCanvas.XmlNs + "g",
+            GetStrokeAttributes(lineWidth, color),
+            coords.Select(point => GetSvgCircle(point, radius))));
+    }
+
+    public override void DrawFilledCircles(
+        IEnumerable<Coord> coords, double radius, Color color)
     {
         _objects.Add(new XElement(SvgCanvas.XmlNs + "g",
             GetFillAttributes(color),
-            points.Select(point => GetSvgCircle(point, radius))));
+            coords.Select(point => GetSvgCircle(point, radius))));
     }
 
+
     /// <param name="emSizePt">Text em-size, in canvas units</param>
+    [Obsolete]
     public override void DrawText(string s, Coord coord,
         Color color, string font, double emSize,
         TextHAlign hAlign, TextVAlign vAlign)
@@ -229,6 +253,42 @@ public class SvgCanvasLayer : CanvasLayer, IDisposable
             new XAttribute("x", coord.X.ToString(_canvas.SvgCoordFormat)),
             new XAttribute("y", (_layerHeight-coord.Y).ToString(_canvas.SvgCoordFormat)),
             new XAttribute("style", $"font-size: {sizeStr}; text-anchor: {anchorStr}; dominant-baseline: {dominantBaselineStr};"),
+            new XText(s)
+            ));
+    }
+
+
+    // TODO: Move to base class?
+    private Font GetFont(string fontName, double emSize)
+    {
+        float emSizePt = (float)(_canvas.ToPt(emSize));
+        return new Font(fontName, (float)emSizePt);
+    }
+
+    // TODO: Move to base class?
+    public override Coord GetTextSize(string fontName, double emSize, string s)
+    {
+        // TODO: optimize. Cache Font?
+        using Font font = GetFont(fontName, emSize);
+        SizeF stringSize = _graphics.MeasureString(s, font);
+        return new Coord(stringSize.Width, stringSize.Height);
+    }
+
+    public override void DrawText(
+        string font, double emSize,
+        string s, Coord centerCiird, Color color)
+    {
+        // Presumably, with no units, font-size is the em size
+        // in canvas units:
+        string sizeStr = emSize.ToString();
+
+        // x/y are at baseline, according to the specified anchor
+        _objects.Add(new XElement(SvgCanvas.XmlNs + "text",
+            new XAttribute("font", font),
+            new XAttribute("fill", color.ToHexCode()),
+            new XAttribute("x", centerCiird.X.ToString(_canvas.SvgCoordFormat)),
+            new XAttribute("y", (_layerHeight - centerCiird.Y).ToString(_canvas.SvgCoordFormat)),
+            new XAttribute("style", $"font-size: {sizeStr}; text-anchor: middle; dominant-baseline: central;"),
             new XText(s)
             ));
     }
@@ -380,6 +440,9 @@ public class SvgCanvasLayer : CanvasLayer, IDisposable
             new XAttribute("r", radius.ToString(_canvas.SvgCoordFormat))
             );
     }
+
+
+
 
     #endregion
 }

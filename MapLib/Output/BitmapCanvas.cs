@@ -175,14 +175,25 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
         _graphics.DrawPolygon(pen, points);
     }
 
-    public override void DrawFilledCircles(
-        IEnumerable<Coord> points, double radius, Color color)
+
+    public override void DrawCircles(IEnumerable<Coord> coords,
+        double radius, double lineWidth, Color color)
     {
-        foreach (Coord point in points)
-            _graphics.FillEllipse(new SolidBrush(color),
-                new RectangleF((float)(point.X - radius),
-                    (float)_height - (float)point.Y - (float)radius,
-                    (int)radius*2, (int)radius*2));
+        using Pen pen = new Pen(color, (float)lineWidth);
+        foreach (Coord coord in coords)
+            _graphics.DrawEllipse(pen, new RectangleF(
+                (float)(coord.X - radius), (float)(coord.Y - radius),
+                (float)radius * 2f, (float)radius * 2f));
+    }
+
+    public override void DrawFilledCircles(
+        IEnumerable<Coord> coords, double radius, Color color)
+    {
+        using Brush brush = new SolidBrush(color);
+        foreach (Coord point in coords)
+            _graphics.FillEllipse(brush, new RectangleF(
+                (float)(point.X - radius), (float)(point.Y - radius),
+                (float)radius * 2f, (float)radius * 2f));
     }
 
     public override void DrawFilledPolygon(Coord[] polygon, Color color)
@@ -225,12 +236,12 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
     }
 
     /// <param name="emSizePt">Text em-size, in canvas units</param>
+    [Obsolete]
     public override void DrawText(string s, Coord coord,
         Color color, string fontName, double emSize,
         TextHAlign hAlign, TextVAlign vAlign)
     {
-        float emSizePt = (float)(_canvas.ToPt(emSize));
-        using Font font = new Font(fontName, (float)emSizePt);
+        using Font font = GetFont(fontName, emSize);
         using Brush brush = new SolidBrush(color);
 
         SizeF stringSize = _graphics.MeasureString(s, font);
@@ -254,8 +265,8 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
         }
 
 #if EXTRADEBUG
-        float lineWidth = (float)emSizePt * 0.03f;
-        float pointRadius = (float)emSizePt * 0.15f;
+        float lineWidth = (float)emSize * 0.03f;
+        float pointRadius = (float)emSize * 0.15f;
         using Brush debugBrush = new SolidBrush(DebugColor);
         using Pen debugPen = new Pen(DebugColor, lineWidth);
         // text coordinate
@@ -375,14 +386,69 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
     {
         PointF[] points = new PointF[coords.Length];
         for (int i = 0; i < coords.Length; i++)
-        {
-            points[i] = new PointF(
-                (float)coords[i].X,
-                // Invert Y coordinate (see class remarks)
-                (float)_height - (float)coords[i].Y);
-        }
+            points[i] = ToPoint(coords[i]);
         return points;
     }
+
+    public PointF ToPoint(Coord coord) => new PointF(
+        (float)coord.X,
+        (float)_height - (float)coord.Y); // Invert Y coordinate (see class remarks)
+
+    //public override double GetFontHeight(string fontName, double emSize)
+    //{
+    //    using Font font = GetFont(fontName, emSize);
+
+    //    FontFamily ff = font.FontFamily;
+    //    float lineSpace = ff.GetLineSpacing(font.Style);
+    //    float ascent = ff.GetCellAscent(font.Style);
+    //    float baseline = font.GetHeight(_graphics) * ascent / lineSpace;
+    //    return baseline;
+    //}
+
+    //public override double GetFontBaseline(string font, double emSize)
+    //{
+    //    throw new NotImplementedException();
+    //}
+
+    //public override double GetTextWidth(string font, double emSize, string s)
+    //{
+    //    throw new NotImplementedException();
+    //}
+
+    // TODO: Move to base class?
+    private Font GetFont(string fontName, double emSize)
+    {
+        float emSizePt = (float)(_canvas.ToPt(emSize));
+        return new Font(fontName, (float)emSizePt);
+    }
+
+    // TODO: Move to base class?
+    public override Coord GetTextSize(string fontName, double emSize, string s)
+    {
+        // TODO: optimize. Cache Font?
+        using Font font = GetFont(fontName, emSize);
+        SizeF stringSize = _graphics.MeasureString(s, font);
+        return new Coord(stringSize.Width, stringSize.Height);
+    }
+
+    public override void DrawText(string fontName, double emSize,
+        string s, Coord centerCoord, Color color)
+    {
+        // TODO: optimize. Cache Font?
+        using Font font = GetFont(fontName, emSize);
+        using Brush brush = new SolidBrush(color);
+        SizeF stringSize = _graphics.MeasureString(s, font);
+
+        PointF point = ToPoint(centerCoord);
+        // DrawString assumes top left corner, so we have to subtract
+        // half the string size to center
+        point.X -= stringSize.Width / 2;
+        point.Y -= stringSize.Height / 2;
+
+        _graphics.DrawString(s, font, brush, point);
+    }
+
+
 
     #endregion
 }
