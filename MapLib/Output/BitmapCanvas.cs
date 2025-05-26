@@ -112,9 +112,6 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
 
     private readonly BitmapCanvas _canvas;
     private readonly Graphics _graphics;
-    //private int _pixelsX;
-    //private int _pixelsY;
-    //private float _height; // in canvas units
     private int pixelsX => _canvas._pixelsX;
     private int pixelsY => _canvas._pixelsY;
     private double _height => _canvas.Height;
@@ -123,21 +120,19 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
 
     /// <param name="height">Height, in canvas units.</param>
     internal BitmapCanvasLayer(
-        //int pixelsX, int pixelsY,
-        //double height, double scaleFactor
         BitmapCanvas canvas)
     {
         _canvas = canvas;
 
         Bitmap = new Bitmap(pixelsX, pixelsY, PixelFormat.Format32bppArgb);
         Bitmap.MakeTransparent(Bitmap.GetPixel(0, 0));
-        //_height = (float)height;
-        //_pixelsY = pixelsX;
-        //_pixelsX = pixelsY;
         _graphics = Graphics.FromImage(Bitmap);
         _graphics.SmoothingMode = SmoothingMode.HighQuality;
 
         // Offset and invert Y (see remarks)
+        // NOTE: Transform inverting Y is currently disabled, because
+        // it leads to text and images drawn upside down!
+        // We invert+offset coordinates manually instead.
         //_graphics.TranslateTransform(0, (float)(height*scaleFactor));
         //_graphics.ScaleTransform((float)scaleFactor, -(float)scaleFactor);
 
@@ -264,11 +259,11 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
         using Brush debugBrush = new SolidBrush(DebugColor);
         using Pen debugPen = new Pen(DebugColor, lineWidth);
         // text coordinate
-        //_graphics.FillEllipse(debugBrush, new RectangleF(
-        //    (float)(coord.X) - pointRadius,
-        //    (float)(_height - coord.Y) - pointRadius,
-        //    pointRadius * 2,
-        //    pointRadius * 2));
+        _graphics.FillEllipse(debugBrush, new RectangleF(
+            (float)(coord.X) - pointRadius,
+            (float)(_height - coord.Y) - pointRadius,
+            pointRadius * 2,
+            pointRadius * 2));
         // bbox
         _graphics.DrawLines(debugPen, new PointF[] {
             new PointF(x, y),

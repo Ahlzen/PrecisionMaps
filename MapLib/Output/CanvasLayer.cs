@@ -45,7 +45,6 @@ public abstract class CanvasLayer : IDisposable
     /// Fills a polygon specified by the given coordinates.
     /// </summary>
     public abstract void DrawFilledPolygon(
-        //IEnumerable<Coord> polygon,
         Coord[] coords,
         Color color);
 
@@ -58,7 +57,6 @@ public abstract class CanvasLayer : IDisposable
     /// should be rendered as holes.
     /// </remarks>
     public abstract void DrawFilledPolygons(
-        //IEnumerable<IEnumerable<Coord>> polygons,
         IEnumerable<Coord[]> polygons,
         Color color);
 
@@ -69,7 +67,6 @@ public abstract class CanvasLayer : IDisposable
     /// CCW polygons are outer polygons, CW are holes.
     /// </remarks>
     public abstract void DrawFilledMultiPolygon(
-        //IEnumerable<IEnumerable<Coord>> multiPolygon,
         IEnumerable<Coord[]> multiPolygon,
         Color color);
 
@@ -77,7 +74,6 @@ public abstract class CanvasLayer : IDisposable
     /// Fills the multipolygons specified by the given coordinates.
     /// </summary>
     public abstract void DrawFilledMultiPolygons(
-        //IEnumerable<IEnumerable<IEnumerable<Coord>>> multipolygons,
         IEnumerable<IEnumerable<Coord[]>> multiPolygons,
         Color color);
 
