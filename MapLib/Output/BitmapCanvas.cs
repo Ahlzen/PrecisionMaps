@@ -128,6 +128,7 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
         Bitmap.MakeTransparent(Bitmap.GetPixel(0, 0));
         _graphics = Graphics.FromImage(Bitmap);
         _graphics.SmoothingMode = SmoothingMode.HighQuality;
+        _graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
 
         // Offset and invert Y (see remarks)
         // NOTE: Transform inverting Y is currently disabled, because
@@ -182,7 +183,7 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
         using Pen pen = new Pen(color, (float)lineWidth);
         foreach (Coord coord in coords)
             _graphics.DrawEllipse(pen, new RectangleF(
-                (float)(coord.X - radius), (float)(coord.Y - radius),
+                (float)(coord.X - radius), (float)(_height - (coord.Y - radius)),
                 (float)radius * 2f, (float)radius * 2f));
     }
 
@@ -192,7 +193,7 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
         using Brush brush = new SolidBrush(color);
         foreach (Coord point in coords)
             _graphics.FillEllipse(brush, new RectangleF(
-                (float)(point.X - radius), (float)(point.Y - radius),
+                (float)(point.X - radius), (float)(_height - (point.Y - radius)),
                 (float)radius * 2f, (float)radius * 2f));
     }
 
@@ -394,27 +395,6 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
         (float)coord.X,
         (float)_height - (float)coord.Y); // Invert Y coordinate (see class remarks)
 
-    //public override double GetFontHeight(string fontName, double emSize)
-    //{
-    //    using Font font = GetFont(fontName, emSize);
-
-    //    FontFamily ff = font.FontFamily;
-    //    float lineSpace = ff.GetLineSpacing(font.Style);
-    //    float ascent = ff.GetCellAscent(font.Style);
-    //    float baseline = font.GetHeight(_graphics) * ascent / lineSpace;
-    //    return baseline;
-    //}
-
-    //public override double GetFontBaseline(string font, double emSize)
-    //{
-    //    throw new NotImplementedException();
-    //}
-
-    //public override double GetTextWidth(string font, double emSize, string s)
-    //{
-    //    throw new NotImplementedException();
-    //}
-
     // TODO: Move to base class?
     private Font GetFont(string fontName, double emSize)
     {
@@ -434,21 +414,19 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
     public override void DrawText(string fontName, double emSize,
         string s, Coord centerCoord, Color color)
     {
+        PointF point = ToPoint(centerCoord);
+
         // TODO: optimize. Cache Font?
         using Font font = GetFont(fontName, emSize);
-        using Brush brush = new SolidBrush(color);
         SizeF stringSize = _graphics.MeasureString(s, font);
-
-        PointF point = ToPoint(centerCoord);
         // DrawString assumes top left corner, so we have to subtract
         // half the string size to center
         point.X -= stringSize.Width / 2;
         point.Y -= stringSize.Height / 2;
 
+        using Brush brush = new SolidBrush(color);
         _graphics.DrawString(s, font, brush, point);
     }
-
-
 
     #endregion
 }

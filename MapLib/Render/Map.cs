@@ -1,5 +1,6 @@
 ﻿using MapLib.GdalSupport;
 using MapLib.Geometry;
+using MapLib.Geometry.Helpers;
 using MapLib.Output;
 using System.ComponentModel.Design;
 using System.Diagnostics;
@@ -80,6 +81,8 @@ public class Map : IHasSrs, IBounded
     public List<MapDataSource> DataSources { get; } = new();
 
     public List<MapLayer> Layers { get; } = new();
+
+    public ObjectPlacementManager PlacementManager { get; } = new(); 
 
     private double _scaleX, _scaleY;
     private double _offsetX, _offsetY;
@@ -286,16 +289,30 @@ public class Map : IHasSrs, IBounded
         // TODO: Only enumerate these if we really need them
         // TODO: Use better polygon centroid algorithm (at least
         // some form of point-in-polygon!)
-        IEnumerable<Coord> pointCoords =
-            data.Points.Select(p => p.Coord)
-            .Union(data.MultiPoints.SelectMany(mp => mp.Coords));
-        IEnumerable<Coord> lineMidpoints =
-            data.Lines.Select(l => l.GetMidpoint())
-            .Union(data.MultiLines.SelectMany(ml => ml.Select(cs => cs.GetMidpoint())));
-        IEnumerable<Coord> polygonCentroids =
-            data.Polygons.Select(p => p.GetCenter())
-            .Union(data.MultiPolygons.SelectMany(mp => mp.Select(cs => Bounds.FromCoords(cs).Center)));
-        IEnumerable<Coord> allPoints =
+
+        //IEnumerable<Coord> pointCoords =
+        //    data.Points.Select(p => p.Coord)
+        //    .Union(data.MultiPoints.SelectMany(mp => mp.Coords));
+        //IEnumerable<Coord> lineMidpoints =
+        //    data.Lines.Select(l => l.GetMidpoint())
+        //    .Union(data.MultiLines.SelectMany(ml => ml.Select(cs => cs.GetMidpoint())));
+        //IEnumerable<Coord> polygonCentroids =
+        //    data.Polygons.Select(p => p.GetCenter())
+        //    .Union(data.MultiPolygons.SelectMany(mp => mp.Select(cs => Bounds.FromCoords(cs).Center)));
+        //IEnumerable<Coord> allPoints =
+        //    pointCoords.Union(lineMidpoints).Union(polygonCentroids);
+
+        IEnumerable<(Coord[] coords, TagList tags)> pointCoords =
+            data.Points.Select(p => (new[] { p.Coord }, p.Tags))
+            .Union(data.MultiPoints.Select(mp => (mp.Coords, mp.Tags)));
+        IEnumerable <(Coord[] coords, TagList tags)> lineMidpoints =
+            data.Lines.Select(l => (new[] { l.GetMidpoint() }, l.Tags))
+            .Union(data.MultiLines.Select(ml => (ml.Select(cs => cs.GetMidpoint()).ToArray(), ml.Tags)));
+        IEnumerable<(Coord[] coords, TagList tags)> polygonCentroids =
+            data.Polygons.Select(p => (new[] { p.GetCenter() }, p.Tags))
+            .Union(data.MultiPolygons.Select(mp => (mp.Select(cs => Bounds.FromCoords(cs).Center).ToArray(), mp.Tags)));
+
+        IEnumerable<(Coord[] coords, TagList tags)> allPoints =
             pointCoords.Union(lineMidpoints).Union(polygonCentroids);
 
         // Fill
@@ -311,11 +328,8 @@ public class Map : IHasSrs, IBounded
         if (lineColor != null && lineWidth != null)
         {
             // Points
-            layer.DrawFilledCircles(pointCoords,
+            layer.DrawFilledCircles(pointCoords.SelectMany(c => c.coords),
                 lineWidth.Value, lineColor.Value);
-            foreach (MultiPoint mp in data.MultiPoints)
-                layer.DrawFilledCircles(mp.Coords,
-                    lineWidth.Value, lineColor.Value);
 
             // Lines
             foreach (Line l in data.Lines)
@@ -340,7 +354,8 @@ public class Map : IHasSrs, IBounded
             switch (style.Symbol)
             {
                 case SymbolType.Circle:
-                    layer.DrawFilledCircles(allPoints, symbolSize/2, symbolFillColor);
+                    layer.DrawFilledCircles(allPoints.SelectMany(c => c.coords),
+                        symbolSize/2, symbolFillColor);
                     break;
                 case SymbolType.Square:
                     throw new NotImplementedException();
@@ -353,19 +368,36 @@ public class Map : IHasSrs, IBounded
                     break;
             }
         }
-        
+
         // Text label
         if (style.TextTag != null)
-        {
+        {        
             Color textColor = style.TextColor ?? Color.Black;
             string fontName = style.TextFont ?? "Calibri";
             double fontSize = style.TextSize ?? canvas.Width * 0.003;
-            foreach (Coord point in allPoints)
+            foreach ((Coord[] coords, TagList tags) point in allPoints)
             {
-                // TODO: fix
-                // TODO: check units, etc
-                layer.DrawText("Label", point, textColor, fontName, fontSize,
-                    TextHAlign.Left, TextVAlign.Bottom);
+                // TODO: Factor out TagList lookup?
+                string? labelText = TagFilter.ValueOrNull(point.tags, style.TextTag);
+                if (labelText == null) continue;
+
+                double spacing = fontSize * 0.3; // spacing between point and edge of text
+                Coord textSize = layer.GetTextSize(fontName, fontSize, labelText);
+
+                // NOTE: Usually a single coord per array (since these
+                // are text labels)
+                foreach (Coord coord in point.coords)
+                {
+                    Bounds bounds = new Bounds(
+                        coord.X-0.5*textSize.X, coord.X+0.5*textSize.X,
+                        coord.Y-0.5*textSize.Y, coord.Y+textSize.Y);
+                    if (PlacementManager.TryAdd([bounds]) != null)
+                    {
+                        // It fits here. Draw text
+                        layer.DrawText(fontName, fontSize, labelText, coord, textColor);
+                    }
+                    
+                }
             }
         }
     }

@@ -50,4 +50,15 @@ public class TagFilter
             source.Polygons.Where(p => Matches(p.Tags)).ToArray(),
             source.MultiPolygons.Where(mp => Matches(mp.Tags)).ToArray());
     }
+
+
+    ///// TagList static helpers (TODO: Factor out, TagListExtensions?)
+    
+    public static string? ValueOrNull(TagList tagList, string key)
+    {
+        foreach (KeyValuePair<string, string> kvp in tagList)
+            if (kvp.Key == key)
+                return kvp.Value;
+        return null;
+    }
 }

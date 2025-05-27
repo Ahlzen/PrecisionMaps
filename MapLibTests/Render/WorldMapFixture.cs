@@ -68,10 +68,10 @@ public class WorldMapFixture : BaseFixture
         map.Layers.Add(new VectorMapLayer(
             "country labels", "countries", new VectorStyle {
                 Symbol = SymbolType.Circle,
-                SymbolSize = 8,
+                SymbolSize = 1,
                 TextColor = Color.Black,
-                TextSize = 6,
-                TextTag = "Country" // todo
+                TextSize = 2,
+                TextTag = "NAME"
             }));;
 
         // Render and save

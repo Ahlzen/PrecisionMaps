@@ -85,17 +85,27 @@ public struct Bounds : IEquatable<Bounds>
     }
 
     /// <summary>
+    /// Returns true iff the bounds intersect (share
+    /// any area; touching is not enough).
+    /// </summary>
+    public bool Intersects(Bounds other)
+    {
+        if (XMax <= other.XMin ||
+            XMin >= other.XMax ||
+            YMax <= other.YMin ||
+            YMin >= other.YMax)
+            return false;
+        return true;
+    }
+
+    /// <summary>
     /// Returns the intersection (overlapping area) of this
     /// and the specified other Bounds. Returns null if no overlap,
     /// including when sharing a corner or side.
     /// </summary>
     public Bounds? Intersection(Bounds other)
     {
-        if (XMax <= other.XMin ||
-            XMin >= other.XMax ||
-            YMax <= other.YMin ||
-            YMin >= other.YMax)
-            return null;
+        if (!Intersects(other)) return null;
         return new Bounds(
             Math.Max(XMin, other.XMin),
             Math.Min(XMax, other.XMax),
