@@ -18,10 +18,9 @@ public class CanvasFixture : BaseFixture
         yield return new BitmapCanvas(CanvasUnit.Mm, width, height, Color.Transparent, 1.0);
         yield return new BitmapCanvas(CanvasUnit.Pixel, width, height, Color.Transparent, 1.0);
         yield return new BitmapCanvas(CanvasUnit.Pixel, width, height, Color.Transparent, 5.0);
+        yield return new SvgCanvas(CanvasUnit.Mm, width, height, Color.Transparent);
         yield return new SvgCanvas(CanvasUnit.Pixel, width, height, Color.Transparent);
     }
-
-
 
     /// <summary>
     /// Test that renders a canvas with many different kinds of drawing
@@ -87,19 +86,11 @@ public class CanvasFixture : BaseFixture
         layer.DrawText("Calibri", 10, canvas.FormatSummary(),
             new Coord(canvas.Width / 2, canvas.Height - 10), Color.Green);
 
-        // HAlign
-        //layer.DrawText("Label Left", (300, 380), Color.DarkOliveGreen, "Calibri", 8, TextHAlign.Left, TextVAlign.Center);
-        //layer.DrawText("Label Center", (300, 360), Color.DarkOliveGreen, "Calibri", 8, TextHAlign.Center, TextVAlign.Center);
-        //layer.DrawText("Label Right", (300, 340), Color.DarkOliveGreen, "Calibri", 8, TextHAlign.Right, TextVAlign.Center);
-        //layer.DrawFilledCircles([(300, 380), (300, 360), (300, 340)], 2, Color.Magenta);
-        // VAlign
-        //layer.DrawText("Label Bottom", (300, 300), Color.DarkOliveGreen, "Calibri", 8, TextHAlign.Center, TextVAlign.Bottom);
-        //layer.DrawText("Label Baseline", (300, 280), Color.DarkOliveGreen, "Calibri", 8, TextHAlign.Center, TextVAlign.Baseline);
-        //layer.DrawText("Label Center", (300, 260), Color.DarkOliveGreen, "Calibri", 8, TextHAlign.Center, TextVAlign.Center);
-        //layer.DrawText("Label Top", (300, 240), Color.DarkOliveGreen, "Calibri", 8, TextHAlign.Center, TextVAlign.Top);
-        //layer.DrawFilledCircles([(300, 300), (300, 280), (300, 260), (300, 240)], 2, Color.Magenta);
+        DrawTextWithBbox(layer, "Calibri", 8, "Test Text 8", (400, 220), Color.Cyan);
+        DrawTextWithBbox(layer, "Calibri", 12, "Test Text 12", (400, 245), Color.Cyan);
+        DrawTextWithBbox(layer, "Calibri", 20, "Test Text 18", (400, 280), Color.Cyan);
+        DrawTextWithBbox(layer, "Calibri", 40, "Test Text 30", (400, 340), Color.Cyan);
 
-        DrawTextWithBbox(layer, "Calibri", 8, "Test Text", (300, 300), Color.Cyan);
 
 
         ///// Bitmap
@@ -108,10 +99,10 @@ public class CanvasFixture : BaseFixture
         Bitmap bitmap = (Bitmap) Bitmap.FromFile(bitmapPath);
         
         // Fully opaque bitmap
-        layer.DrawBitmap(bitmap, 410, 210, 180, 180, 1.0);
+        layer.DrawBitmap(bitmap, 610, 210, 180, 180, 1.0);
 
         // Semi-transparent bitmap
-        layer.DrawBitmap(bitmap, 610, 210, 180, 180, 0.3);
+        layer.DrawBitmap(bitmap, 810, 210, 180, 180, 0.3);
 
         Visualizer.SaveCanvas(canvas, false);
         canvas.Dispose();

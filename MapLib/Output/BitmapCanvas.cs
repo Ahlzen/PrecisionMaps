@@ -133,6 +133,7 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
         Bitmap = new Bitmap(pixelsX, pixelsY, PixelFormat.Format32bppArgb);
         Bitmap.MakeTransparent(Bitmap.GetPixel(0, 0));
         _graphics = Graphics.FromImage(Bitmap);
+        _graphics.PageUnit = GraphicsUnit.Pixel;
         _graphics.SmoothingMode = SmoothingMode.HighQuality;
         _graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
 
@@ -405,8 +406,7 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
     // TODO: Move to base class?
     private Font GetFont(string fontName, double emSize)
     {
-        float emSizePt = (float)(_canvas.ToPt(emSize));
-        return new Font(fontName, (float)emSizePt);
+        return new Font(fontName, (float)emSize);
     }
 
     // TODO: Move to base class?

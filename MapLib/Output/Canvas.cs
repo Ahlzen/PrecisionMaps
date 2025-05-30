@@ -82,6 +82,12 @@ public abstract class Canvas : IDisposable
         units * ToPixelsFactor();
 
     /// <summary>
+    /// Translate canvas pixels -> units.
+    /// </summary>
+    public double FromPixels(double units) =>
+        units / ToPixelsFactor();
+
+    /// <summary>
     /// Conversion factor canvas units -> Pixels
     /// </summary>
     public double ToPixelsFactor()

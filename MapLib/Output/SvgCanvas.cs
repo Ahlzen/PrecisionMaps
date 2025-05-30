@@ -114,6 +114,7 @@ public class SvgCanvasLayer : CanvasLayer, IDisposable
 
         _bitmap = new Bitmap(1, 1, PixelFormat.Format32bppArgb);
         _graphics = Graphics.FromImage(_bitmap);
+        _graphics.PageUnit = GraphicsUnit.Pixel;
         _graphics.SmoothingMode = SmoothingMode.HighQuality;
     }
 
@@ -261,8 +262,7 @@ public class SvgCanvasLayer : CanvasLayer, IDisposable
     // TODO: Move to base class?
     private Font GetFont(string fontName, double emSize)
     {
-        float emSizePt = (float)(_canvas.ToPt(emSize));
-        return new Font(fontName, (float)emSizePt);
+        return new Font(fontName, (float)emSize);
     }
 
     // TODO: Move to base class?
@@ -280,7 +280,13 @@ public class SvgCanvasLayer : CanvasLayer, IDisposable
     {
         // Presumably, with no units, font-size is the em size
         // in canvas units:
-        string sizeStr = emSize.ToString();
+        // HACK: GDI+ measures text slightly differently (em-size) than the
+        // baseline-to-baseline measurement of SVG. Add an approximate
+        // compenstation foactor (for now; long term: do own text rendering
+        // for full control)
+        const double textScaleFactor = (35.0 / 30.0); // not exact; but seems close enough for now
+        double svgTextSize = emSize * textScaleFactor;
+        string sizeStr = svgTextSize.ToString();
 
         // x/y are at baseline, according to the specified anchor
         _objects.Add(new XElement(SvgCanvas.XmlNs + "text",
