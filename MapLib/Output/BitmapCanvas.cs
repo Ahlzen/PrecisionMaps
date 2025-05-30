@@ -58,6 +58,12 @@ public class BitmapCanvas : Canvas, IDisposable
         _layers.Clear();
     }
 
+    public override string FormatSummary()
+    {
+        return base.FormatSummary() +
+            $" ({_pixelsX}x{_pixelsY} px) Scale: {_pixelScaleFactor} (pixel) * {_userScaleFactor} (user) = {ScaleFactor}";
+    }
+
     public override IEnumerable<CanvasLayer> Layers => _layers;
     public override int LayerCount => _layers.Count;
 
@@ -180,22 +186,23 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
     public override void DrawCircles(IEnumerable<Coord> coords,
         double radius, double lineWidth, Color color)
     {
-        using Pen pen = new Pen(color, (float)lineWidth);
+        void DrawCircleAtPoint(float x, float y, float radius, Pen pen)
+            => _graphics.DrawEllipse(pen, x - radius, y - radius, radius * 2f, radius * 2f);
+        using Pen pen = new(color, (float)lineWidth);
         foreach (Coord coord in coords)
-            _graphics.DrawEllipse(pen, new RectangleF(
-                (float)(coord.X - radius), (float)(_height - (coord.Y - radius)),
-                (float)radius * 2f, (float)radius * 2f));
+            DrawCircleAtPoint((float)coord.X, (float)(_height - coord.Y), (float)radius, pen);
     }
 
     public override void DrawFilledCircles(
         IEnumerable<Coord> coords, double radius, Color color)
     {
-        using Brush brush = new SolidBrush(color);
-        foreach (Coord point in coords)
-            _graphics.FillEllipse(brush, new RectangleF(
-                (float)(point.X - radius), (float)(_height - (point.Y - radius)),
-                (float)radius * 2f, (float)radius * 2f));
+        void FillCircleAtPoint(float x, float y, float radius, Brush brush)
+            => _graphics.FillEllipse(brush, x - radius, y - radius, radius * 2f, radius * 2f);
+        using SolidBrush brush = new(color);
+        foreach (Coord coord in coords)
+            FillCircleAtPoint((float)coord.X, (float)(_height - coord.Y), (float)radius, brush);
     }
+
 
     public override void DrawFilledPolygon(Coord[] polygon, Color color)
     {

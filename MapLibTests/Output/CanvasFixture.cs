@@ -15,10 +15,13 @@ public class CanvasFixture : BaseFixture
     {
         int width = 1600;
         int height = 800;
+        yield return new BitmapCanvas(CanvasUnit.Mm, width, height, Color.Transparent, 1.0);
         yield return new BitmapCanvas(CanvasUnit.Pixel, width, height, Color.Transparent, 1.0);
         yield return new BitmapCanvas(CanvasUnit.Pixel, width, height, Color.Transparent, 5.0);
         yield return new SvgCanvas(CanvasUnit.Pixel, width, height, Color.Transparent);
     }
+
+
 
     /// <summary>
     /// Test that renders a canvas with many different kinds of drawing
@@ -81,7 +84,8 @@ public class CanvasFixture : BaseFixture
 
         ///// Text
 
-
+        layer.DrawText("Calibri", 10, canvas.FormatSummary(),
+            new Coord(canvas.Width / 2, canvas.Height - 10), Color.Green);
 
         // HAlign
         //layer.DrawText("Label Left", (300, 380), Color.DarkOliveGreen, "Calibri", 8, TextHAlign.Left, TextVAlign.Center);

@@ -29,6 +29,9 @@ public abstract class Canvas : IDisposable
     public abstract string DefaultFileExtension { get; }
     public abstract void SaveToFile(string filename);
 
+    public virtual string FormatSummary()
+        => $"{GetType()}, {Unit}, {Width} x {Height}";
+
     /// <summary>
     /// Translate mm -> canvas units.
     /// </summary>

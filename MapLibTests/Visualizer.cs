@@ -110,10 +110,11 @@ internal class Visualizer
         }
     }
 
-    public static string SaveCanvas(Canvas canvas, bool show)
+    public static string SaveCanvas(Canvas canvas, bool show, string? extraSuffix = null)
     {
+        string prefix = TestName + (extraSuffix == null ? null : "_" + extraSuffix);
         string filename = FileSystemHelpers.GetTempOutputFileName(
-            canvas.DefaultFileExtension, TestName);
+            canvas.DefaultFileExtension, prefix);
         canvas.SaveToFile(filename);
         Console.WriteLine("Saved image to: " + filename);
         if (show) ShowFile(filename);
