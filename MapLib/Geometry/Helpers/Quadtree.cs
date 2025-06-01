@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -36,9 +37,9 @@ public class QuadtreeNode
     private readonly List<Bounds> _items = new();
 
     /// <summary>
-    /// Child nodes. These are either all null or all non-null.  
+    /// Child nodes. Order: [TopLeft, TopRight, BottomLeft, BottomRight]
     /// </summary>
-    private QuadtreeNode? _topLeft, _topRight, _bottomLeft, _bottomRight;
+    private QuadtreeNode[]? _children = null;
 
     public QuadtreeNode(Bounds bounds, int maxItemsPerNode = DefaultMaxItemsPerNode)
     {
@@ -51,10 +52,10 @@ public class QuadtreeNode
     /// True if the item was added. False otherwise, for example
     /// if the item is entirely outside the bounds of this quadtree.
     /// </returns>
-    public bool Add(Bounds item)
+    public bool Add(Bounds bounds)
     {
         // Check if item is fully within the bounds of this quadtree
-        if (!item.IsFullyWithin(_bounds))
+        if (!bounds.IsFullyWithin(_bounds))
             return false;
 
         if (_items.Count >= _maxItemsPerNode)
@@ -63,17 +64,14 @@ public class QuadtreeNode
         // Add item to the appropriate quadrant, if it fits fully within.
         if (HasChildren)
         {
-            QuadtreeNode? enclosingNode = GetFullyEnclosingChildNode(item);
+            QuadtreeNode? enclosingNode = GetFullyEnclosingChildNode(bounds);
             if (enclosingNode != null)
-            {
-                return enclosingNode.Add(item);
-            }
-                
+                return enclosingNode.Add(bounds);
         }
 
         // This is a leaf node, or item doesn't fit whithin one
         // quadrant: Add directly to this note's items.
-        _items.Add(item);
+        _items.Add(bounds);
         return true;
     }
 
@@ -101,13 +99,14 @@ public class QuadtreeNode
         // Then check children (if applicable)
         if (HasChildren)
         {
-            return _topLeft!.GetOverlappingItem(item) ??
-                _topRight!.GetOverlappingItem(item) ??
-                _bottomLeft!.GetOverlappingItem(item) ??
-                _bottomRight!.GetOverlappingItem(item);
+            foreach (QuadtreeNode node in _children)
+            {
+                Bounds? overlap = node!.GetOverlappingItem(item);
+                if (overlap != null)
+                    return overlap;
+            }
         }
 
-        // No overlaps!
         return null;
     }
 
@@ -149,11 +148,12 @@ public class QuadtreeNode
     {
         if (HasChildren) return; // already subdivided
 
-        // Add child nodes
-        _topLeft = new QuadtreeNode(new Bounds(_bounds.TopLeft, _bounds.Center), _maxItemsPerNode);
-        _topRight = new QuadtreeNode(new Bounds(_bounds.TopRight, _bounds.Center), _maxItemsPerNode);
-        _bottomLeft = new QuadtreeNode(new Bounds(_bounds.BottomLeft, _bounds.Center), _maxItemsPerNode);
-        _bottomRight = new QuadtreeNode(new Bounds(_bounds.BottomRight, _bounds.Center), _maxItemsPerNode);
+        // Create child nodes
+        _children = [
+            new QuadtreeNode(new Bounds(_bounds.TopLeft, _bounds.Center), _maxItemsPerNode),
+            new QuadtreeNode(new Bounds(_bounds.TopRight, _bounds.Center), _maxItemsPerNode),
+            new QuadtreeNode(new Bounds(_bounds.BottomLeft, _bounds.Center), _maxItemsPerNode),
+            new QuadtreeNode(new Bounds(_bounds.BottomRight, _bounds.Center), _maxItemsPerNode)];
 
         // Move any item fully within a child node to that node
         foreach (Bounds item in _items.ToArray())
@@ -179,18 +179,14 @@ public class QuadtreeNode
         {
             int count = _items.Count;
             if (HasChildren)
-            {
-                count += _topLeft!.Count;
-                count += _topRight!.Count;
-                count += _bottomLeft!.Count;
-                count += _bottomRight!.Count;
-            }
+                foreach (QuadtreeNode child in _children)
+                    count += child.Count;
             return count;
         }
     }
 
-    /// <remarks>If one child is non-null, all are non-null.</remarks>
-    private bool HasChildren => _topLeft != null;
+    [MemberNotNullWhen(true, nameof(_children))]
+    private bool HasChildren => _children != null;
 
     /// <returns>
     /// Returns the child node (quadrant) that fully encloses the
@@ -199,18 +195,10 @@ public class QuadtreeNode
     /// </returns>
     private QuadtreeNode? GetFullyEnclosingChildNode(Bounds item)
     {
-        if (!HasChildren)
-            return null;
-
-        if (item.IsFullyWithin(_topLeft!._bounds))
-            return _topLeft;
-        else if (item.IsFullyWithin(_topRight!._bounds))
-            return _topRight;
-        else if (item.IsFullyWithin(_bottomLeft!._bounds))
-            return _bottomLeft;
-        else if (item.IsFullyWithin(_bottomRight!._bounds))
-            return _bottomRight;
-
+        if (HasChildren)
+            foreach (QuadtreeNode child in _children)
+                if (item.IsFullyWithin(child._bounds))
+                    return child;
         return null;
     }
 
