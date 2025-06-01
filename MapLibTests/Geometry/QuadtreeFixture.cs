@@ -26,17 +26,17 @@ public class QuadtreeFixture : BaseFixture
     public void TestRandomBoundsOverlap()
     {
         ObjectPlacementManager placementManager = new();
-        QuadtreeNode quadtree = new(10, overallBounds);
+        QuadtreeNode quadtree = new(overallBounds, 10);
 
         int overlapCount = 0;
         Random random = new();
         for (int i = 0; i < ObjectCount; i++)
         {
             // Create new item (simulate e.g. a text label)
-            double xmin = random.NextDouble() * Width;
-            double xmax = xmin + 10 + random.NextDouble() * 30;
-            double ymin = random.NextDouble() * Height;
-            double ymax = ymin + 5 + random.NextDouble() * 10;
+            double xmin = Math.Floor(random.NextDouble() * Width);
+            double xmax = Math.Ceiling(xmin + 10 + random.NextDouble() * 30);
+            double ymin = Math.Floor(random.NextDouble() * Height);
+            double ymax = Math.Ceiling(ymin + 5 + random.NextDouble() * 10);
             xmax = Math.Min(Width, xmax);
             ymax = Math.Min(Height, ymax);
             Bounds item = new(xmin, xmax, ymin, ymax);
@@ -45,13 +45,20 @@ public class QuadtreeFixture : BaseFixture
             // Add item
             Bounds? overlapOpm = placementManager.GetOverlappingItem(item);
             Bounds? overlapQtree = quadtree.GetOverlappingItem(item);
-            
+
+            // TEST CODE
+            Bounds existingItem = new Bounds(727, 750, 621, 636);
+            bool qtreeHasExistingItem = quadtree.Contains(existingItem);
+            QuadtreeNode? containingNode = quadtree.GetQuadtreeContaining(existingItem);
+
             bool addedOpm = placementManager.TryAdd([item]) != null;
             bool addedQtree = quadtree.AddIfNotOverlapping(item);
 
-            // Check that item was either added to both or neither
-            // (i.e. that the quadtree agrees with the reference
-            // implementation of ObjectPlacementManager).
+            // Check that item was either added to both or neither.
+            // (i.e. the quadtree and ObjectPlacementManager agree).
+            if (addedQtree)
+                Assert.That(quadtree.Contains(item));
+            Assert.That(placementManager.Count == quadtree.Count);
             Assert.That(addedOpm == addedQtree);
             
             if (!addedOpm)

@@ -61,7 +61,7 @@ public class LabelPlacementBenchmark : BaseBenchmark
     [Benchmark]
     public void PlaceLabels_QuadTree()
     {
-        QuadtreeNode quadtree = new(QuadTreeMaxItemsPerNode, OverallBounds);
+        QuadtreeNode quadtree = new(OverallBounds, QuadTreeMaxItemsPerNode);
         int overlapCount = 0;
         foreach (Bounds bounds in LabelBounds)
         {
