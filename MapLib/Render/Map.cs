@@ -290,27 +290,20 @@ public class Map : IHasSrs, IBounded
         // TODO: Use better polygon centroid algorithm (at least
         // some form of point-in-polygon!)
 
-        //IEnumerable<Coord> pointCoords =
-        //    data.Points.Select(p => p.Coord)
-        //    .Union(data.MultiPoints.SelectMany(mp => mp.Coords));
-        //IEnumerable<Coord> lineMidpoints =
-        //    data.Lines.Select(l => l.GetMidpoint())
-        //    .Union(data.MultiLines.SelectMany(ml => ml.Select(cs => cs.GetMidpoint())));
-        //IEnumerable<Coord> polygonCentroids =
-        //    data.Polygons.Select(p => p.GetCenter())
-        //    .Union(data.MultiPolygons.SelectMany(mp => mp.Select(cs => Bounds.FromCoords(cs).Center)));
-        //IEnumerable<Coord> allPoints =
-        //    pointCoords.Union(lineMidpoints).Union(polygonCentroids);
-
         IEnumerable<(Coord[] coords, TagList tags)> pointCoords =
             data.Points.Select(p => (new[] { p.Coord }, p.Tags))
-            .Union(data.MultiPoints.Select(mp => (mp.Coords, mp.Tags)));
-        IEnumerable <(Coord[] coords, TagList tags)> lineMidpoints =
+            //.Union(data.MultiPoints.Select(mp => (mp.Coords, mp.Tags)));
+            .Union(data.MultiPoints.Select(mp => (new[] { mp.GetBounds().Center }, mp.Tags)));
+
+        IEnumerable<(Coord[] coords, TagList tags)> lineMidpoints =
             data.Lines.Select(l => (new[] { l.GetMidpoint() }, l.Tags))
-            .Union(data.MultiLines.Select(ml => (ml.Select(cs => cs.GetMidpoint()).ToArray(), ml.Tags)));
+            //.Union(data.MultiLines.Select(ml => (ml.Select(cs => cs.GetMidpoint()).ToArray(), ml.Tags)));
+            .Union(data.MultiLines.Select(ml => (new[] { ml.GetBounds().Center }, ml.Tags)));
+
         IEnumerable<(Coord[] coords, TagList tags)> polygonCentroids =
             data.Polygons.Select(p => (new[] { p.GetCenter() }, p.Tags))
-            .Union(data.MultiPolygons.Select(mp => (mp.Select(cs => Bounds.FromCoords(cs).Center).ToArray(), mp.Tags)));
+            //.Union(data.MultiPolygons.Select(mp => (mp.Select(cs => Bounds.FromCoords(cs).Center).ToArray(), mp.Tags)));
+            .Union(data.MultiPolygons.Select(mp => (new[] { mp.GetBounds().Center }, mp.Tags)));
 
         IEnumerable<(Coord[] coords, TagList tags)> allPoints =
             pointCoords.Union(lineMidpoints).Union(polygonCentroids);

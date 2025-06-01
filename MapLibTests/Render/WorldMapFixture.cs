@@ -53,7 +53,7 @@ public class WorldMapFixture : BaseFixture
             }));
         map.Layers.Add(new VectorMapLayer(
             "landFill", "land", new VectorStyle {
-                FillColor = Color.WhiteSmoke,
+                FillColor = ColorUtil.FromHex("#efc"),
             }));
         map.Layers.Add(new VectorMapLayer(
             "borders", "countries", new VectorStyle {
@@ -75,7 +75,8 @@ public class WorldMapFixture : BaseFixture
             }));;
 
         // Render and save
-        map.Render(canvas, ratioMismatchStrategy: AspectRatioMismatchStrategy.CenterOnCanvas);
+        map.Render(canvas,
+            ratioMismatchStrategy: AspectRatioMismatchStrategy.CenterOnCanvas);
         string filename = FileSystemHelpers.GetTempOutputFileName(
             canvas.DefaultFileExtension, "WorldCountries");
         canvas.SaveToFile(filename);
