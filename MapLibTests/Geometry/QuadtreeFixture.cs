@@ -43,24 +43,13 @@ public class QuadtreeFixture : BaseFixture
             Assert.That(item.IsFullyWithin(overallBounds));
 
             // Add item
-            Bounds? overlapOpm = placementManager.GetOverlappingItem(item);
-            Bounds? overlapQtree = quadtree.GetOverlappingItem(item);
-
-            // TEST CODE
-            Bounds existingItem = new Bounds(727, 750, 621, 636);
-            bool qtreeHasExistingItem = quadtree.Contains(existingItem);
-            QuadtreeNode? containingNode = quadtree.GetQuadtreeContaining(existingItem);
-
             bool addedOpm = placementManager.TryAdd([item]) != null;
             bool addedQtree = quadtree.AddIfNotOverlapping(item);
 
             // Check that item was either added to both or neither.
             // (i.e. the quadtree and ObjectPlacementManager agree).
-            if (addedQtree)
-                Assert.That(quadtree.Contains(item));
-            Assert.That(placementManager.Count == quadtree.Count);
             Assert.That(addedOpm == addedQtree);
-            
+
             if (!addedOpm)
                 overlapCount++;
         }

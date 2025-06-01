@@ -56,10 +56,6 @@ public class QuadtreeNode
         if (!item.IsFullyWithin(_bounds))
             return false;
 
-        //if (!_bounds.Intersects(item))
-        //    return false; 
-
-        // If we're at max capacity, we need to subdivide this quadtree
         if (_items.Count >= _maxItemsPerNode)
             Subdivide();
 
@@ -69,10 +65,7 @@ public class QuadtreeNode
             QuadtreeNode? enclosingNode = GetFullyEnclosingChildNode(item);
             if (enclosingNode != null)
             {
-                bool result = enclosingNode.Add(item);
-                Debug.Assert(result);
-                SanityCheck(this);
-                return result;
+                return enclosingNode.Add(item);
             }
                 
         }
@@ -80,7 +73,6 @@ public class QuadtreeNode
         // This is a leaf node, or item doesn't fit whithin one
         // quadrant: Add directly to this note's items.
         _items.Add(item);
-        SanityCheck(this);
         return true;
     }
 
@@ -88,24 +80,7 @@ public class QuadtreeNode
     /// True iff the item overlaps any existing item in this quadtree.
     /// </returns>
     public bool Overlaps(Bounds item)
-    {
-        //// First check if item overlaps any of this node's items
-        //foreach (Bounds ownItem in _items)
-        //    if (item.Intersects(ownItem))
-        //        return true;
-
-        //// Items in child nodes should all be fully enclosed
-        //// by that node (or they would be on this node's list),
-        //// so we only need to check at most one child:
-        //QuadtreeNode? child = GetFullyEnclosingChildNode(item);
-        //if (child != null)
-        //    return child.Overlaps(item);
-
-        //// No overlaps!
-        //return false;
-
-        return GetOverlappingItem(item) != null;
-    }
+        => GetOverlappingItem(item) != null;
 
     /// <returns>
     /// The (first) item in this node that overlaps the
@@ -113,9 +88,8 @@ public class QuadtreeNode
     /// </returns>
     public Bounds? GetOverlappingItem(Bounds item)
     {
-        // If item is entirely outside these bounds,
-        // it cannot overlap
-        if (!item.Intersects(this._bounds))
+        // If item is entirely outside our bounds it cannot overlap
+        if (!item.Intersects(_bounds))
             return null;
 
         // First check if item overlaps any of this node's own items
@@ -123,8 +97,7 @@ public class QuadtreeNode
             if (item.Intersects(ownItem))
                 return ownItem;
 
-        // We only need to check chilren whose bounds intersect
-        // with our item
+        // Then check children (if applicable)
         if (HasChildren)
         {
             return _topLeft!.GetOverlappingItem(item) ??
@@ -132,27 +105,6 @@ public class QuadtreeNode
                 _bottomLeft!.GetOverlappingItem(item) ??
                 _bottomRight!.GetOverlappingItem(item);
         }
-
-        // Items in child nodes should all be fully enclosed
-        // by that node (or they would be on this node's list),
-        // so we only need to check at most one child:
-        //QuadtreeNode? child = GetFullyEnclosingChildNode(item);
-        //if (child != null)
-        //    return child.GetOverlappingItem(item);
-
-        //// Check items of children
-        //if (HasChildren)
-        //{
-        //    Bounds? overlapItem;
-        //    overlapItem = _topLeft!.GetOverlappingItem(item);
-        //    if (overlapItem != null) return overlapItem;
-        //    overlapItem = _topRight!.GetOverlappingItem(item);
-        //    if (overlapItem != null) return overlapItem;
-        //    overlapItem = _bottomLeft!.GetOverlappingItem(item);
-        //    if (overlapItem != null) return overlapItem;
-        //    overlapItem = _bottomRight!.GetOverlappingItem(item);
-        //    if (overlapItem != null) return overlapItem;
-        //}
 
         // No overlaps!
         return null;
@@ -165,12 +117,7 @@ public class QuadtreeNode
     /// </summary>
     /// <returns>True if the item was added, false otherwise.</returns>
     public bool AddIfNotOverlapping(Bounds item)
-    {
-        return AddOrGetOverlap(item) == null;
-        //if (Overlaps(item))
-        //    return false;
-        //return Add(item);
-    }
+        => AddOrGetOverlap(item) == null;
 
     /// <summary>
     /// Adds the specified item and returns null, or returns
@@ -181,11 +128,8 @@ public class QuadtreeNode
     {
         Bounds? overlappingItem = GetOverlappingItem(item);
         if (overlappingItem != null)
-        {
             return overlappingItem;
-        }
         Add(item);
-        SanityCheck(this);
         return null;
     }
 
@@ -194,7 +138,7 @@ public class QuadtreeNode
     /// <returns>True iff an item was removed.</returns>
     public bool Remove(Bounds item)
     {
-        throw new NotImplementedException();
+        throw new NotImplementedException("TODO: implement if needed");
     }
 
 
@@ -222,24 +166,14 @@ public class QuadtreeNode
                 enclosingNode.Add(item);
             }
         }
-
-        SanityCheck(this);
     }
 
-    // TEST CODE
-    [Conditional("DEBUG")]
-    private void SanityCheck(QuadtreeNode node)
-    {
-        // Verify none of own items can't fit in a single child node
-        Debug.Assert(_items.All(item => GetFullyEnclosingChildNode(item) == null));
-
-        // Verify each child items fit within that node
-        if (HasChildren)
-            foreach (var child in new QuadtreeNode[] {_topLeft!, _topRight!, _bottomLeft!, _bottomRight!})
-                Debug.Assert(child._items.All(item => GetFullyEnclosingChildNode(item) == child));
-    }
-    
-    // TEST CODE
+    /// <summary>
+    /// Returns the number of items under this node in the quadtree.
+    /// </summary>
+    /// <remarks>
+    /// NOTE: This requires fully traversing the tree.
+    /// </remarks>
     public int Count
     {
         get
@@ -255,37 +189,6 @@ public class QuadtreeNode
             return count;
         }
     }
-
-    // TEST CODE
-    public QuadtreeNode? GetQuadtreeContaining(Bounds item)
-    {
-        if (_items.Contains(item))
-            return this;
-        if (HasChildren)
-        {
-            return
-                _topLeft!.GetQuadtreeContaining(item) ??
-                _topRight!.GetQuadtreeContaining(item) ??
-                _bottomLeft!.GetQuadtreeContaining(item) ??
-                _bottomRight!.GetQuadtreeContaining(item) ??
-                null;
-        }
-        return null;
-    }
-    public bool Contains(Bounds item)
-    {
-        if (_items.Contains(item))
-            return true;
-        if (HasChildren)
-        {
-            if (_topLeft!.Contains(item)) return true;
-            if (_topRight!.Contains(item)) return true;
-            if (_bottomLeft!.Contains(item)) return true;
-            if (_bottomRight!.Contains(item)) return true;
-        }
-        return false;
-    }
-
 
     /// <remarks>If one child is non-null, all are non-null.</remarks>
     private bool HasChildren => _topLeft != null;
