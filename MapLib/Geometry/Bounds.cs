@@ -113,6 +113,16 @@ public struct Bounds : IEquatable<Bounds>
             Math.Min(YMax, other.YMax));
     }
 
+    /// <param name="other"></param>
+    /// <returns>True iff these bounds are completely
+    /// within (including touching) the specified other bounds.
+    /// </returns>
+    public bool IsFullyWithin(Bounds other) =>
+        other.XMin <= XMin &&
+        other.XMax >= XMax &&
+        other.YMin <= YMin &&
+        other.YMax >= YMax;
+
     public Bounds ResizeAndCenterX(double newWidth)
     {
         double extraWidth = newWidth - Width;

@@ -41,4 +41,7 @@ public class ObjectPlacementManager
     /// </returns>
     private bool OverlapsExistingBounds(Bounds bounds)
         => AllBounds.Any(b => b.Intersects(bounds));
+
+    public Bounds? GetOverlappingItem(Bounds bounds)
+        => AllBounds.FirstOrDefault(b => b.Intersects(bounds));
 }

@@ -76,17 +76,27 @@ public class BoundsFixture : BaseFixture
 
         Assert.That(b1.Intersection(b2), Is.EqualTo(new Bounds(5, 7, 2, 4)));
         Assert.That(b1.Intersects(b2), Is.True);
+        Assert.That(b1.IsFullyWithin(b2), Is.False);
 
         Assert.That(b1.Intersection(b3), Is.Null);
         Assert.That(b1.Intersects(b3), Is.False);
-        
+        Assert.That(b1.IsFullyWithin(b3), Is.False);
+
         Assert.That(b1.Intersection(b4), Is.Null);
         Assert.That(b1.Intersects(b4), Is.False);
-        
+        Assert.That(b1.IsFullyWithin(b4), Is.False);
+
         Assert.That(b1.Intersection(b5), Is.EqualTo(b1));
         Assert.That(b1.Intersects(b5), Is.True);
+        Assert.That(b1.IsFullyWithin(b5), Is.True);
+        Assert.That(b5.IsFullyWithin(b1), Is.False);
 
         Assert.That(b1.Intersection(b6), Is.Null);
         Assert.That(b1.Intersects(b6), Is.False);
+        Assert.That(b1.IsFullyWithin(b6), Is.False);
+
+        // identical areas are considered intersecting and "fully within"
+        Assert.That(b1.Intersects(b1), Is.True);
+        Assert.That(b1.IsFullyWithin(b1), Is.True);
     }
 }
