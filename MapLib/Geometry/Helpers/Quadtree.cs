@@ -25,10 +25,11 @@ public class QuadtreeNode
     // a lot of small removals and insertions.
 
     /// <remarks>
-    /// This seems to result in good performance for most workloads.
+    /// Based on benchmark results, somewhere in the range 16-32 items per
+    /// node seems to result in good performance for most workloads.
     /// See <see cref="MapLibTests.Geometry.LabelPlacementBenchmarks"/>
     /// </remarks>
-    public const int DefaultMaxItemsPerNode = 256;
+    public const int DefaultMaxItemsPerNode = 32;
 
     private readonly int _maxItemsPerNode;
     private readonly Bounds _bounds;
@@ -140,8 +141,6 @@ public class QuadtreeNode
     {
         throw new NotImplementedException("TODO: implement if needed");
     }
-
-
 
     /// <summary>
     /// Subdivides this node into four quadrants (child nodes).

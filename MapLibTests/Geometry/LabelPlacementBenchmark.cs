@@ -24,7 +24,7 @@ public class LabelPlacementBenchmark : BaseBenchmark
     [Params(100, 1000, 10000, 100000)]
     public int ObjectCount;
 
-    [Params(4, 16, 64, 256, 1024)]
+    [Params(4, 16, 32, 64, 256)]
     public int QuadTreeMaxItemsPerNode;
 
     [GlobalSetup]
@@ -73,46 +73,46 @@ public class LabelPlacementBenchmark : BaseBenchmark
 }
 
 /*
-| Method                             | ObjectCount | QuadTreeMaxItemsPerNode | Mean          | Error         | StdDev        |
-|----------------------------------- |------------ |------------------------ |--------------:|--------------:|--------------:|
-| PlaceLabels_ObjectPlacementManager | 100         | 4                       |      31.33 us |      0.583 us |      0.545 us |
-| PlaceLabels_QuadTree               | 100         | 4                       |      39.49 us |      0.351 us |      0.329 us |
-| PlaceLabels_ObjectPlacementManager | 100         | 16                      |      31.20 us |      0.608 us |      0.724 us |
-| PlaceLabels_QuadTree               | 100         | 16                      |      26.49 us |      0.342 us |      0.320 us |
-| PlaceLabels_ObjectPlacementManager | 100         | 64                      |      29.95 us |      0.408 us |      0.361 us |
-| PlaceLabels_QuadTree               | 100         | 64                      |      19.44 us |      0.236 us |      0.197 us |
-| PlaceLabels_ObjectPlacementManager | 100         | 256                     |      29.06 us |      0.238 us |      0.223 us |
-| PlaceLabels_QuadTree               | 100         | 256                     |      16.37 us |      0.065 us |      0.058 us |
-| PlaceLabels_ObjectPlacementManager | 100         | 1024                    |      28.89 us |      0.333 us |      0.311 us |
-| PlaceLabels_QuadTree               | 100         | 1024                    |      16.33 us |      0.096 us |      0.085 us |
-| PlaceLabels_ObjectPlacementManager | 1000        | 4                       |   2,256.96 us |     27.620 us |     25.836 us |
-| PlaceLabels_QuadTree               | 1000        | 4                       |   2,333.65 us |      9.377 us |      8.772 us |
-| PlaceLabels_ObjectPlacementManager | 1000        | 16                      |   2,288.11 us |     16.616 us |     14.730 us |
-| PlaceLabels_QuadTree               | 1000        | 16                      |   1,578.17 us |      9.186 us |      7.671 us |
-| PlaceLabels_ObjectPlacementManager | 1000        | 64                      |   2,291.96 us |     15.654 us |     14.643 us |
-| PlaceLabels_QuadTree               | 1000        | 64                      |   1,243.24 us |      5.205 us |      4.869 us |
-| PlaceLabels_ObjectPlacementManager | 1000        | 256                     |   2,290.45 us |     13.283 us |     11.775 us |
-| PlaceLabels_QuadTree               | 1000        | 256                     |   1,159.24 us |      8.859 us |      7.854 us |
-| PlaceLabels_ObjectPlacementManager | 1000        | 1024                    |   2,304.13 us |     10.224 us |      9.063 us |
-| PlaceLabels_QuadTree               | 1000        | 1024                    |   1,413.42 us |      8.602 us |      7.183 us |
-| PlaceLabels_ObjectPlacementManager | 10000       | 4                       |  51,472.25 us |    587.612 us |    549.653 us |
-| PlaceLabels_QuadTree               | 10000       | 4                       |  44,169.88 us |    464.728 us |    434.707 us |
-| PlaceLabels_ObjectPlacementManager | 10000       | 16                      |  51,283.13 us |    254.787 us |    238.328 us |
-| PlaceLabels_QuadTree               | 10000       | 16                      |  32,972.48 us |    361.403 us |    338.056 us |
-| PlaceLabels_ObjectPlacementManager | 10000       | 64                      |  51,396.54 us |    338.441 us |    282.614 us |
-| PlaceLabels_QuadTree               | 10000       | 64                      |  27,370.44 us |    156.634 us |    146.516 us |
-| PlaceLabels_ObjectPlacementManager | 10000       | 256                     |  51,291.19 us |    353.254 us |    330.434 us |
-| PlaceLabels_QuadTree               | 10000       | 256                     |  23,623.58 us |     63.318 us |     52.874 us |
-| PlaceLabels_ObjectPlacementManager | 10000       | 1024                    |  50,254.25 us |    251.784 us |    223.200 us |
-| PlaceLabels_QuadTree               | 10000       | 1024                    |  24,362.95 us |    136.423 us |    127.610 us |
-| PlaceLabels_ObjectPlacementManager | 100000      | 4                       | 590,427.41 us |  5,374.948 us |  5,027.730 us |
-| PlaceLabels_QuadTree               | 100000      | 4                       | 923,181.50 us |  5,647.586 us |  5,282.756 us |
-| PlaceLabels_ObjectPlacementManager | 100000      | 16                      | 590,403.87 us |  3,163.807 us |  2,959.427 us |
-| PlaceLabels_QuadTree               | 100000      | 16                      | 494,396.29 us |  2,485.814 us |  2,325.232 us |
-| PlaceLabels_ObjectPlacementManager | 100000      | 64                      | 583,016.00 us | 11,567.117 us | 12,856.820 us |
-| PlaceLabels_QuadTree               | 100000      | 64                      | 389,549.45 us |  7,653.953 us |  7,159.512 us |
-| PlaceLabels_ObjectPlacementManager | 100000      | 256                     | 584,714.65 us | 11,548.222 us | 12,835.818 us |
-| PlaceLabels_QuadTree               | 100000      | 256                     | 337,510.60 us |  6,662.067 us |  7,672.046 us |
-| PlaceLabels_ObjectPlacementManager | 100000      | 1024                    | 580,811.79 us | 11,390.831 us | 11,697.545 us |
-| PlaceLabels_QuadTree               | 100000      | 1024                    | 335,171.51 us |    799.996 us |    709.176 us |
+| Method                             | ObjectCount | QuadTreeMaxItemsPerNode | Mean           | Error         | StdDev        |
+|----------------------------------- |------------ |------------------------ |---------------:|--------------:|--------------:|
+| PlaceLabels_ObjectPlacementManager | 100         | 4                       |      32.142 us |     0.3120 us |     0.2918 us |
+| PlaceLabels_QuadTree               | 100         | 4                       |      13.700 us |     0.1192 us |     0.1115 us |
+| PlaceLabels_ObjectPlacementManager | 100         | 16                      |      31.704 us |     0.3745 us |     0.3320 us |
+| PlaceLabels_QuadTree               | 100         | 16                      |      12.209 us |     0.2374 us |     0.3169 us |
+| PlaceLabels_ObjectPlacementManager | 100         | 32                      |      31.249 us |     0.6117 us |     0.6282 us |
+| PlaceLabels_QuadTree               | 100         | 32                      |       9.045 us |     0.1523 us |     0.1350 us |
+| PlaceLabels_ObjectPlacementManager | 100         | 64                      |      31.064 us |     0.4140 us |     0.3872 us |
+| PlaceLabels_QuadTree               | 100         | 64                      |      13.524 us |     0.1317 us |     0.1168 us |
+| PlaceLabels_ObjectPlacementManager | 100         | 256                     |      30.998 us |     0.1157 us |     0.0966 us |
+| PlaceLabels_QuadTree               | 100         | 256                     |       8.772 us |     0.0775 us |     0.0687 us |
+| PlaceLabels_ObjectPlacementManager | 1000        | 4                       |   2,379.216 us |     6.2599 us |     4.8873 us |
+| PlaceLabels_QuadTree               | 1000        | 4                       |     368.386 us |     4.5383 us |     4.0231 us |
+| PlaceLabels_ObjectPlacementManager | 1000        | 16                      |   2,345.893 us |    16.7155 us |    14.8179 us |
+| PlaceLabels_QuadTree               | 1000        | 16                      |     328.258 us |     4.3945 us |     4.1106 us |
+| PlaceLabels_ObjectPlacementManager | 1000        | 32                      |   2,330.282 us |    30.9301 us |    28.9320 us |
+| PlaceLabels_QuadTree               | 1000        | 32                      |     349.273 us |     1.3456 us |     1.2587 us |
+| PlaceLabels_ObjectPlacementManager | 1000        | 64                      |   2,392.134 us |    26.8863 us |    25.1495 us |
+| PlaceLabels_QuadTree               | 1000        | 64                      |     351.337 us |     2.3255 us |     2.1753 us |
+| PlaceLabels_ObjectPlacementManager | 1000        | 256                     |   2,369.220 us |    10.1127 us |     7.8953 us |
+| PlaceLabels_QuadTree               | 1000        | 256                     |     597.709 us |     2.5969 us |     2.0275 us |
+| PlaceLabels_ObjectPlacementManager | 10000       | 4                       |  52,387.317 us |   608.7829 us |   569.4559 us |
+| PlaceLabels_QuadTree               | 10000       | 4                       |   4,469.100 us |    26.0480 us |    21.7512 us |
+| PlaceLabels_ObjectPlacementManager | 10000       | 16                      |  51,979.057 us |   682.5020 us |   638.4128 us |
+| PlaceLabels_QuadTree               | 10000       | 16                      |   4,420.094 us |    25.7110 us |    21.4699 us |
+| PlaceLabels_ObjectPlacementManager | 10000       | 32                      |  51,356.964 us |   251.1667 us |   222.6527 us |
+| PlaceLabels_QuadTree               | 10000       | 32                      |   4,623.323 us |    38.8024 us |    34.3973 us |
+| PlaceLabels_ObjectPlacementManager | 10000       | 64                      |  51,833.886 us |   437.5756 us |   387.8994 us |
+| PlaceLabels_QuadTree               | 10000       | 64                      |   4,677.096 us |    54.7515 us |    51.2146 us |
+| PlaceLabels_ObjectPlacementManager | 10000       | 256                     |  52,255.805 us |   401.2329 us |   335.0477 us |
+| PlaceLabels_QuadTree               | 10000       | 256                     |   6,156.808 us |    52.1323 us |    43.5329 us |
+| PlaceLabels_ObjectPlacementManager | 100000      | 4                       | 595,473.340 us | 7,164.8975 us | 6,702.0496 us |
+| PlaceLabels_QuadTree               | 100000      | 4                       |  59,629.655 us |   705.6188 us |   625.5126 us |
+| PlaceLabels_ObjectPlacementManager | 100000      | 16                      | 598,935.446 us | 6,694.7818 us | 5,590.4460 us |
+| PlaceLabels_QuadTree               | 100000      | 16                      |  59,673.222 us |   257.3601 us |   228.1430 us |
+| PlaceLabels_ObjectPlacementManager | 100000      | 32                      | 591,503.538 us | 1,582.0849 us | 1,321.1126 us |
+| PlaceLabels_QuadTree               | 100000      | 32                      |  60,956.210 us |   381.0463 us |   337.7877 us |
+| PlaceLabels_ObjectPlacementManager | 100000      | 64                      | 585,709.940 us | 9,089.6825 us | 8,502.4947 us |
+| PlaceLabels_QuadTree               | 100000      | 64                      |  58,753.802 us |   625.9187 us |   554.8606 us |
+| PlaceLabels_ObjectPlacementManager | 100000      | 256                     | 588,842.058 us | 2,203.8328 us | 1,720.6077 us |
+| PlaceLabels_QuadTree               | 100000      | 256                     |  68,792.807 us |   441.0975 us |   344.3799 us |
 */
