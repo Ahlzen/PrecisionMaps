@@ -344,12 +344,17 @@ public class Map : IHasSrs, IBounded
             SymbolType symbolType = style.Symbol.Value;
             double symbolSize = style.SymbolSize ?? canvas.Width * 0.001;
             Color symbolFillColor = style.SymbolColor ?? Color.Black;
+            
 
             switch (style.Symbol)
             {
                 case SymbolType.Circle:
                     layer.DrawFilledCircles(allPoints.SelectMany(c => c.coords),
                         symbolSize/2, symbolFillColor);
+                    foreach (Coord point in allPoints.SelectMany(p => p.coords))
+                        PlacementManager.TryAdd([new Bounds(
+                            point.X-symbolSize/2, point.X+symbolSize/2,
+                            point.Y-symbolSize/2, point.Y+symbolSize/2)]);
                     break;
                 case SymbolType.Square:
                     throw new NotImplementedException();
@@ -375,7 +380,7 @@ public class Map : IHasSrs, IBounded
                 string? labelText = TagFilter.ValueOrNull(point.tags, style.TextTag);
                 if (labelText == null) continue;
 
-                double spacing = fontSize * 0.3; // spacing between point and edge of text
+                double spacing = fontSize * 0.2; // spacing between point and edge of text
                 Coord textSize = layer.GetTextSize(fontName, fontSize, labelText);
 
                 // NOTE: Usually a single coord per array (since these
