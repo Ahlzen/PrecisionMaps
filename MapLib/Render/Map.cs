@@ -2,6 +2,7 @@
 using MapLib.Geometry;
 using MapLib.Geometry.Helpers;
 using MapLib.Output;
+using OSGeo.OGR;
 using System.ComponentModel.Design;
 using System.Diagnostics;
 using System.Drawing;
@@ -381,18 +382,53 @@ public class Map : IHasSrs, IBounded
                 // are text labels)
                 foreach (Coord coord in point.coords)
                 {
-                    Bounds bounds = new Bounds(
-                        coord.X-0.5*textSize.X, coord.X+0.5*textSize.X,
-                        coord.Y-0.5*textSize.Y, coord.Y+textSize.Y);
-                    if (PlacementManager.TryAdd([bounds]) != null)
-                    {
-                        // It fits here. Draw text
-                        layer.DrawText(fontName, fontSize, labelText, coord, textColor);
-                    }
-                    
+                    Coord? placement = GetLabelPlacement(coord, textSize, fontSize * 0.3);
+                    if (placement != null)
+                        layer.DrawText(fontName, fontSize, labelText, placement.Value, textColor);
                 }
             }
         }
+    }
+
+    /// <param name="featureCoord">Feature centerpoint.</param>
+    /// <param name="textSize">Measured size of text</param>
+    /// <returns>
+    /// The text centerpoint for the text label as placed by
+    /// alignment priority and existing labels. Null if no suitable
+    /// placement found.
+    /// </returns>
+    private Coord? GetLabelPlacement(Coord featureCoord, Coord textSize, double spacing)
+    {
+        // TODO: Pick more appropriate order?
+        /* Current priority order:
+         *   8 4 7
+         *   2 * 1
+         *   6 3 5
+         */
+        return
+            GetLabelPlacement(featureCoord, textSize, spacing, TextHAlign.Left, TextVAlign.Center) ??
+            GetLabelPlacement(featureCoord, textSize, spacing, TextHAlign.Right, TextVAlign.Center) ??
+            GetLabelPlacement(featureCoord, textSize, spacing, TextHAlign.Center, TextVAlign.Top) ??
+            GetLabelPlacement(featureCoord, textSize, spacing, TextHAlign.Center, TextVAlign.Bottom) ??
+            GetLabelPlacement(featureCoord, textSize, spacing, TextHAlign.Left, TextVAlign.Top) ??
+            GetLabelPlacement(featureCoord, textSize, spacing, TextHAlign.Right, TextVAlign.Top) ??
+            GetLabelPlacement(featureCoord, textSize, spacing, TextHAlign.Left, TextVAlign.Bottom) ??
+            GetLabelPlacement(featureCoord, textSize, spacing, TextHAlign.Right, TextVAlign.Bottom);
+    }
+    private Coord? GetLabelPlacement(Coord featureCoord, Coord textSize, double spacing,
+        TextHAlign halign, TextVAlign valign)
+    {
+        double x = featureCoord.X, y = featureCoord.Y;
+        if (halign == TextHAlign.Left) x += (textSize.X / 2 + spacing);
+        if (halign == TextHAlign.Right) x -= (textSize.X / 2 + spacing);
+        if (valign == TextVAlign.Bottom) y -= (textSize.Y / 2 + spacing);
+        if (valign == TextVAlign.Top) y += (textSize.Y / 2 + spacing);
+        Bounds bounds = new Bounds(
+            x - 0.5 * textSize.X, x + 0.5 * textSize.X,
+            y - 0.5 * textSize.Y, y + textSize.Y);
+        if (PlacementManager.TryAdd([bounds]) != null)
+            return new Coord(x, y);
+        return null;
     }
 
     private void DrawRaster(Canvas canvas, RasterMapLayer mapLayer, RasterData data)
