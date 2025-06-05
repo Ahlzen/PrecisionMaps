@@ -1,7 +1,5 @@
 ﻿using MapLib.GdalSupport;
 using MapLib.Geometry;
-using MapLib.Util;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace MapLib.DataSources.Raster;
@@ -25,6 +23,13 @@ public class Usgs3depDataSource : BaseRasterDataSource2
     
     public override bool IsBounded => false;
 
+    public double ScaleFactor { get; set; }
+
+    public Usgs3depDataSource(double scaleFactor = 1)
+    {
+        ScaleFactor = scaleFactor;
+    }
+
     public override Task<RasterData2> GetData()
     {
         throw new NotImplementedException();
@@ -40,7 +45,7 @@ public class Usgs3depDataSource : BaseRasterDataSource2
         List<string> localFiles = new();
         foreach (string url in GetDownloadUrls(boundsWgs84))
         {
-            // TODO: Handle non-existent files
+            // TODO: Handle non-existent files better
             try
             {
                 string filePath = await DownloadAndCache(url, Subdirectory);
@@ -55,8 +60,10 @@ public class Usgs3depDataSource : BaseRasterDataSource2
             }
         }
 
-        // TODO: Turn all local files into RasterData2
-        throw new NotImplementedException();
+        // Read data using GDAL
+        GdalDataSource2 gdalSource = new GdalDataSource2(localFiles, ScaleFactor);
+        RasterData2 data = await gdalSource.GetData(boundsWgs84);
+        return data;
     }
 
     public override Task<RasterData2> GetData(Bounds boundsWgs84, string destSrs)

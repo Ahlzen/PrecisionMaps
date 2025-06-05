@@ -32,8 +32,34 @@ public static class GdalUtils
     /// <exception cref="ApplicationException">
     /// Thrown on failure.
     /// </exception>
-    public static Dataset OpenDataset(string filename)
+    public static Dataset OpenDataset(string filename) => OpenDataset([filename]);
+    //{
+    //    Dataset dataset = Gdal.Open(filename, Access.GA_ReadOnly);
+    //    if (dataset == null)
+    //        throw new ApplicationException("Failed to open " + filename);
+    //    return dataset;
+    //}
+
+    /// <summary>
+    /// Opens and returns the dataset at the specified file name. If
+    /// multiple file names specified, a VRT (virtual raster) dataset
+    /// is created on-the-fly.
+    /// </summary>
+    /// <exception cref="ApplicationException">
+    /// Thrown on failure.
+    /// </exception>
+    public static Dataset OpenDataset(IEnumerable<string> filenames)
     {
+        if (!filenames.Any())
+            throw new ArgumentException("No files.", nameof(filenames));
+
+        if (filenames.Count() > 1)
+        {
+            // Create VRT
+            return CreateVrt(filenames);
+        }
+
+        string filename = filenames.Single();
         Dataset dataset = Gdal.Open(filename, Access.GA_ReadOnly);
         if (dataset == null)
             throw new ApplicationException("Failed to open " + filename);
@@ -287,6 +313,24 @@ public static class GdalUtils
             maxerror: 0 // use exact calculations
             );
         return destDataset;
+    }
+
+    #endregion
+
+    #region VRT support
+
+    public static Dataset CreateVrt(IEnumerable<string> filenames)
+    {
+        Dataset? vrt = Gdal.wrapper_GDALBuildVRT_names(
+            "dest", // doesn't matter; we're not writing this to disk
+            filenames.ToArray(),
+            new GDALBuildVRTOptions([]),
+            null, null);
+        if (vrt == null)
+            throw new ApplicationException("Failed to create VRT: " +
+                Gdal.GetLastErrorMsg());
+        vrt.FlushCache();
+        return vrt;
     }
 
     #endregion

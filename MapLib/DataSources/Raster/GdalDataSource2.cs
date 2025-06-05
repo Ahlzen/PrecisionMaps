@@ -9,40 +9,70 @@ public class GdalDataSource2 : BaseRasterDataSource2
 {
     public override string Name => "Raster File (using GDAL)";
 
-    public string Filename { get; }
+    //public string Filename { get; }
+    public List<string> Filenames { get; }
 
     public override string Srs { get; }
     public override Bounds? Bounds { get; }
     public override bool IsBounded => true; // Probably depends on the source
 
-    public int WidthPx { get; }
-    public int HeightPx { get; }
+    /// <summary>
+    /// Width of the raster data in the original data source.
+    /// </summary>
+    public int SourceWidthPx { get; }
+    public int SourceHeightPx { get; }
 
-    public GdalDataSource2(string filename)
+    /// <summary>
+    /// Width of the bitmap data that we read the source into.
+    /// </summary>
+    /// <remarks>
+    /// Usually the same as the source, but may be smaller than the source, e.g.
+    /// if we read a lower resolution version of a large raster data set.
+    /// </remarks>
+    public int BitmapWidthPx { get; }
+    public int BitmapHeightPx { get; }
+
+    public GdalDataSource2(string filename, double scaleFactor = 1)
+        : this([filename], scaleFactor)
     {
-        using Dataset dataset = GdalUtils.OpenDataset(filename);
+    }
 
-        Filename = filename;
+    public GdalDataSource2(IEnumerable<string> filenames, double scaleFactor = 1)
+    {
+        Filenames = filenames.ToList();
+
+        if (Filenames.Count == 0)
+            throw new ArgumentException("No files.", nameof(filenames));
+
+        Dataset? dataset = Filenames.Count == 1 ?
+            GdalUtils.OpenDataset(Filenames[0]) :
+            GdalUtils.CreateVrt(filenames); // Multiple files: Create VRT (virtual raster)
+
         Srs = GdalUtils.GetSrsAsWkt(dataset);
         Bounds = GdalUtils.GetBounds(dataset);
-        WidthPx = dataset.RasterXSize;
-        HeightPx = dataset.RasterYSize;
+
+        SourceWidthPx = dataset.RasterXSize;
+        SourceHeightPx = dataset.RasterYSize;
+        BitmapWidthPx = (int)Math.Round(dataset.RasterXSize * scaleFactor);
+        BitmapHeightPx = (int)Math.Round(dataset.RasterYSize * scaleFactor);
 
         // For debugging
         Console.WriteLine(GdalUtils.GetRasterBandSummary(dataset));
+
+        dataset.Dispose();
     }
 
     private RasterData2 GetRasterData(Dataset dataset)
     {
         // Get size, projection and bounds
-        int widthPx = dataset.RasterXSize;
-        int heightPx = dataset.RasterYSize;
-        long pixelCount = widthPx * heightPx;
+        long pixelCount = BitmapWidthPx * BitmapHeightPx;
         var affineGeoTransform = new double[6];
         dataset.GetGeoTransform(affineGeoTransform);
         Bounds bounds = Geometry.Bounds.FromCoords([
-            new Coord(GdalUtils.PixelToGeo(affineGeoTransform, new Coord(0, 0))),
-            new Coord(GdalUtils.PixelToGeo(affineGeoTransform, new Coord(widthPx - 1, heightPx - 1)))]);
+            new Coord(GdalUtils.PixelToGeo(affineGeoTransform,
+                new Coord(0, 0))),
+            new Coord(GdalUtils.PixelToGeo(affineGeoTransform,
+                new Coord(SourceWidthPx - 1, SourceHeightPx - 1)))]);
         string srs = GdalUtils.GetSrsAsWkt(dataset);
 
         // Get raster band configuration
@@ -90,8 +120,8 @@ public class GdalDataSource2 : BaseRasterDataSource2
 
                 // Read the grayscale band
                 byte[] buffer = new byte[pixelCount];
-                band.ReadRaster(0, 0, widthPx, heightPx, buffer,
-                    widthPx, heightPx, 0, 0);
+                band.ReadRaster(0, 0, SourceWidthPx, SourceHeightPx, buffer,
+                    BitmapWidthPx, BitmapHeightPx, 0, 0);
 
                 // Build ARGB image data
                 imageData = new byte[pixelCount * 4];
@@ -111,8 +141,8 @@ public class GdalDataSource2 : BaseRasterDataSource2
                 // 8-bit raw data
 
                 byte[] buffer = new byte[pixelCount];
-                band.ReadRaster(0, 0, widthPx, heightPx, buffer,
-                    widthPx, heightPx, 0, 0);
+                band.ReadRaster(0, 0, SourceWidthPx, SourceHeightPx, buffer,
+                    BitmapWidthPx, BitmapHeightPx, 0, 0);
 
                 // TODO: Record nodata value
 
@@ -127,8 +157,8 @@ public class GdalDataSource2 : BaseRasterDataSource2
                 // 32-bit float raw data
 
                 singleBandData = new float[pixelCount];
-                band.ReadRaster(0, 0, widthPx, heightPx, singleBandData,
-                    widthPx, heightPx, 0, 0);
+                band.ReadRaster(0, 0, SourceWidthPx, SourceHeightPx, singleBandData,
+                    BitmapWidthPx, BitmapHeightPx, 0, 0);
             }
             else if (bandDataTypes[0] == DataType.GDT_Byte &&
                 bandColorInterp[0] == ColorInterp.GCI_PaletteIndex)
@@ -138,8 +168,8 @@ public class GdalDataSource2 : BaseRasterDataSource2
                 byte? noDataByte = hasNoDataValue == 1 ? (byte)rawNoDataValue : null;
 
                 byte[] buffer = new byte[pixelCount];
-                band.ReadRaster(0, 0, widthPx, heightPx, buffer,
-                    widthPx, heightPx, 0, 0);
+                band.ReadRaster(0, 0, SourceWidthPx, SourceHeightPx, buffer,
+                    BitmapWidthPx, BitmapWidthPx, 0, 0);
 
                 // Read color table
                 ColorTable colorTable = band.GetColorTable();
@@ -201,8 +231,8 @@ public class GdalDataSource2 : BaseRasterDataSource2
                 byte noDataByte = (hasNoDataValue == 1) ? (byte)rawNoDataValue : (byte)0;
 
                 byte[] buffer = new byte[pixelCount];
-                band.ReadRaster(0, 0, widthPx, heightPx, buffer,
-                    widthPx, heightPx, 0, 0);
+                band.ReadRaster(0, 0, SourceWidthPx, SourceHeightPx, buffer,
+                    BitmapWidthPx, BitmapHeightPx, 0, 0);
 
                 ColorInterp colorInterpretation = band.GetRasterColorInterpretation();
                 bool isAlphaBand = false;
@@ -247,22 +277,27 @@ public class GdalDataSource2 : BaseRasterDataSource2
                 "Unsupported raster band configuration.");
 
         if (imageData != null)
-            return new ImageRasterData(srs, bounds, widthPx, heightPx, imageData!);
+            return new ImageRasterData(srs, bounds, BitmapWidthPx, BitmapHeightPx, imageData!);
         else
-            return new SingleBandRasterData(srs, bounds, widthPx, heightPx,
+            return new SingleBandRasterData(srs, bounds, BitmapWidthPx, BitmapHeightPx,
                 singleBandData!, noDataValue);
     }
     
     public override Task<RasterData2> GetData(string? destSrs = null)
     {
-        string filename = Filename;
+        //string filename = Filename;
+        List<string> filenames = new(Filenames);
+
         if (destSrs != null && destSrs != Srs)
         {
-            // Reproject source data, and use that file
-            filename = GdalUtils.Warp(filename, destSrs);
+            // Reproject source data file(s), and use that
+            for (int i = 0; i < filenames.Count; i++)
+            {
+                filenames[i] = GdalUtils.Warp(filenames[i], destSrs);
+            }
         }
         using Dataset sourceDataset =
-            GdalUtils.OpenDataset(filename);
+            GdalUtils.OpenDataset(filenames);
         Console.WriteLine(GdalUtils.GetRasterInfo(sourceDataset));
         return Task.FromResult(GetRasterData(sourceDataset));
     }
