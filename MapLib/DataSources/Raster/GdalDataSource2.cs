@@ -66,6 +66,12 @@ public class GdalDataSource2 : BaseRasterDataSource2
     {
         // Get size, projection and bounds
         long pixelCount = BitmapWidthPx * BitmapHeightPx;
+
+        // check if the source is too big
+        if (pixelCount * 4 > Array.MaxLength)
+            throw new ApplicationException(
+                "GDAL Raster is too large. Try using a smaller scale factor.");
+
         var affineGeoTransform = new double[6];
         dataset.GetGeoTransform(affineGeoTransform);
         Bounds bounds = Geometry.Bounds.FromCoords([
