@@ -1,4 +1,5 @@
-﻿using MapLib.RasterOps;
+﻿using MapLib.DataSources.Raster;
+using MapLib.RasterOps;
 using System;
 using System.Collections.Generic;
 using System.Linq;

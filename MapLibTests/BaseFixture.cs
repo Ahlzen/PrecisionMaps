@@ -23,8 +23,12 @@ public abstract class BaseFixture
 
 
     public static string TestDataPath =>
-        //"../../../../TestData";
         FileSystemHelpers.TestDataPath;
+
+
+    protected static readonly Bounds MassachusettsBounds =
+        new(-73.30, -69.56, 41.14, 42.53);
+
 
     [OneTimeSetUp]
     public void OneTimeSetUp()
@@ -34,8 +38,6 @@ public abstract class BaseFixture
         // Make sure we have all data required for the tests
         TestDataManager.EnsureTestDataReady(Console.Out);
     }
-
-
 
     protected void SaveTempBitmap(Bitmap bitmap, string? prefix = null, string extension = ".png")
     {
