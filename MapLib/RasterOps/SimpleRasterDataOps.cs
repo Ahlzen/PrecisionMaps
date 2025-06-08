@@ -1,4 +1,5 @@
 ﻿// ReSharper disable CompareOfFloatsByEqualityOperator
+using MapLib.ColorSpace;
 using System.Diagnostics;
 using System.Reflection.Metadata.Ecma335;
 
@@ -252,6 +253,33 @@ public static class SimpleRasterDataOps
 
         PrintMinMax(hillshadeData, source.NoDataValue, "Hillshade: ");
         return source.CloneWithNewData(hillshadeData);
+    }
+
+    /// <summary>
+    /// Creates image raster data by mapping source values
+    /// with the supplied gradient.
+    /// </summary>
+    /// <remarks>
+    /// Useful e.g. for hypsometric tints.
+    /// </remarks>
+    public static ImageRasterData GetGradientMap(
+        this SingleBandRasterData source, Gradient gradient)
+    {
+        // TODO: Handle no-data pixels better
+
+        long pixelCount = source.HeightPx * source.WidthPx;
+        byte[] imageData = new byte[pixelCount*4];
+        for (long i = 0; i < pixelCount; i++)
+        {
+            float sourceValue = source.SingleBandData[i];
+            (float r, float g, float b) rgb = gradient.ColorAt(sourceValue);
+            imageData[i * 4 + 3] = 255; // A
+            imageData[i * 4 + 2] = (byte)Math.Clamp(rgb.r * 255, 0, 255); // R
+            imageData[i * 4 + 1] = (byte)Math.Clamp(rgb.g * 255, 0, 255); // G
+            imageData[i * 4 + 0] = (byte)Math.Clamp(rgb.b * 255, 0, 255); // B
+
+        }
+        return new ImageRasterData(source.Srs, source.Bounds, source.WidthPx, source.HeightPx, imageData);
     }
 
     /// <summary>
