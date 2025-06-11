@@ -1,7 +1,6 @@
 ﻿using MapLib.ColorSpace;
 using MapLib.DataSources.Raster;
 using MapLib.RasterOps;
-using Perfolizer.Mathematics.Randomization;
 
 namespace MapLib.Tests.RasterOps;
 
@@ -20,9 +19,9 @@ public class SimpleRasterDataOpsFixture : BaseFixture
 
         // Run hillshade
         SingleBandRasterData hillshade = demData!
-            .GetScaled(10)
-            .GetHillshade_Basic()
-            .GetWithOffset(128f);
+            .Scale(10)
+            .Hillshade_Basic()
+            .Offset(128f);
         ImageRasterData imageData = hillshade.ToImageRasterData(normalize: false);
 
         SaveTempBitmap(imageData.Bitmap, "TestHillshade", ".jpg");
@@ -47,8 +46,8 @@ public class SimpleRasterDataOpsFixture : BaseFixture
         gradient.Add(1.0f, (0.9f, 0.95f, 1.0f));
 
         ImageRasterData hypso = demData!
-            .GetNormalized()
-            .GetGradientMap(gradient);
+            .Normalize()
+            .GradientMap(gradient);
         SaveTempBitmap(hypso.Bitmap, "TestGradientMap", ".jpg");
     }
 
@@ -64,9 +63,9 @@ public class SimpleRasterDataOpsFixture : BaseFixture
 
         // Run hillshade
         SingleBandRasterData hillshadeData = demData!
-            .GetScaled(10)
-            .GetHillshade_Basic()
-            .GetWithOffset(128f);
+            .Scale(10)
+            .Hillshade_Basic()
+            .Offset(128f);
         ImageRasterData hillshadeImage = hillshadeData.ToImageRasterData(normalize: false);
 
         // Build hypsometric tint gradient
@@ -77,16 +76,17 @@ public class SimpleRasterDataOpsFixture : BaseFixture
         gradient.Add(0.9f, (0.9f, 0.9f, 0.9f));
         gradient.Add(1.0f, (0.8f, 0.9f, 1.0f));
         ImageRasterData hypso = demData!
-            .GetNormalized()
-            .GetGradientMap(gradient);
+            .Normalize()
+            .GradientMap(gradient);
 
         // Lighten, and blend using multiply
         LevelAdjustment lighten = LevelAdjustment.AdjustMidpoint(0.6f);
         var lightHillshadeData = lighten.Apply(hillshadeData);
         ImageRasterData compositeMultiply = lightHillshadeData
             .ToImageRasterData()
-            .Blend(hypso, BlendMode.Multiply, 0.5f);
-        ImageRasterData compositeNormal = hillshadeImage.Blend(hypso, BlendMode.Normal, 0.3f);
+            .BlendWith(hypso, BlendMode.Multiply, 0.5f);
+        ImageRasterData compositeNormal = hillshadeImage
+            .BlendWith(hypso, BlendMode.Normal, 0.3f);
 
         SaveTempBitmap(hillshadeImage.Bitmap, "TestShadedGradientMap_hillshade", ".jpg");
         SaveTempBitmap(lightHillshadeData.ToImageRasterData().Bitmap, "TestShadedGradientMap_lightHillshade", ".jpg");

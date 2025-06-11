@@ -1,10 +1,5 @@
 ﻿using System.Drawing;
 using MapLib.RasterOps;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Drawing.Imaging;
 
 namespace MapLib.Tests.RasterOps;
@@ -13,20 +8,20 @@ internal class LevelAdjustmentVisualizer
 {
     private List<(string title, LevelAdjustment adjustment)> Items { get; } = new();
 
-    private int GradientWidth { get; set; } = 512;
+    private int GradientWidth => 512;
 
-    private int GradientHeight { get; set; } = 64;
+    private int GradientHeight => 64;
 
-    private int GraphWidth { get; set; } = 128;
-    private int GraphHeight { get; set; } = 128;
+    private int GraphWidth => 128;
+    private int GraphHeight => 128;
 
-    private float TextSizePt { get; set; } = 8f;
+    private float TextSizePt => 8f;
 
-    private int Margin { get; set; } = 30;
+    private int Margin => 30;
 
-    float[] _graphInputData;
-    float[] _gradientInputData;
-    private Bitmap _referenceGradient;
+    private readonly float[] _graphInputData;
+    private readonly float[] _gradientInputData;
+    private readonly Bitmap _referenceGradient;
 
     public LevelAdjustmentVisualizer()
     {

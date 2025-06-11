@@ -32,7 +32,7 @@ public static class BlendingOps
     private static float ByteToFloatScale = 1f / 255f;
     private static float FloatToByteScale = 255f / 1f;
 
-    public static ImageRasterData Blend(
+    public static ImageRasterData BlendWith(
         this ImageRasterData bottomLayer,
         ImageRasterData topLayer,
         BlendMode blendMode = BlendMode.Normal,

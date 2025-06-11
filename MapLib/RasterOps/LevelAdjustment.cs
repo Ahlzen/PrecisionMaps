@@ -153,6 +153,23 @@ public class LevelAdjustment
         float midpoint, float scale, int tableLength = DefaultTableLength)
         => new LevelAdjustment((n) => Math.Clamp(
             midpoint + (n - midpoint) * scale, 0.0f, 1.0f), tableLength);
+}
 
+public static class LevelAdjustmentExtensions
+{
+    public static SingleBandRasterData Scale(this SingleBandRasterData source,
+        float scale, int tableLength = LevelAdjustment.DefaultTableLength)
+        => LevelAdjustment.Scale(scale, tableLength).Apply(source);
 
+    public static SingleBandRasterData Quantize(this SingleBandRasterData source,
+        int stepCount, int tableLength = LevelAdjustment.DefaultTableLength)
+        => LevelAdjustment.Quantize(stepCount, tableLength).Apply(source);
+
+    public static SingleBandRasterData AdjustMidpoint(this SingleBandRasterData source,
+        float midpointLevel, int tableLength = LevelAdjustment.DefaultTableLength)
+        => LevelAdjustment.AdjustMidpoint(midpointLevel, tableLength).Apply(source);
+
+    public static SingleBandRasterData ScaleAndClamp(this SingleBandRasterData source,
+        float midpoint, float scale, int tableLength = LevelAdjustment.DefaultTableLength)
+        => LevelAdjustment.ScaleAndClamp(midpoint, scale, tableLength).Apply(source);
 }
