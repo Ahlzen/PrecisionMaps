@@ -45,6 +45,8 @@ public class LevelAdjustment
 
     // TODO: Support nodata
 
+    
+
     /// <summary>
     /// Returns a clone of the input data with the
     /// adjustment function/table applied.
@@ -80,18 +82,21 @@ public class LevelAdjustment
         return output;
     }
 
+    /// <summary>
+    /// Returns a clone of the input data with the
+    /// adjustment function/table applied.
+    /// </summary>
+    public SingleBandRasterData Apply(SingleBandRasterData source)
+        => source.CloneWithNewData(Apply(source.SingleBandData));
+
+
+
     private float Lerp(float a, float b, float distance) =>
         (1 - distance) * a + distance * b;
 
 
     // General functions
 
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="scale"></param>
-    /// <param name="tableLength"></param>
-    /// <returns></returns>
     public static LevelAdjustment Identity(
         int tableLength = DefaultTableLength)
         => new LevelAdjustment((n) => n, tableLength);
