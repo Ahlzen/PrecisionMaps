@@ -4,6 +4,7 @@
 		<TargetFramework>net8.0-windows</TargetFramework>
 		<ImplicitUsings>disable</ImplicitUsings>
 		<Nullable>enable</Nullable>
+		<AssemblyName>MapLib.Tests</AssemblyName>
 		<RootNamespace>MapLib.Tests</RootNamespace>
 		<StartupObject>MapLibBenchmarks</StartupObject>
 	</PropertyGroup>

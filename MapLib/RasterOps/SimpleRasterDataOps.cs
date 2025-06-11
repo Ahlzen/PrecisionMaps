@@ -1,6 +1,7 @@
 ﻿// ReSharper disable CompareOfFloatsByEqualityOperator
 using MapLib.ColorSpace;
 using System.Diagnostics;
+using System.Numerics;
 using System.Reflection.Metadata.Ecma335;
 
 namespace MapLib.RasterOps;
@@ -199,6 +200,45 @@ public static class SimpleRasterDataOps
     }
 
     /// <summary>
+    /// Generate a "stepped" version of the source data with the
+    /// specified step interval (and an optional offset).
+    /// Values are always rounded down.
+    /// </summary>
+    /// <remarks>
+    /// For example, step 10 offset 3 would generate steps at
+    /// -7 for [-7,3)
+    ///  3 for [3,13)
+    ///  13 for [13,23)
+    /// etc.
+    /// useful e.g. to generate discrete hypsometric tints.
+    /// </remarks>
+    public static SingleBandRasterData GenerateSteps(
+        this SingleBandRasterData source,
+        float stepInterval, float offset = 0)
+    {
+        long pixelCount = source.HeightPx * source.WidthPx;
+        float[] steppedData = new float[pixelCount];
+        float nodataValue = source.NoDataValue ?? float.NaN;
+        for (long i = 0; i < pixelCount; i++)
+        {
+            float value = source.SingleBandData[i];
+            if (value == nodataValue) {
+                steppedData[i] = nodataValue;
+            }
+            else {
+                value -= offset;
+                value /= stepInterval;
+                value = (float)Math.Floor(value);
+                value *= stepInterval;
+                value += offset;
+                steppedData[i] = value;
+            }
+        }
+        PrintMinMax(steppedData, source.NoDataValue, "Stepped: ");
+        return source.CloneWithNewData(steppedData);
+    }
+
+    /// <summary>
     /// Creates image raster data by mapping source values
     /// with the supplied gradient.
     /// </summary>
@@ -280,7 +320,7 @@ public static class SimpleRasterDataOps
 
     /// <remarks>For development only</remarks>
     [Conditional("DEBUG")]
-    private static void PrintMinMax(float[] data, float? noDataValue, string? prefix)
+    internal static void PrintMinMax(float[] data, float? noDataValue, string? prefix)
     {
         RasterStatsExtensions.GetMinMax(data, out float min, out float max, noDataValue);
         Console.WriteLine($"{prefix}Min: {min}, Max: {max}");

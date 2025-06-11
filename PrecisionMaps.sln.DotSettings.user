@@ -17,5 +17,6 @@
     &lt;TestId&gt;NUnit3x::4CBA79BC-D8C5-47A6-A8CB-CF4EED751AA4::net8.0-windows::MapLib.Tests.Render.WorldMapFixture.RenderWorldCountriesMap&lt;/TestId&gt;&#xD;
     &lt;TestId&gt;NUnit3x::4CBA79BC-D8C5-47A6-A8CB-CF4EED751AA4::net8.0-windows::MapLib.Tests.DataSources.Usgs3depDataSourceFixture.TestDownloadMassachusetts&lt;/TestId&gt;&#xD;
     &lt;TestId&gt;NUnit3x::4CBA79BC-D8C5-47A6-A8CB-CF4EED751AA4::net8.0-windows::MapLib.Tests.RasterOps.SimpleRasterDataOpsFixture.TestShadedGradientMap&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::4CBA79BC-D8C5-47A6-A8CB-CF4EED751AA4::net8.0-windows::MapLib.Tests.RasterOps.SimpleRasterDataOpsFixture.TestGradientMap&lt;/TestId&gt;&#xD;
   &lt;/TestAncestor&gt;&#xD;
 &lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>
