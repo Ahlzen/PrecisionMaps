@@ -273,11 +273,10 @@ public static class SimpleRasterDataOps
         {
             float sourceValue = source.SingleBandData[i];
             (float r, float g, float b) rgb = gradient.ColorAt(sourceValue);
-            imageData[i * 4 + 3] = 255; // A
-            imageData[i * 4 + 2] = (byte)Math.Clamp(rgb.r * 255, 0, 255); // R
-            imageData[i * 4 + 1] = (byte)Math.Clamp(rgb.g * 255, 0, 255); // G
             imageData[i * 4 + 0] = (byte)Math.Clamp(rgb.b * 255, 0, 255); // B
-
+            imageData[i * 4 + 1] = (byte)Math.Clamp(rgb.g * 255, 0, 255); // G
+            imageData[i * 4 + 2] = (byte)Math.Clamp(rgb.r * 255, 0, 255); // R
+            imageData[i * 4 + 3] = 255; // A
         }
         return new ImageRasterData(source.Srs, source.Bounds, source.WidthPx, source.HeightPx, imageData);
     }
@@ -349,11 +348,6 @@ public static class SimpleRasterDataOps
     public static SingleBandRasterData GetWithLevelAdjustment(
         this SingleBandRasterData source, LevelAdjustment adjustmentTable)
         => source.CloneWithNewData(adjustmentTable.Apply(source.SingleBandData));
-
-    // TODO: Hypsometric tints (basic)
-    // TODO: Contour lines (basic)
-    // TODO: Levels/contrast/stretch/histogram etc
-    // TODO: Low pass filtering (smoothing)
 
     /// <remarks>For development only</remarks>
     [Conditional("DEBUG")]

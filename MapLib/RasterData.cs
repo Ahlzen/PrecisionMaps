@@ -85,6 +85,7 @@ public class ImageRasterData : RasterData2
     /// Image data for image data sources (aerial imagery, maps, shaded
     /// relief etc).
     /// WidthPx * HeightPx * 4 bytes (ARGB).
+    /// (byte order: B, G, R, A on little endian)
     /// </summary>
     public byte[] ImageData { get; }
 
@@ -110,5 +111,19 @@ public class ImageRasterData : RasterData2
         Marshal.Copy(ImageData, 0, dataPointer, ImageData.Length);
         bitmap.UnlockBits(bitmapData);
         return bitmap;
+    }
+
+    public ImageRasterData CloneWithNewData(byte[] newImageData)
+    {
+        // Check that the length matches
+        long expectedLength = HeightPx * WidthPx * 4;
+        if (newImageData.LongLength != expectedLength)
+            throw new ArgumentException("New data is not of correct length: " +
+                $"Expected {expectedLength}, Was {newImageData.LongLength}",
+                nameof(newImageData));
+
+        ImageRasterData newData = new(
+            Srs, Bounds, WidthPx, HeightPx, newImageData);
+        return newData;
     }
 }

@@ -1,11 +1,6 @@
 ﻿using MapLib.ColorSpace;
 using MapLib.DataSources.Raster;
 using MapLib.RasterOps;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MapLib.Tests.RasterOps;
 
@@ -54,5 +49,43 @@ public class SimpleRasterDataOpsFixture : BaseFixture
             .GetNormalized()
             .GetGradientMap(gradient);
         SaveTempBitmap(hypso.Bitmap, "TestGradientMap", ".jpg");
+    }
+
+    [Test]
+    [Explicit]
+    public async Task TestShadedGradientMap()
+    {
+        // Get 3DEP DEM data
+        Usgs3depDataSource source = new(scaleFactor: 0.25);
+        RasterData2 data = await source.GetData(MassachusettsBounds);
+        SingleBandRasterData? demData = data as SingleBandRasterData;
+        Assert.That(demData, Is.Not.Null);
+
+        // Run hillshade
+        SingleBandRasterData hillshadeData = demData!
+            .GetScaled(10)
+            .GetHillshade_Basic()
+            .GetWithOffset(128f);
+        ImageRasterData hillshade = hillshadeData.ToImageRasterData(normalize: false);
+
+        // Build hypsometric tint gradient
+        Gradient gradient = new();
+        gradient.Add(0.0f, (0.5f, 0.9f, 0.2f));
+        gradient.Add(0.2f, (0.8f, 0.9f, 0.1f));
+        gradient.Add(0.4f, (0.9f, 0.6f, 0.1f));
+        gradient.Add(0.9f, (0.9f, 0.9f, 0.9f));
+        gradient.Add(1.0f, (0.8f, 0.9f, 1.0f));
+        ImageRasterData hypso = demData!
+            .GetNormalized()
+            .GetGradientMap(gradient);
+
+        // Blend using multiply
+        ImageRasterData compositeMultiply = hillshade.Blend(hypso, BlendMode.Multiply, 1.0f);
+        ImageRasterData compositeNormal = hillshade.Blend(hypso, BlendMode.Normal, 1.0f);
+
+        SaveTempBitmap(hillshade.Bitmap, "TestShadedGradientMap_hillshade", ".jpg");
+        SaveTempBitmap(hypso.Bitmap, "TestShadedGradientMap_hypso", ".jpg");
+        SaveTempBitmap(compositeMultiply.Bitmap, "TestShadedGradientMap_compositeMultiply", ".jpg");
+        SaveTempBitmap(compositeNormal.Bitmap, "TestShadedGradientMap_compositeNormal", ".jpg");
     }
 }
