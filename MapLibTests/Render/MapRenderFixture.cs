@@ -1,9 +1,11 @@
 ﻿using System.Drawing;
 using System.IO;
+using MapLib.ColorSpace;
 using MapLib.DataSources.Raster;
 using MapLib.DataSources.Vector;
 using MapLib.GdalSupport;
 using MapLib.Output;
+using MapLib.RasterOps;
 using MapLib.Render;
 using MapLib.Util;
 

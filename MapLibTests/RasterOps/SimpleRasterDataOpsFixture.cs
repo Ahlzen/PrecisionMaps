@@ -85,13 +85,26 @@ public class SimpleRasterDataOpsFixture : BaseFixture
         ImageRasterData hypso = demData!
             .Normalize()
             .GradientMap(gradient);
+        ImageRasterData steppedHypso = demData!
+            .GenerateSteps(100, 0)
+            .Normalize()
+            .GradientMap(gradient);
 
         // Lighten, and blend using multiply
-        LevelAdjustment lighten = LevelAdjustment.AdjustMidpoint(0.6f);
-        var lightHillshadeData = lighten.Apply(hillshadeData);
+        //LevelAdjustment lighten = LevelAdjustment.AdjustMidpoint(0.6f);
+        //var lightHillshadeData = lighten.Apply(hillshadeData);
+        var lightHillshadeData = demData!
+            .Scale(10)
+            .Hillshade_Basic()
+            .Normalize()
+            .AdjustMidpoint(0.6f)
+            .Offset(128f);
         ImageRasterData compositeMultiply = lightHillshadeData
             .ToImageRasterData()
             .BlendWith(hypso, BlendMode.Multiply, 0.5f);
+        ImageRasterData compositeSteppedMultiply = lightHillshadeData
+            .ToImageRasterData()
+            .BlendWith(steppedHypso, BlendMode.Multiply, 0.5f);
         ImageRasterData compositeNormal = hillshadeImage
             .BlendWith(hypso, BlendMode.Normal, 0.3f);
 
@@ -100,5 +113,6 @@ public class SimpleRasterDataOpsFixture : BaseFixture
         SaveTempBitmap(hypso.Bitmap, "TestShadedGradientMap_hypso", ".jpg");
         SaveTempBitmap(compositeMultiply.Bitmap, "TestShadedGradientMap_compositeMultiply", ".jpg");
         SaveTempBitmap(compositeNormal.Bitmap, "TestShadedGradientMap_compositeNormal", ".jpg");
+        SaveTempBitmap(compositeSteppedMultiply.Bitmap, "TestShadedGradientMap_compositeSteppedMultiply", ".jpg");
     }
 }

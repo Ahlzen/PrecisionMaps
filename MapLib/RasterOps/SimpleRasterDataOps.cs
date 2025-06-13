@@ -109,8 +109,7 @@ public static class SimpleRasterDataOps
     }
 
     /// <summary>
-    /// Very rudimentary hillshade algorithm. Normalize
-    /// and turn into image afterward.
+    /// Very rudimentary hillshade algorithm.
     /// </summary>
     public static SingleBandRasterData Hillshade_Basic(
         this SingleBandRasterData source)
