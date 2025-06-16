@@ -33,7 +33,7 @@ public static class CoordinateTransformationExtensions
         return transformer.Transform(coord);
     }
     public static Coord ToWgs84(this Coord coord, string srcSrs)
-        => coord.Transform(srcSrs, Transformer.WktWgs84);
+        => coord.Transform(srcSrs, Epsg.Wgs84);
 
     public static Bounds Transform(this Bounds bounds, string srcSrs, string destSrs)
     {
@@ -41,5 +41,5 @@ public static class CoordinateTransformationExtensions
         return transformer.Transform(bounds);
     }
     public static Bounds ToWgs84(this Bounds bounds, string srcSrs)
-        => bounds.Transform(srcSrs, Transformer.WktWgs84);
+        => bounds.Transform(srcSrs, Epsg.Wgs84);
 }

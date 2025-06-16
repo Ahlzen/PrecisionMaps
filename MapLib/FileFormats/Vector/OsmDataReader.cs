@@ -135,7 +135,7 @@ public class OsmDataReader : IVectorFormatReader
         }
 
         // OSM data is plain lon/lat WGS84
-        return builder.ToVectorData(Transformer.WktWgs84);
+        return builder.ToVectorData(Epsg.Wgs84);
     }
 
     // Example:

@@ -1,11 +1,13 @@
-﻿using System.Data;
-using System.Drawing.Imaging;
-using System.Drawing;
-using System.Text;
+﻿using MapLib.Geometry;
+using MapLib.Util;
 using OSGeo.GDAL;
 using OSGeo.OSR;
-using MapLib.Geometry;
-using MapLib.Util;
+using System;
+using System.Data;
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.Text;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace MapLib.GdalSupport;
 
@@ -66,6 +68,91 @@ public static class GdalUtils
         return dataset;
     }
 
+    /// <summary>
+    /// Creates an in-memory GDAL dataset from the specified
+    /// (single-band) raw data.
+    /// </summary>
+    public static Dataset CreateInMemoryDataset(
+        float[] data, int width, int height,
+        double[] geoTransform,
+        string srsWkt,
+        float? noDataValue)
+    {
+        // Get the MEM driver
+        Driver memDriver = Gdal.GetDriverByName("MEM");
+        if (memDriver == null)
+            throw new Exception("MEM driver not available.");
+
+        // Create the in-memory dataset
+        Dataset dataset = memDriver.Create(
+            "", width, height, bands: 1, DataType.GDT_Float32, options: null);
+        if (dataset == null)
+            throw new Exception("Failed to create in-memory dataset.");
+        dataset.SetGeoTransform(geoTransform);
+        dataset.SetProjection(srsWkt);
+
+        // Create raster band
+        Band band = dataset.GetRasterBand(1);
+        if (noDataValue.HasValue)
+            band.SetNoDataValue(noDataValue.Value);
+
+        // Write the buffer to the raster band
+        band.WriteRaster(0, 0, width, height, data, width, height, 0, 0);
+
+        band.FlushCache();
+        dataset.FlushCache();
+        return dataset;
+    }
+
+    /// <summary>
+    /// Creates an in-memory GDAL dataset from the specified 
+    /// RGB or RGBA raw data.
+    /// </summary>
+    public static Dataset CreateInMemoryDataset(
+        byte[] r, byte[] g, byte[] b, byte[]? a,
+        int width, int height,
+        double[] geoTransform,
+        string srsWkt)
+    {
+        // Get the MEM driver
+        Driver memDriver = Gdal.GetDriverByName("MEM");
+        if (memDriver == null)
+            throw new Exception("MEM driver not available.");
+
+        // Create the in-memory dataset
+        int bandCount = a == null ? 3 : 4;
+        Dataset dataset = memDriver.Create(
+            "", width, height, bands: bandCount, DataType.GDT_Byte, options: null);
+        if (dataset == null)
+            throw new Exception("Failed to create in-memory dataset.");
+        dataset.SetGeoTransform(geoTransform);
+        dataset.SetProjection(srsWkt);
+
+        // Create and fill raster bands
+        Band rBand = dataset.GetRasterBand(1);
+        rBand.SetColorInterpretation(ColorInterp.GCI_RedBand);
+        rBand.WriteRaster(0, 0, width, height, r, width, height, 0, 0);
+        Band gBand = dataset.GetRasterBand(2);
+        gBand.SetColorInterpretation(ColorInterp.GCI_GreenBand);
+        gBand.WriteRaster(0, 0, width, height, g, width, height, 0, 0);
+        Band bBand = dataset.GetRasterBand(3);
+        bBand.SetColorInterpretation(ColorInterp.GCI_BlueBand);
+        bBand.WriteRaster(0, 0, width, height, b, width, height, 0, 0);
+        Band? aBand = null;
+        if (a != null) {
+            aBand = dataset.GetRasterBand(4);
+            aBand.SetColorInterpretation(ColorInterp.GCI_AlphaBand);
+            aBand.WriteRaster(0, 0, width, height, a, width, height, 0, 0);
+        }
+        
+        rBand.FlushCache();
+        gBand.FlushCache();
+        bBand.FlushCache();
+        aBand?.FlushCache();
+        dataset.FlushCache();
+        return dataset;
+    }
+
     #region Raster <-> Pixel coordinate transformation
 
     /// <summary>
@@ -117,6 +204,23 @@ public static class GdalUtils
         Coord c1 = PixelToGeo(ds, 0, 0);
         Coord c2 = PixelToGeo(ds, width - 1, height - 1);
         return Bounds.FromCoords([c1, c2]);
+    }
+
+    /// <summary>
+    /// Returns geo transform from the specified raster parameters.
+    /// </summary>
+    public static double[] GetGeoTransform(
+        Bounds rasterBounds, int widthPx, int heightPx)
+    {
+        double originX = rasterBounds.XMin;
+        double originY = rasterBounds.YMax;
+        double pixelWidth = (rasterBounds.XMax - rasterBounds.XMin) / widthPx;
+        double pixelHeight = (rasterBounds.YMin - rasterBounds.YMax) / heightPx; // usually negative
+        
+        double[] geoTransform = [
+            originX, pixelWidth, 0,
+            originY, 0, pixelHeight];
+        return geoTransform;
     }
 
     #endregion
@@ -250,7 +354,8 @@ public static class GdalUtils
     {
         string projection = rasterDataset.GetProjectionRef();
         if (projection == null)
-            throw new ApplicationException("Could not determine projection from GDAL Dataset.");
+            throw new ApplicationException(
+                "Could not determine projection from GDAL Dataset.");
 
         SpatialReference srs = new SpatialReference(null);
         if (srs.ImportFromWkt(ref projection) == 0)
@@ -545,5 +650,5 @@ public static class GdalUtils
         return bitmap;
     }
 
-    #endregion
 }
+    #endregion

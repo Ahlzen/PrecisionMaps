@@ -98,8 +98,8 @@ public class Map : IHasSrs, IBounded
         Canvas canvas,
         AspectRatioMismatchStrategy strategy)
     {
-        Transformer wgs84ToMapSrs = new(Transformer.WktWgs84, this.Srs);
-        Transformer mapSrsToWgs84 = new(this.Srs, Transformer.WktWgs84);
+        Transformer wgs84ToMapSrs = new(Epsg.Wgs84, this.Srs);
+        Transformer mapSrsToWgs84 = new(this.Srs, Epsg.Wgs84);
 
         Debug.WriteLine("Requested bounds (WGS84): " + RequestedBoundsWgs84);
 
@@ -230,7 +230,7 @@ public class Map : IHasSrs, IBounded
             MapDataSource layerDataSource =
                 sourcesByName[layer.DataSourceName];
             using Transformer wgs84ToSourceTransformer = new(
-                Transformer.WktWgs84, layerDataSource.SourceSrs);
+                Epsg.Wgs84, layerDataSource.SourceSrs);
             using Transformer sourceToMapTransformer = new(
                 layerDataSource.SourceSrs, Srs);
 
@@ -443,8 +443,8 @@ public class Map : IHasSrs, IBounded
         Console.WriteLine("Map SRS: " + Srs);
         Console.WriteLine("Raster SRS: " + data.Srs);
         
-        Console.WriteLine("Map bounds LL: " + this.BoundsToSrs(Transformer.WktWgs84));
-        Console.WriteLine("Raster bounds LL: " + data.BoundsToSrs(Transformer.WktWgs84));
+        Console.WriteLine("Map bounds LL: " + this.BoundsToSrs(Epsg.Wgs84));
+        Console.WriteLine("Raster bounds LL: " + data.BoundsToSrs(Epsg.Wgs84));
 
         Console.WriteLine("Map bounds: " + Bounds);
         Console.WriteLine("Raster bounds: " + data.BoundsToSrs(this.Srs));
@@ -476,8 +476,8 @@ public class Map : IHasSrs, IBounded
         Console.WriteLine("Map SRS: " + Srs);
         Console.WriteLine("Raster SRS: " + data.Srs);
 
-        Console.WriteLine("Map bounds LL: " + this.BoundsToSrs(Transformer.WktWgs84));
-        Console.WriteLine("Raster bounds LL: " + data.BoundsToSrs(Transformer.WktWgs84));
+        Console.WriteLine("Map bounds LL: " + this.BoundsToSrs(Epsg.Wgs84));
+        Console.WriteLine("Raster bounds LL: " + data.BoundsToSrs(Epsg.Wgs84));
 
         Console.WriteLine("Map bounds: " + Bounds);
         Console.WriteLine("Raster bounds: " + data.BoundsToSrs(this.Srs));

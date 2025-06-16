@@ -33,7 +33,7 @@ public class GdalDataSource2Fixture : BaseFixture
     public async void TestWarpAndSaveAsPng(string filename)
     {
         filename = Path.Join(TestDataPath, filename);
-        string warpedFilename = GdalUtils.Warp(filename, MapLib.GdalSupport.Transformer.WktWebMercator);
+        string warpedFilename = GdalUtils.Warp(filename, Epsg.WebMercator);
         GdalDataSource2 ds = new(warpedFilename);
         RasterData2 data = await ds.GetData();
         Assert.That(data, Is.TypeOf<ImageRasterData>());
@@ -97,7 +97,7 @@ public class GdalDataSource2Fixture : BaseFixture
         _ = ds.GetData();
         
         // Warp (reproject) it and show summary again
-        string warpedFilename = GdalUtils.Warp(filename, MapLib.GdalSupport.Transformer.WktWebMercator);
+        string warpedFilename = GdalUtils.Warp(filename, MapLib.GdalSupport.Epsg.WebMercator);
         Console.Write("Warped: " + warpedFilename);
         using (Dataset warpedDataset = GdalUtils.OpenDataset(warpedFilename))
         {

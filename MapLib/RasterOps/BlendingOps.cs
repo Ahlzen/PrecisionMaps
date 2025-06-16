@@ -29,8 +29,8 @@ public enum BlendMode
 /// </remarks>
 public static class BlendingOps
 {
-    private static float ByteToFloatScale = 1f / 255f;
-    private static float FloatToByteScale = 255f / 1f;
+    //private static float ByteToFloatScale = 1f / 255f;
+    //private static float FloatToByteScale = 255f / 1f;
 
     public static ImageRasterData BlendWith(
         this ImageRasterData bottomLayer,
@@ -43,8 +43,10 @@ public static class BlendingOps
             bottomLayer.HeightPx != topLayer.HeightPx)
             throw new InvalidOperationException("Blend: Both source images must be the same size");
 
-        (float[] r, float[] g, float[] b, float[] a) bottom = SplitChannels(bottomLayer.ImageData);
-        (float[] r, float[] g, float[] b, float[] a) top = SplitChannels(topLayer.ImageData);
+        (float[] r, float[] g, float[] b, float[] a) bottom =
+            ImageRasterData.SplitAndNormalizeChannels(bottomLayer.ImageData);
+        (float[] r, float[] g, float[] b, float[] a) top =
+            ImageRasterData.SplitAndNormalizeChannels(topLayer.ImageData);
         (float[] r, float[] g, float[] b, float[] a) dest = (
             new float[pixelCount],
             new float[pixelCount],
@@ -78,46 +80,9 @@ public static class BlendingOps
                     "Unsupported blend mode: " + blendMode);
         }
 
-        byte[] blendedImageData = MergeChannels(dest.r, dest.g, dest.b, dest.a);
+        byte[] blendedImageData = ImageRasterData.MergeAndDenormalizeChannels(
+            dest.r, dest.g, dest.b, dest.a);
         return bottomLayer.CloneWithNewData(blendedImageData);
-    }
-
-    private static (float[] r, float[] g, float[] b, float[] a)
-        SplitChannels(byte[] imageData) => (
-            GetChannel(imageData, 2),
-            GetChannel(imageData, 1),
-            GetChannel(imageData, 0),
-            GetChannel(imageData, 3));
-
-    private static float[] GetChannel(byte[] imageData, int byteOffset)
-    {
-        int pixelCount = imageData.Length / 4;
-        float[] channelData = new float[pixelCount];
-        for (int p = 0; p < pixelCount; p++)
-        {
-            byte sourceData = imageData[p * 4 + byteOffset];
-            channelData[p] = ByteToFloatScale * sourceData;
-        }
-        return channelData;
-    }
-
-    private static byte[] MergeChannels(float[] r, float[] g, float[] b, float[] a) {
-        byte[] dest = new byte[r.Length * 4];
-        SetChannel(dest, 2, r);
-        SetChannel(dest, 1, g);
-        SetChannel(dest, 0, b);
-        SetChannel(dest, 3, a);
-        return dest;
-    }
-    
-    private static void SetChannel(byte[] dest, int byteOffset, float[] channelData)
-    {
-        int pixelCount = channelData.Length;
-        for (int p = 0; p < pixelCount; p++)
-        {
-            int destOffset = byteOffset + p * 4;
-            dest[destOffset] = (byte)(channelData[p] * FloatToByteScale);
-        }
     }
 
     private static void BlendAndComposite(

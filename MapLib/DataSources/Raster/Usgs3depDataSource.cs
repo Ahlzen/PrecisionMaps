@@ -12,7 +12,7 @@ public class Usgs3depDataSource : BaseRasterDataSource2
 {
     public override string Name => "USGS 3D Elevation Program (3DEP)";
 
-    public override string Srs => Transformer.WktNad83;
+    public override string Srs => Epsg.Nad83;
 
     private string Subdirectory => "USGS_3DEP";
 

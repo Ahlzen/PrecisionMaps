@@ -22,12 +22,13 @@ public class MapRenderFixture : BaseFixture
     }
 
     [Test]
+    [Explicit]
     [TestCaseSource(nameof(LetterSizeCanvases))]
     public void RenderSimpleOsmData(Canvas canvas)
     {
         Map map = new Map(
             new Bounds(-70.944, -70.915, 42.187, 42.207),
-            Transformer.WktWebMercator);
+            Epsg.WebMercator);
 
         map.DataSources.Add(
             new VectorMapDataSource("osmdata",
@@ -61,12 +62,13 @@ public class MapRenderFixture : BaseFixture
     }
 
     [Test]
+    [Explicit]
     [TestCaseSource("LetterSizeCanvases")]
     public void RenderSimpleOsmDataAndRaster(Canvas canvas)
     {
         Map map = new Map(
             new Bounds(-70.944, -70.915, 42.187, 42.207),
-            Transformer.WktWebMercator);
+            Epsg.WebMercator);
 
         map.DataSources.Add(
             new VectorMapDataSource("osmdata",
@@ -129,10 +131,72 @@ public class MapRenderFixture : BaseFixture
                 style: new VectorStyle { FillColor = Color.Tan },
                 filter: new TagFilter("building"))); 
 
-        //Canvas canvas = new SvgCanvas(CanvasUnit.In, 11.0, 8.5, Color.White);
         map.Render(canvas);
         string filename = FileSystemHelpers.GetTempOutputFileName(
             canvas.DefaultFileExtension, "RenderSimpleOsmDataAndRaster_");
+        canvas.SaveToFile(filename);
+        Console.WriteLine(filename);
+        canvas.Dispose();
+    }
+
+    [Test]
+    [Explicit]
+    [TestCaseSource("LetterSizeCanvases")]
+    public async Task TestRenderMassachusettsTopoMap(Canvas canvas)
+    {
+        // Get 3DEP DEM data
+        Usgs3depDataSource source = new(scaleFactor: 0.1);
+        RasterData2 data = await source.GetData(MassachusettsBounds);
+        SingleBandRasterData? demData = data as SingleBandRasterData;
+        Assert.That(demData, Is.Not.Null);
+
+        // Run hillshade
+        var lightHillshadeData = demData!
+            .Scale(3)
+            .Hillshade_Basic()
+            .Offset(128f);
+
+        // Build hypsometric tint gradient
+        Gradient gradient = new();
+        gradient.Add(0.0f, (0.6f, 1.0f, 0.3f));
+        gradient.Add(0.2f, (0.9f, 1.0f, 0.1f));
+        gradient.Add(0.4f, (1.0f, 0.6f, 0.1f));
+        gradient.Add(0.9f, (0.9f, 0.9f, 0.9f));
+        gradient.Add(1.0f, (0.8f, 0.9f, 1.0f));
+        ImageRasterData steppedHypso = demData!
+            .GenerateSteps(100, 0)
+            .Normalize()
+            .GradientMap(gradient);
+
+        // Create hillshade/hypsometric tint composite
+        ImageRasterData compositeSteppedHypso = lightHillshadeData
+            .ToImageRasterData(normalize: false)
+            .BlendWith(steppedHypso, BlendMode.Normal, 0.3f);
+        SaveTempBitmap(compositeSteppedHypso.Bitmap, "compositeSteppedHypso", ".jpg");
+
+        // Generate contour lines
+        string contourTempPath = FileSystemHelpers.GetTempOutputFileName(
+            ".shp", "ma_contours");
+        await GdalContourGenerator.GenerateContours(source, 1,
+            100, 0, contourTempPath, MassachusettsBounds);
+
+        Map map = new Map(MassachusettsBounds, Epsg.WebMercator);
+
+        map.DataSources.Add(new RasterMapDataSource2("hillshadeComposite",
+            new ExistingRasterDataSource(compositeSteppedHypso)));
+
+        map.DataSources.Add(new VectorMapDataSource("contours",
+            new VectorFileDataSource(contourTempPath)));
+
+        map.Layers.Add(new RasterMapLayer("hillshadeComposite", "hillshadeComposite"));
+        map.Layers.Add(new VectorMapLayer("contours", "contours",
+            style: new VectorStyle {
+                LineColor = Color.FromArgb(120, 0, 0, 0),
+                LineWidth = 0.003f}));
+
+        map.Render(canvas);
+        string filename = FileSystemHelpers.GetTempOutputFileName(
+            canvas.DefaultFileExtension, "MassachusettsTopo");
         canvas.SaveToFile(filename);
         Console.WriteLine(filename);
         canvas.Dispose();

@@ -62,6 +62,21 @@ public class GdalDataSource2 : BaseRasterDataSource2
         dataset.Dispose();
     }
 
+    public GdalDataSource2(Dataset dataset, double scaleFactor = 1)
+    {
+        Srs = GdalUtils.GetSrsAsWkt(dataset);
+        Bounds = GdalUtils.GetBounds(dataset);
+        Filenames = new List<string>();
+
+        SourceWidthPx = dataset.RasterXSize;
+        SourceHeightPx = dataset.RasterYSize;
+        BitmapWidthPx = (int)Math.Round(dataset.RasterXSize * scaleFactor);
+        BitmapHeightPx = (int)Math.Round(dataset.RasterYSize * scaleFactor);
+
+        // For debugging
+        Console.WriteLine(GdalUtils.GetRasterBandSummary(dataset));
+    }
+
     private RasterData2 GetRasterData(Dataset dataset)
     {
         // Get size, projection and bounds

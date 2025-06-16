@@ -1,5 +1,7 @@
-﻿using MapLib.Geometry;
+﻿using MapLib.GdalSupport;
+using MapLib.Geometry;
 using MapLib.RasterOps;
+using OSGeo.GDAL;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
@@ -35,6 +37,11 @@ public abstract class RasterData2 : GeoData
         WidthPx = widthPx;
         HeightPx = heightPx;
     }
+
+    public double[] GetGeoTransform()
+        => GdalUtils.GetGeoTransform(Bounds, WidthPx, HeightPx);
+
+    public abstract Dataset ToInMemoryGdalDataset();
 }
 
 public class SingleBandRasterData : RasterData2
@@ -76,6 +83,14 @@ public class SingleBandRasterData : RasterData2
         SingleBandRasterData newData = new SingleBandRasterData(
             Srs, Bounds, WidthPx, HeightPx, newImageData, NoDataValue);
         return newData;
+    }
+
+    public override Dataset ToInMemoryGdalDataset()
+    {
+        return GdalUtils.CreateInMemoryDataset(
+            SingleBandData, WidthPx, HeightPx, 
+            GdalUtils.GetGeoTransform(Bounds, WidthPx, HeightPx),
+            Srs, NoDataValue);
     }
 }
 
@@ -126,4 +141,72 @@ public class ImageRasterData : RasterData2
             Srs, Bounds, WidthPx, HeightPx, newImageData);
         return newData;
     }
+
+    public override Dataset ToInMemoryGdalDataset()
+    {
+        (byte[] r, byte[] g, byte[] b, byte[] a) channels = SplitChannels(ImageData);
+        double[] transform = GdalUtils.GetGeoTransform(Bounds, WidthPx, HeightPx);
+        return GdalUtils.CreateInMemoryDataset(
+            channels.r, channels.g, channels.b, channels.a,
+            WidthPx, HeightPx, transform, Srs);
+    }
+
+    #region Helpers for splitting and merging channels
+
+    private static float ByteToFloatScale = 1f / 255f;
+    private static float FloatToByteScale = 255f / 1f;
+
+    public static (byte[] r, byte[] g, byte[] b, byte[] a)
+        SplitChannels(byte[] imageData) => (
+            GetChannel(imageData, 2),
+            GetChannel(imageData, 1),
+            GetChannel(imageData, 0),
+            GetChannel(imageData, 3));
+    private static byte[] GetChannel(byte[] imageData, int byteOffset)
+    {
+        int pixelCount = imageData.Length / 4;
+        byte[] channelData = new byte[pixelCount];
+        for (int p = 0; p < pixelCount; p++)
+            channelData[p] = imageData[p * 4 + byteOffset]; ;
+        return channelData;
+    }
+
+    public static (float[] r, float[] g, float[] b, float[] a)
+        SplitAndNormalizeChannels(byte[] imageData) => (
+            SplitAndNormalizeChannel(imageData, 2),
+            SplitAndNormalizeChannel(imageData, 1),
+            SplitAndNormalizeChannel(imageData, 0),
+            SplitAndNormalizeChannel(imageData, 3));
+    private static float[] SplitAndNormalizeChannel(byte[] imageData, int byteOffset)
+    {
+        int pixelCount = imageData.Length / 4;
+        float[] channelData = new float[pixelCount];
+        for (int p = 0; p < pixelCount; p++)
+        {
+            byte sourceData = imageData[p * 4 + byteOffset];
+            channelData[p] = ByteToFloatScale * sourceData;
+        }
+        return channelData;
+    }
+
+    public static byte[] MergeAndDenormalizeChannels(float[] r, float[] g, float[] b, float[] a)
+    {
+        byte[] dest = new byte[r.Length * 4];
+        SetAndDenormalizeChannel(dest, 2, r);
+        SetAndDenormalizeChannel(dest, 1, g);
+        SetAndDenormalizeChannel(dest, 0, b);
+        SetAndDenormalizeChannel(dest, 3, a);
+        return dest;
+    }
+    private static void SetAndDenormalizeChannel(byte[] dest, int byteOffset, float[] channelData)
+    {
+        int pixelCount = channelData.Length;
+        for (int p = 0; p < pixelCount; p++)
+        {
+            int destOffset = byteOffset + p * 4;
+            dest[destOffset] = (byte)(channelData[p] * FloatToByteScale);
+        }
+    }
+
+    #endregion
 }
