@@ -3,9 +3,7 @@ using System.Diagnostics;
 using MapLib.FileFormats.Vector;
 using MapLib.Output;
 using System.Text;
-using System.IO;
 using MapLib.Util;
-using NUnit.Framework.Internal;
 
 namespace MapLib.Tests;
 

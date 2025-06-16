@@ -2,10 +2,6 @@
 using MapLib.Geometry;
 using MapLib.Util;
 using OSGeo.GDAL;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace MapLib.DataSources.Raster;

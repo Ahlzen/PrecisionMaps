@@ -33,19 +33,6 @@ public class VectorMapDataSource : MapDataSource
     }
 }
 
-[Obsolete]
-public class RasterMapDataSource : MapDataSource
-{
-    public BaseRasterDataSource DataSource { get; }
-    public override string SourceSrs => DataSource.Srs;
-
-    public RasterMapDataSource(string name,
-        BaseRasterDataSource dataSource) : base(name)
-    {
-        DataSource = dataSource;
-    }
-}
-
 public class RasterMapDataSource2 : MapDataSource
 {
     public BaseRasterDataSource2 DataSource { get; }
@@ -57,15 +44,3 @@ public class RasterMapDataSource2 : MapDataSource
         DataSource = dataSource;
     }
 }
-
-
-
-//public class GraticuleMapDataSource : MapDataSource
-//{
-//    public BaseVectorDataSource DataSource { get; }
-
-//    public GraticuleDataSource(string name) : base(name)
-//    {
-//        DataSource = new GraticuleDataSource();
-//    }
-//}

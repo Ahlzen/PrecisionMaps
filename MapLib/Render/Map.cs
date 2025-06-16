@@ -2,12 +2,8 @@
 using MapLib.Geometry;
 using MapLib.Geometry.Helpers;
 using MapLib.Output;
-using OSGeo.OGR;
-using System.ComponentModel.Design;
 using System.Diagnostics;
 using System.Drawing;
-using System.Security.Cryptography;
-using System.Threading;
 
 namespace MapLib.Render;
 
@@ -257,14 +253,14 @@ public class Map : IHasSrs, IBounded
                 // Render data onto canvas
                 DrawVectors(canvas, vectorLayer, dataInCanvasSpace);
             }
-            else if (layerDataSource is RasterMapDataSource rasterDataSource)
-            {
-                if (!(layer is RasterMapLayer))
-                    throw new InvalidOperationException("Raster data source must use raster layer");
-                var rasterLayer = (RasterMapLayer)layer;
-                RasterData data = await rasterDataSource.DataSource.GetData(this.Srs);
-                DrawRaster(canvas, rasterLayer, data);
-            }
+            //else if (layerDataSource is RasterMapDataSource rasterDataSource)
+            //{
+            //    if (!(layer is RasterMapLayer))
+            //        throw new InvalidOperationException("Raster data source must use raster layer");
+            //    var rasterLayer = (RasterMapLayer)layer;
+            //    RasterData data = await rasterDataSource.DataSource.GetData(this.Srs);
+            //    DrawRaster(canvas, rasterLayer, data);
+            //}
             else if (layerDataSource is RasterMapDataSource2 rasterDataSource2)
             {
                 if (!(layer is RasterMapLayer))
@@ -436,39 +432,6 @@ public class Map : IHasSrs, IBounded
         return null;
     }
 
-    private void DrawRaster(Canvas canvas, RasterMapLayer mapLayer, RasterData data)
-    {
-        CanvasLayer layer = canvas.AddNewLayer(mapLayer.Name);
-
-        Console.WriteLine("Map SRS: " + Srs);
-        Console.WriteLine("Raster SRS: " + data.Srs);
-        
-        Console.WriteLine("Map bounds LL: " + this.BoundsToSrs(Epsg.Wgs84));
-        Console.WriteLine("Raster bounds LL: " + data.BoundsToSrs(Epsg.Wgs84));
-
-        Console.WriteLine("Map bounds: " + Bounds);
-        Console.WriteLine("Raster bounds: " + data.BoundsToSrs(this.Srs));
-
-        Console.WriteLine("Bitmap pixel format: " + data.Bitmap.PixelFormat);
-
-        // Find overlapping area (in map SRS)
-        Bounds? overlap = Bounds.Intersection(data.BoundsToSrs(this.Srs));
-        if (overlap == null)
-            return; // no overlap - nothing to render
-
-        // TODO: Figure out cropped part of bitmap
-        // For now, just transform coordinates to canvas space,
-        // and draw the full bitmap
-        Bounds rasterBoundsInMapSrs = data.BoundsToSrs(this.Srs);
-        Bounds rasterBoundsInCanvasSrs = rasterBoundsInMapSrs.Transform(
-            _scaleX, _scaleY, _offsetX, _offsetY);
-
-        layer.DrawBitmap(data.Bitmap,
-            rasterBoundsInCanvasSrs.XMin, rasterBoundsInCanvasSrs.YMin,
-            rasterBoundsInCanvasSrs.Width, rasterBoundsInCanvasSrs.Height,
-            1.0);
-    }
-
     private void DrawRaster(Canvas canvas, RasterMapLayer mapLayer, RasterData2 data)
     {
         CanvasLayer layer = canvas.AddNewLayer(mapLayer.Name);
@@ -513,8 +476,5 @@ public class Map : IHasSrs, IBounded
         {
             throw new NotSupportedException("Unsupported raster data type");
         }
-        
-        
-
     }
 }
