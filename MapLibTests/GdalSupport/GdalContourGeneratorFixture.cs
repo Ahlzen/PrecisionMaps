@@ -34,8 +34,8 @@ public class GdalContourGeneratorFixture : BaseFixture
     {
         string outputPath = FileSystemHelpers.GetTempOutputFileName(
             ".shp", "contours");
-        BaseRasterDataSource2 dataSource =
-            new GdalDataSource2(SourceFilename);
+        BaseRasterDataSource dataSource =
+            new GdalDataSource(SourceFilename);
         await GdalContourGenerator.GenerateContours(
             dataSource: dataSource,
             bandIndex: 1,

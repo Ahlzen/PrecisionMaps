@@ -69,16 +69,16 @@ public static class GdalContourGenerator
             callback_data: null);
     }
 
-    /// <see cref="GenerateContours(BaseRasterDataSource2, int, double, double, string)"/>
+    /// <see cref="GenerateContours(BaseRasterDataSource, int, double, double, string)"/>
     public static async Task GenerateContours(
-        BaseRasterDataSource2 dataSource,
+        BaseRasterDataSource dataSource,
         int bandIndex,
         double contourInterval,
         double baseContour,
         string outputVectorPath,
         Bounds? boundsWgs84 = null)
     {
-        RasterData2 rasterData;
+        RasterData rasterData;
         if (boundsWgs84 != null)
             rasterData = await dataSource.GetData(boundsWgs84.Value);
         else

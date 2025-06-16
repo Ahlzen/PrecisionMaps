@@ -17,5 +17,5 @@ public interface IRasterFormatReader
     /// for details.
     /// </exception>
     // TODO: remove requirement on bounds (read full file if null)
-    public RasterData2 ReadFile(string filePath, Bounds bounds);
+    public RasterData ReadFile(string filePath, Bounds bounds);
 }

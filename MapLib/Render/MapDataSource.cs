@@ -35,11 +35,11 @@ public class VectorMapDataSource : MapDataSource
 
 public class RasterMapDataSource2 : MapDataSource
 {
-    public BaseRasterDataSource2 DataSource { get; }
+    public BaseRasterDataSource DataSource { get; }
     public override string SourceSrs => DataSource.Srs;
 
     public RasterMapDataSource2(string name,
-        BaseRasterDataSource2 dataSource) : base(name)
+        BaseRasterDataSource dataSource) : base(name)
     {
         DataSource = dataSource;
     }

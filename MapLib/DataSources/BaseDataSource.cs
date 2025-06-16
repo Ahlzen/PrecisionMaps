@@ -140,6 +140,6 @@ public abstract class BaseVectorDataSource : BaseDataSource<VectorData>
     }
 }
 
-public abstract class BaseRasterDataSource2 : BaseDataSource<RasterData2>
+public abstract class BaseRasterDataSource : BaseDataSource<RasterData>
 {
 }

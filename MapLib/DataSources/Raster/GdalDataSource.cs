@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace MapLib.DataSources.Raster;
 
-public class GdalDataSource2 : BaseRasterDataSource2
+public class GdalDataSource : BaseRasterDataSource
 {
     public override string Name => "Raster File (using GDAL)";
 
@@ -32,12 +32,12 @@ public class GdalDataSource2 : BaseRasterDataSource2
     public int BitmapWidthPx { get; }
     public int BitmapHeightPx { get; }
 
-    public GdalDataSource2(string filename, double scaleFactor = 1)
+    public GdalDataSource(string filename, double scaleFactor = 1)
         : this([filename], scaleFactor)
     {
     }
 
-    public GdalDataSource2(IEnumerable<string> filenames, double scaleFactor = 1)
+    public GdalDataSource(IEnumerable<string> filenames, double scaleFactor = 1)
     {
         Filenames = filenames.ToList();
 
@@ -62,7 +62,7 @@ public class GdalDataSource2 : BaseRasterDataSource2
         dataset.Dispose();
     }
 
-    public GdalDataSource2(Dataset dataset, double scaleFactor = 1)
+    public GdalDataSource(Dataset dataset, double scaleFactor = 1)
     {
         Srs = GdalUtils.GetSrsAsWkt(dataset);
         Bounds = GdalUtils.GetBounds(dataset);
@@ -77,7 +77,7 @@ public class GdalDataSource2 : BaseRasterDataSource2
         Console.WriteLine(GdalUtils.GetRasterBandSummary(dataset));
     }
 
-    private RasterData2 GetRasterData(Dataset dataset)
+    private RasterData GetRasterData(Dataset dataset)
     {
         // Get size, projection and bounds
         long pixelCount = BitmapWidthPx * BitmapHeightPx;
@@ -304,7 +304,7 @@ public class GdalDataSource2 : BaseRasterDataSource2
                 singleBandData!, noDataValue);
     }
     
-    public override Task<RasterData2> GetData(string? destSrs = null)
+    public override Task<RasterData> GetData(string? destSrs = null)
     {
         //string filename = Filename;
         List<string> filenames = new(Filenames);
@@ -323,12 +323,12 @@ public class GdalDataSource2 : BaseRasterDataSource2
         return Task.FromResult(GetRasterData(sourceDataset));
     }
 
-    public override Task<RasterData2> GetData()
+    public override Task<RasterData> GetData()
         => GetData(null);
 
-    public override Task<RasterData2> GetData(Bounds boundsWgs84)
+    public override Task<RasterData> GetData(Bounds boundsWgs84)
         => GetData(null);
 
-    public override Task<RasterData2> GetData(Bounds boundsWgs84, string? destSrs = null)
+    public override Task<RasterData> GetData(Bounds boundsWgs84, string? destSrs = null)
         => GetData(destSrs);
 }

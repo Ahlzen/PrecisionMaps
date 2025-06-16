@@ -266,7 +266,7 @@ public class Map : IHasSrs, IBounded
                 if (!(layer is RasterMapLayer))
                     throw new InvalidOperationException("Raster data source must use raster layer");
                 var rasterLayer = (RasterMapLayer)layer;
-                RasterData2 data = await rasterDataSource2.DataSource.GetData(this.Srs);
+                RasterData data = await rasterDataSource2.DataSource.GetData(this.Srs);
                 DrawRaster(canvas, rasterLayer, data);
             }
         }
@@ -432,7 +432,7 @@ public class Map : IHasSrs, IBounded
         return null;
     }
 
-    private void DrawRaster(Canvas canvas, RasterMapLayer mapLayer, RasterData2 data)
+    private void DrawRaster(Canvas canvas, RasterMapLayer mapLayer, RasterData data)
     {
         CanvasLayer layer = canvas.AddNewLayer(mapLayer.Name);
 

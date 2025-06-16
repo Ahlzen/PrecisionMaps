@@ -8,7 +8,7 @@ namespace MapLib.DataSources.Raster;
 /// USGS 3D Elevation Program (3DEP) and
 /// National Elevation Dataset (NED)
 /// </summary>
-public class Usgs3depDataSource : BaseRasterDataSource2
+public class Usgs3depDataSource : BaseRasterDataSource
 {
     public override string Name => "USGS 3D Elevation Program (3DEP)";
 
@@ -30,17 +30,17 @@ public class Usgs3depDataSource : BaseRasterDataSource2
         ScaleFactor = scaleFactor;
     }
 
-    public override Task<RasterData2> GetData()
+    public override Task<RasterData> GetData()
     {
         throw new NotImplementedException();
     }
 
-    public override Task<RasterData2> GetData(string destSrs)
+    public override Task<RasterData> GetData(string destSrs)
     {
         throw new NotImplementedException();
     }
 
-    public override async Task<RasterData2> GetData(Bounds boundsWgs84)
+    public override async Task<RasterData> GetData(Bounds boundsWgs84)
     {
         List<string> localFiles = new();
         foreach (string url in GetDownloadUrls(boundsWgs84))
@@ -61,12 +61,12 @@ public class Usgs3depDataSource : BaseRasterDataSource2
         }
 
         // Read data using GDAL
-        GdalDataSource2 gdalSource = new GdalDataSource2(localFiles, ScaleFactor);
-        RasterData2 data = await gdalSource.GetData(boundsWgs84);
+        GdalDataSource gdalSource = new GdalDataSource(localFiles, ScaleFactor);
+        RasterData data = await gdalSource.GetData(boundsWgs84);
         return data;
     }
 
-    public override Task<RasterData2> GetData(Bounds boundsWgs84, string destSrs)
+    public override Task<RasterData> GetData(Bounds boundsWgs84, string destSrs)
     {
         throw new NotImplementedException();
     }

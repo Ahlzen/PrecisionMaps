@@ -12,7 +12,7 @@ public class Usgs3depDataSourceFixture : BaseFixture
     {
         // Download and save at quarter resolution (full res is too large)
         Usgs3depDataSource source = new(scaleFactor: 0.25);
-        RasterData2 data = await source.GetData(MassachusettsBounds);
+        RasterData data = await source.GetData(MassachusettsBounds);
         
         SingleBandRasterData? demData = data as SingleBandRasterData;
         Assert.That(demData, Is.Not.Null);

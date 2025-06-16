@@ -7,14 +7,14 @@ using System.Runtime.InteropServices;
 
 namespace MapLib;
 
-public abstract class RasterData2 : GeoData
+public abstract class RasterData : GeoData
 {
     public override Bounds Bounds { get; }
 
     public int WidthPx { get; }
     public int HeightPx { get; }
 
-    public RasterData2(string srs, Bounds bounds, int widthPx, int heightPx) : base(srs)
+    public RasterData(string srs, Bounds bounds, int widthPx, int heightPx) : base(srs)
     {
         Bounds = bounds;
         WidthPx = widthPx;
@@ -27,7 +27,7 @@ public abstract class RasterData2 : GeoData
     public abstract Dataset ToInMemoryGdalDataset();
 }
 
-public class SingleBandRasterData : RasterData2
+public class SingleBandRasterData : RasterData
 {
     /// <summary>
     /// Values  for data sources that contain a single band of values
@@ -77,7 +77,7 @@ public class SingleBandRasterData : RasterData2
     }
 }
 
-public class ImageRasterData : RasterData2
+public class ImageRasterData : RasterData
 {
     /// <summary>
     /// Image data for image data sources (aerial imagery, maps, shaded

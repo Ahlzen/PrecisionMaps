@@ -78,7 +78,7 @@ public class MapRenderFixture : BaseFixture
         //    new GdalDataSource(Path.Join(TestDataPath, "MassGIS LiDAR/be_19TCG340674.tif"))));
         map.DataSources.Add(
             new RasterMapDataSource2("ortophoto",
-            new GdalDataSource2(Path.Join(TestDataPath, "MassGIS Aerial/19TCG390725.jp2"))));
+            new GdalDataSource(Path.Join(TestDataPath, "MassGIS Aerial/19TCG390725.jp2"))));
 
         //map.Layers.Add(
         //    new RasterMapLayer("Hillshading", "hillshading"));
@@ -146,7 +146,7 @@ public class MapRenderFixture : BaseFixture
     {
         // Get 3DEP DEM data
         Usgs3depDataSource source = new(scaleFactor: 0.1);
-        RasterData2 data = await source.GetData(MassachusettsBounds);
+        RasterData data = await source.GetData(MassachusettsBounds);
         SingleBandRasterData? demData = data as SingleBandRasterData;
         Assert.That(demData, Is.Not.Null);
 

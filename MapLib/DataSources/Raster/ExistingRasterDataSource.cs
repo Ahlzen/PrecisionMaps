@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace MapLib.DataSources.Raster;
 
-internal class ExistingRasterDataSource : BaseRasterDataSource2
+internal class ExistingRasterDataSource : BaseRasterDataSource
 {
     public override string Name => "Existing Raster";
 
@@ -16,17 +16,17 @@ internal class ExistingRasterDataSource : BaseRasterDataSource2
     public int WidthPx => RasterData.WidthPx;
     public int HeightPx => RasterData.HeightPx;
 
-    private RasterData2 RasterData { get; }
+    private RasterData RasterData { get; }
 
-    public ExistingRasterDataSource(RasterData2 rasterData)
+    public ExistingRasterDataSource(RasterData rasterData)
     {
         RasterData = rasterData;
     }
 
-    public override Task<RasterData2> GetData()
+    public override Task<RasterData> GetData()
         => Task.FromResult(RasterData);
 
-    public override Task<RasterData2> GetData(string destSrs)
+    public override Task<RasterData> GetData(string destSrs)
     {
         if (Srs == destSrs)
         {
@@ -47,14 +47,14 @@ internal class ExistingRasterDataSource : BaseRasterDataSource2
 
             string warpedFilename = GdalUtils.Warp(tempFilename, destSrs);
 
-            GdalDataSource2 reprojectedDataSource = new(warpedFilename);
+            GdalDataSource reprojectedDataSource = new(warpedFilename);
             return reprojectedDataSource.GetData();
         }
     }
 
-    public override Task<RasterData2> GetData(Bounds boundsWgs84)
+    public override Task<RasterData> GetData(Bounds boundsWgs84)
         => GetData(); // for now, no reprojection or cropping
 
-    public override Task<RasterData2> GetData(Bounds boundsWgs84, string destSrs)
+    public override Task<RasterData> GetData(Bounds boundsWgs84, string destSrs)
         => GetData(destSrs); // for now, no reprojection or cropping
 }

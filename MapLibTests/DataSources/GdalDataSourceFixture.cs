@@ -9,7 +9,7 @@ using MapLib.Util;
 namespace MapLib.Tests.DataSources;
 
 [TestFixture]
-public class GdalDataSource2Fixture : BaseFixture
+public class GdalDataSourceFixture : BaseFixture
 {
     [Test]
     [TestCase("MassGIS Aerial/19TCG390725.jp2")] // RGB imagery
@@ -17,8 +17,8 @@ public class GdalDataSource2Fixture : BaseFixture
     public async void TestSaveAsPng(string filename)
     {
         filename = Path.Join(TestDataPath, filename);
-        GdalDataSource2 ds = new(filename);
-        RasterData2 data = await ds.GetData();
+        GdalDataSource ds = new(filename);
+        RasterData data = await ds.GetData();
         Assert.That(data, Is.TypeOf<ImageRasterData>());
         var imageData = data as ImageRasterData;
         Assert.That(imageData, Is.Not.Null);
@@ -34,8 +34,8 @@ public class GdalDataSource2Fixture : BaseFixture
     {
         filename = Path.Join(TestDataPath, filename);
         string warpedFilename = GdalUtils.Warp(filename, Epsg.WebMercator);
-        GdalDataSource2 ds = new(warpedFilename);
-        RasterData2 data = await ds.GetData();
+        GdalDataSource ds = new(warpedFilename);
+        RasterData data = await ds.GetData();
         Assert.That(data, Is.TypeOf<ImageRasterData>());
         var imageData = data as ImageRasterData;
         Assert.That(imageData, Is.Not.Null);
@@ -53,7 +53,7 @@ public class GdalDataSource2Fixture : BaseFixture
         filename = Path.Join(TestDataPath, filename);
         
         // Load DEM (single-band raster)
-        GdalDataSource2 ds = new(filename);
+        GdalDataSource ds = new(filename);
         SingleBandRasterData? dem = await ds.GetData() as SingleBandRasterData;
         Assert.That(dem, Is.Not.Null);
 
@@ -93,7 +93,7 @@ public class GdalDataSource2Fixture : BaseFixture
         Console.WriteLine();
 
         // Test that reading the data completes successfully
-        GdalDataSource2 ds = new(filename);
+        GdalDataSource ds = new(filename);
         _ = ds.GetData();
         
         // Warp (reproject) it and show summary again
@@ -106,7 +106,7 @@ public class GdalDataSource2Fixture : BaseFixture
         Console.WriteLine();
 
         // Test that reading the data completes successfully
-        GdalDataSource2 dsWarped = new(warpedFilename);
+        GdalDataSource dsWarped = new(warpedFilename);
         _ = dsWarped.GetData();
 
         /*
