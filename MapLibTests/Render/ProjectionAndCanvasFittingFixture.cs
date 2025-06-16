@@ -49,9 +49,8 @@ public class ProjectionAndCanvasFittingFixture : BaseFixture
         sw1.Dispose();
 
         var sw2 = new QuickStopwatch("Adding data sources");
-        map.DataSources.Add(
-            new VectorMapDataSource("osmdata",
-            new VectorFileDataSource(Path.Join(TestDataPath, "osm-xml/Weymouth Detail.osm"))));
+        map.VectorDataSources.Add("osmdata",
+            new VectorFileDataSource(Path.Join(TestDataPath, "osm-xml/Weymouth Detail.osm")));
         sw2.Dispose();
 
         var sw3 = new QuickStopwatch("Adding layers");

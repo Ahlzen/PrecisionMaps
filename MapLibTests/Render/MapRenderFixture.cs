@@ -30,9 +30,8 @@ public class MapRenderFixture : BaseFixture
             new Bounds(-70.944, -70.915, 42.187, 42.207),
             Epsg.WebMercator);
 
-        map.DataSources.Add(
-            new VectorMapDataSource("osmdata",
-            new VectorFileDataSource(Path.Join(TestDataPath, "osm-xml/Weymouth Detail.osm"))));
+        map.VectorDataSources.Add("osmdata",
+            new VectorFileDataSource(Path.Join(TestDataPath, "osm-xml/Weymouth Detail.osm")));
 
         map.Layers.Add(
             new VectorMapLayer("Water", "osmdata",
@@ -70,18 +69,11 @@ public class MapRenderFixture : BaseFixture
             new Bounds(-70.944, -70.915, 42.187, 42.207),
             Epsg.WebMercator);
 
-        map.DataSources.Add(
-            new VectorMapDataSource("osmdata",
-            new VectorFileDataSource(Path.Join(TestDataPath, "osm-xml/Weymouth Detail.osm"))));
-        //map.DataSources.Add(
-        //    new RasterMapDataSource("hillshading",
-        //    new GdalDataSource(Path.Join(TestDataPath, "MassGIS LiDAR/be_19TCG340674.tif"))));
-        map.DataSources.Add(
-            new RasterMapDataSource2("ortophoto",
-            new GdalDataSource(Path.Join(TestDataPath, "MassGIS Aerial/19TCG390725.jp2"))));
+        map.VectorDataSources.Add("osmdata",
+            new VectorFileDataSource(Path.Join(TestDataPath, "osm-xml/Weymouth Detail.osm")));
+        map.RasterDataSources.Add("ortophoto",
+            new GdalDataSource(Path.Join(TestDataPath, "MassGIS Aerial/19TCG390725.jp2")));
 
-        //map.Layers.Add(
-        //    new RasterMapLayer("Hillshading", "hillshading"));
         map.Layers.Add(
             new RasterMapLayer("ortophoto", "ortophoto"));
 
@@ -182,11 +174,10 @@ public class MapRenderFixture : BaseFixture
 
         Map map = new Map(MassachusettsBounds, Epsg.WebMercator);
 
-        map.DataSources.Add(new RasterMapDataSource2("hillshadeComposite",
-            new ExistingRasterDataSource(compositeSteppedHypso)));
-
-        map.DataSources.Add(new VectorMapDataSource("contours",
-            new VectorFileDataSource(contourTempPath)));
+        map.RasterDataSources.Add("hillshadeComposite",
+            new ExistingRasterDataSource(compositeSteppedHypso));
+        map.VectorDataSources.Add("contours",
+            new VectorFileDataSource(contourTempPath));
 
         map.Layers.Add(new RasterMapLayer("hillshadeComposite", "hillshadeComposite"));
         map.Layers.Add(new VectorMapLayer("contours", "contours",

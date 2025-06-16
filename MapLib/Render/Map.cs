@@ -4,43 +4,9 @@ using MapLib.Geometry.Helpers;
 using MapLib.Output;
 using System.Diagnostics;
 using System.Drawing;
+using MapLib.DataSources;
 
 namespace MapLib.Render;
-
-/// <summary>
-/// Strategies for handling the (common) case where the projection
-/// of the requested area doesn't exactly match the aspect ratio
-/// of the destination canvas.
-/// </summary>
-public enum AspectRatioMismatchStrategy
-{
-    /// <summary>
-    /// Stretch the data to fit the canvas. Typically results
-    /// in skewed objects.
-    /// </summary>
-    StretchToFillCanvas,
-
-    /// <summary>
-    /// Include only the requested area, centering the data
-    /// on the canvas. Typically results in empty space on
-    /// the left/right or top/bottom.
-    /// </summary>
-    CenterOnCanvas,
-
-    /// <summary>
-    /// Crop (in either x or y) the requested area to
-    /// match the canvas aspect ratio. Typically results in parts
-    /// of the requested area not being included on the map.
-    /// </summary>
-    CropBounds,
-
-    /// <summary>
-    /// Extend (in either x or y) the requested area to
-    /// match the canvas aspect ratio. Typically results in a larger
-    /// area than requested included on the map.
-    /// </summary>
-    ExtendBounds,
-}
 
 public class Map : IHasSrs, IBounded
 {
@@ -75,7 +41,8 @@ public class Map : IHasSrs, IBounded
     /// </remarks>
     public string Srs { get; set; }
 
-    public List<MapDataSource> DataSources { get; } = new();
+    public OrderedDictionary<string, BaseVectorDataSource> VectorDataSources { get; } = new();
+    public OrderedDictionary<string, BaseRasterDataSource> RasterDataSources { get; } = new();
 
     public List<MapLayer> Layers { get; } = new();
 
@@ -218,29 +185,26 @@ public class Map : IHasSrs, IBounded
     {
         ComputeActualBounds(canvas, ratioMismatchStrategy);
 
-        Dictionary<string, MapDataSource> sourcesByName =
-            DataSources.ToDictionary(ds => ds.Name);
+        //Dictionary<string, MapDataSource> sourcesByName =
+        //    DataSources.ToDictionary(ds => ds.Name);
         
         foreach (MapLayer layer in Layers)
         {
-            MapDataSource layerDataSource =
-                sourcesByName[layer.DataSourceName];
-            using Transformer wgs84ToSourceTransformer = new(
-                Epsg.Wgs84, layerDataSource.SourceSrs);
-            using Transformer sourceToMapTransformer = new(
-                layerDataSource.SourceSrs, Srs);
-
-            // Determine bounds in the SRS of the data source
-            Bounds dataSourceBounds = wgs84ToSourceTransformer.Transform(RequestedBoundsWgs84);
-
-            // Get data
-            if (layerDataSource is VectorMapDataSource vectorDataSource)
+            if (layer is VectorMapLayer vectorLayer)
             {
-                if (!(layer is VectorMapLayer))
-                    throw new InvalidOperationException("Vector data source must use vector layer");
-                var vectorLayer = (VectorMapLayer)layer;
-                VectorData data = await vectorDataSource.DataSource.GetData(
-                    dataSourceBounds, this.Srs);
+                BaseVectorDataSource? dataSource =
+                    VectorDataSources.GetValueOrDefault(vectorLayer.Name);
+                if (dataSource == null)
+                    throw new InvalidOperationException(
+                        "Vector layer data source must use vector data source");
+                
+                using Transformer wgs84ToSourceTransformer = new(
+                    Epsg.Wgs84, dataSource.Srs);
+                using Transformer sourceToMapTransformer = new(
+                    dataSource.Srs, Srs);
+                Bounds dataSourceBounds = wgs84ToSourceTransformer.Transform(RequestedBoundsWgs84);
+
+                VectorData data = await dataSource.GetData(dataSourceBounds, Srs);
 
                 // Filter features (if applicable)
                 if (vectorLayer.Filter != null)
@@ -252,22 +216,23 @@ public class Map : IHasSrs, IBounded
 
                 // Render data onto canvas
                 DrawVectors(canvas, vectorLayer, dataInCanvasSpace);
+
             }
-            //else if (layerDataSource is RasterMapDataSource rasterDataSource)
-            //{
-            //    if (!(layer is RasterMapLayer))
-            //        throw new InvalidOperationException("Raster data source must use raster layer");
-            //    var rasterLayer = (RasterMapLayer)layer;
-            //    RasterData data = await rasterDataSource.DataSource.GetData(this.Srs);
-            //    DrawRaster(canvas, rasterLayer, data);
-            //}
-            else if (layerDataSource is RasterMapDataSource2 rasterDataSource2)
+            else if (layer is RasterMapLayer rasterLayer)
             {
-                if (!(layer is RasterMapLayer))
-                    throw new InvalidOperationException("Raster data source must use raster layer");
-                var rasterLayer = (RasterMapLayer)layer;
-                RasterData data = await rasterDataSource2.DataSource.GetData(this.Srs);
+                BaseRasterDataSource? dataSource =
+                    RasterDataSources.GetValueOrDefault(rasterLayer.Name);
+                if (dataSource == null)
+                    throw new InvalidOperationException(
+                        "Raster layer data source must use raster data source");
+
+                RasterData data = await dataSource.GetData(Srs);
                 DrawRaster(canvas, rasterLayer, data);
+            }
+            else
+            {
+                throw new NotSupportedException(
+                    "Unsupported layer type: " + layer.GetType());
             }
         }
     }
@@ -289,17 +254,14 @@ public class Map : IHasSrs, IBounded
 
         IEnumerable<(Coord[] coords, TagList tags)> pointCoords =
             data.Points.Select(p => (new[] { p.Coord }, p.Tags))
-            //.Union(data.MultiPoints.Select(mp => (mp.Coords, mp.Tags)));
             .Union(data.MultiPoints.Select(mp => (new[] { mp.GetBounds().Center }, mp.Tags)));
 
         IEnumerable<(Coord[] coords, TagList tags)> lineMidpoints =
             data.Lines.Select(l => (new[] { l.GetMidpoint() }, l.Tags))
-            //.Union(data.MultiLines.Select(ml => (ml.Select(cs => cs.GetMidpoint()).ToArray(), ml.Tags)));
             .Union(data.MultiLines.Select(ml => (new[] { ml.GetBounds().Center }, ml.Tags)));
 
         IEnumerable<(Coord[] coords, TagList tags)> polygonCentroids =
             data.Polygons.Select(p => (new[] { p.GetCenter() }, p.Tags))
-            //.Union(data.MultiPolygons.Select(mp => (mp.Select(cs => Bounds.FromCoords(cs).Center).ToArray(), mp.Tags)));
             .Union(data.MultiPolygons.Select(mp => (new[] { mp.GetBounds().Center }, mp.Tags)));
 
         IEnumerable<(Coord[] coords, TagList tags)> allPoints =

@@ -33,17 +33,14 @@ public class WorldMapFixture : BaseFixture
             srs);
 
         // Add data
-        map.DataSources.Add(
-            new VectorMapDataSource("land",
-                new VectorFileDataSource(Path.Join(TestDataPath,
-                "Natural Earth/ne_110m_land.shp"))));
-        map.DataSources.Add(
-            new VectorMapDataSource("countries",
-                new VectorFileDataSource(Path.Join(TestDataPath,
-                "Natural Earth/ne_110m_admin_0_countries.shp"))));
-        map.DataSources.Add(
-            new VectorMapDataSource("graticule",
-                new GraticuleDataSource { XInterval = 10, YInterval = 10 }));
+        map.VectorDataSources.Add("land",
+            new VectorFileDataSource(Path.Join(TestDataPath,
+            "Natural Earth/ne_110m_land.shp")));
+        map.VectorDataSources.Add("countries",
+            new VectorFileDataSource(Path.Join(TestDataPath,
+            "Natural Earth/ne_110m_admin_0_countries.shp")));
+        map.VectorDataSources.Add("graticule",
+            new GraticuleDataSource { XInterval = 10, YInterval = 10 });
 
         // Add styles
         map.Layers.Add(new VectorMapLayer(
