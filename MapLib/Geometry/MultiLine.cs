@@ -15,19 +15,33 @@ public class MultiLine : Shape, IEnumerable<Coord[]>
     public MultiLine(Coord[][] coords, TagList? tags) : base(tags)
     {
         Coords = coords;
+        Validate();
     }
 
     public MultiLine(Line line) : base(line.Tags)
     {
         Coords = [line.Coords];
+        Validate();
     }
 
     public MultiLine(IEnumerable<Line> lines, TagList? tags) : base(tags) {
         Coords = lines.Select(l => l.Coords).ToArray();
+        Validate();
     }
 
     public MultiLine(IEnumerable<MultiLine> multiLines, TagList? tags) : base(tags) {
         Coords = multiLines.SelectMany(ml => ml.Coords).ToArray();
+        Validate();
+    }
+
+    private void Validate() => Validate(Coords);
+
+    internal static void Validate(Coord[][] coords)
+    {
+        if (coords.Length == 0)
+            throw new ArgumentException("A MultiLine requires at least one line");
+        foreach (Coord[] line in coords)
+            Line.Validate(line);
     }
 
     #region Transformations

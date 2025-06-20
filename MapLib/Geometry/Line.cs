@@ -13,11 +13,21 @@ public class Line : Shape, IEnumerable<Coord>
     public Line(Coord[] coords, TagList? tags) : base(tags)
     {
         Coords = coords;
+        Validate();
     }
 
     public Line(IEnumerable<Coord> coords, TagList? tags) : base(tags)
     {
         Coords = coords.ToArray();
+        Validate();
+    }
+
+    private void Validate() => Validate(Coords);
+
+    internal static void Validate(Coord[] coords)
+    {
+        if (coords.Length < 2)
+            throw new ArgumentException("A line requires at least two coordinates", "coords");
     }
 
     public override Bounds GetBounds() {

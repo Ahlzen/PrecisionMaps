@@ -128,6 +128,9 @@ public class OsmDataReader : IVectorFormatReader
                     break;
                 case "bounds":
                     break; // don't care. we calculate our own
+                case "note":
+                case "meta":
+                    break; // don't care about these either
                 default:
                     Debug.Fail("Unknown node type: " + xmlNode.Name);
                     break;
@@ -236,9 +239,7 @@ public class OsmDataReader : IVectorFormatReader
     //   <tag k="type" v="route"/>
     // </relation>
     private void ParseRelation(XmlNode xmlNode,
-        //Dictionary<long, Line> ways,
         Dictionary<long, Coord[]> ways,
-        //Dictionary<long, MultiPolygon> multiPolygons,
         VectorDataBuilder builder)
     {
         long id = long.Parse(xmlNode.Attributes?["id"]?.Value ?? "");
@@ -249,20 +250,49 @@ public class OsmDataReader : IVectorFormatReader
         if (typeTag == null || typeTag.Value.Value != "multipolygon")
             return;
 
-        // TODO: Parse routes and other types of relations?
+        // NOTE: Relations _either_ reference previously defined
+        // ways, _or_ include coordinates (nd) directly
+        // as child tags of the member.
 
-        Coord[][] polygons = xmlNode.ChildNodes
+        List<Coord[]> polygons = new();
+
+        IEnumerable<XmlNode> wayMemberNodes = xmlNode.ChildNodes
             .Cast<XmlNode>()
             .Where(child => child.Name == "member")
-            .Where(child => child.Attributes?["type"]?.Value == "way")
-            .Select(child => long.Parse(child.Attributes?["ref"]?.Value ?? ""))
-            .Where(ways.ContainsKey) // no guarantee we have all relation members
-            .Select(wayId => ways[wayId].ToArray())
-            .ToArray();
-        MultiPolygon multiPolygon = new(polygons, tags);
-        //multiPolygons.Add(id, multiPolygon);
-        if (tags.Length > 0)
-            builder.MultiPolygons.Add(multiPolygon);
+            .Where(child => child.Attributes?["type"]?.Value == "way");
+        foreach (XmlNode wayMember in wayMemberNodes)
+        {
+            long refId = long.Parse(wayMember.Attributes?["ref"]?.Value ?? "");
+            if (ways.ContainsKey(refId))
+            {
+                // We have the referenced way: Use that
+                polygons.Add(ways[refId]);
+            }
+            else
+            {
+                // The nodes (nd) may be specified directly as children
+                IEnumerable<XmlNode> childNodes = wayMember.ChildNodes
+                    .Cast<XmlNode>()
+                    .Where(node => node.Name == "nd");
+                Coord[] way = childNodes
+                    .Select(n => new Coord(
+                        double.Parse(n.Attributes?["lon"]?.Value ?? ""),
+                        double.Parse(n.Attributes?["lat"]?.Value ?? "")))
+                    .ToArray();
+                polygons.Add(way);
+            }
+        }
+
+        try
+        {
+            MultiPolygon multiPolygon = new(polygons.ToArray(), tags);
+            if (tags.Length > 0)
+                builder.MultiPolygons.Add(multiPolygon);
+        }
+        catch (ArgumentException)
+        {
+            // Invalid polygon - no rings? Don't add.
+        }
     }
 
     protected TagList ParseTags(XmlNode node)

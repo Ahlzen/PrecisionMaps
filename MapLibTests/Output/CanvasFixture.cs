@@ -164,7 +164,7 @@ public class CanvasFixture : BaseFixture
     }
 
     [Test]
-    public void TestRenderMultipolygon()
+    public void TestRenderMultipolygon_FromGeoJSON()
     {
         Visualizer.LoadOgrDataAndDrawPolygons(
             Path.Join(TestDataPath, "Aaron River/Aaron River Reservoir.geojson"),
@@ -177,7 +177,7 @@ public class CanvasFixture : BaseFixture
     }
 
     [Test]
-    public void TestRenderFilledMultipolygon()
+    public void TestRenderFilledMultipolygon_FromGeoJSON()
     {
         Visualizer.LoadOgrDataAndDrawPolygons(
             Path.Join(TestDataPath, "Aaron River/Aaron River Reservoir.geojson"),
@@ -189,7 +189,30 @@ public class CanvasFixture : BaseFixture
     }
 
     [Test]
-    public void TestRenderShorelinePolygons_AaronRiver()
+    public void TestRenderFilledMultipolygon_FromOSM()
+    {
+        Visualizer.LoadOSMDataAndDrawPolygons(
+            Path.Join(TestDataPath, "osm-xml/Aaron River Reservoir.osm"),
+            600, 600, 600, 600, Color.AntiqueWhite, (canvas, multiPolygons) => {
+                CanvasLayer layer = canvas.AddNewLayer("water");
+                foreach (var multipolygon in multiPolygons)
+                    layer.DrawFilledMultiPolygon(multipolygon, Color.CornflowerBlue);
+            });
+        //OsmDataReader osmDataReader = new();
+        //VectorData data = osmDataReader.ReadFile(
+        //    Path.Join(TestDataPath,
+        //    "osm-xml/Weymouth Detail.osm");
+        //Visualizer.LoadOgrDataAndDrawPolygons(
+        //    Path.Join(TestDataPath, "Aaron River/Aaron River Reservoir.geojson"),
+        //    600, 600, 600, 600, Color.AntiqueWhite, (canvas, multiPolygons) => {
+        //        CanvasLayer layer = canvas.AddNewLayer("water");
+        //        foreach (var multipolygon in multiPolygons)
+        //            layer.DrawFilledMultiPolygon(multipolygon, Color.CornflowerBlue);
+        //    });
+    }
+
+    [Test]
+    public void TestRenderShorelinePolygons_AaronRiver_FromGeoJSON()
     {
         Visualizer.LoadOgrDataAndDrawPolygons(
             Path.Join(TestDataPath, "Aaron River/Aaron River Reservoir.geojson"),

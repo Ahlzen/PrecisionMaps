@@ -87,10 +87,23 @@ internal class Visualizer
         double geometryWidth, double geometryHeight,
         int canvasWidth, int canvasHeight,
         Color background, Action<Canvas, IEnumerable<MultiPolygon>> drawingFunc)
+        => DrawPolygons(new OgrDataReader().ReadFile(inputFilename),
+            geometryWidth, geometryHeight,
+            canvasWidth, canvasHeight, background, drawingFunc);
+
+    internal static void LoadOSMDataAndDrawPolygons(string inputFilename,
+        double geometryWidth, double geometryHeight,
+        int canvasWidth, int canvasHeight,
+        Color background, Action<Canvas, IEnumerable<MultiPolygon>> drawingFunc)
+        => DrawPolygons(new OsmDataReader().ReadFile(inputFilename),
+            geometryWidth, geometryHeight,
+            canvasWidth, canvasHeight, background, drawingFunc);
+
+    internal static void DrawPolygons(VectorData data,
+        double geometryWidth, double geometryHeight,
+        int canvasWidth, int canvasHeight,
+        Color background, Action<Canvas, IEnumerable<MultiPolygon>> drawingFunc)
     {
-        // Read data
-        OgrDataReader reader = new OgrDataReader();
-        VectorData data = reader.ReadFile(inputFilename);
         Console.WriteLine(FormatVectorDataSummary(data));
         VectorData transformedData = TransformToFit(data, geometryWidth, geometryHeight);
         BitmapCanvas bitmapCanvas = new BitmapCanvas(CanvasUnit.Pixel, canvasWidth, canvasHeight, background);

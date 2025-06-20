@@ -38,6 +38,12 @@ public class MultiPoint : Shape, IEnumerable<Coord>
         Coords = multiPoints.SelectMany(mp => mp.Coords).ToArray();
     }
 
+    internal static void Validate(Coord[] coords)
+    {
+        if (coords.Length == 0)
+            throw new ArgumentException("A MultiPoint requires at least one point");
+    }
+
     #region Transformations
 
     /// <returns>

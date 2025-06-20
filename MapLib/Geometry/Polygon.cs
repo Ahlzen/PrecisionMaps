@@ -20,11 +20,13 @@ public class Polygon : Line
         Validate();
     }
 
-    private void Validate()
+    private void Validate() => Validate(Coords);
+
+    internal static void Validate(Coord[] coords)
     {
-        if (Coords.Length < 3)
+        if (coords.Length < 3)
             throw new ArgumentException("A polygon requires at least three coordinates", "coords");
-        if (Coords[0] != Coords[Coords.Length - 1])
+        if (coords[0] != coords[coords.Length - 1])
             throw new ArgumentException("First and last points must be the same", "coords");
     }
 

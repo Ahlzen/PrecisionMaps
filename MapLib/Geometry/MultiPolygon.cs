@@ -14,20 +14,34 @@ public class MultiPolygon : Shape, IEnumerable<Coord[]>
     public MultiPolygon(Coord[][] coords, TagList? tags) : base(tags)
     {
         Coords = coords;
+        Validate();
     }
 
     public MultiPolygon(Polygon polygon, TagList? tags) : base(tags) {
         Coords = [polygon.Coords];
+        Validate();
     }
 
     public MultiPolygon(IEnumerable<Polygon> polygons, TagList? tags) : base(tags)
     {
         Coords = polygons.Select(p => p.Coords).ToArray();
+        Validate();
     }
 
     public MultiPolygon(IEnumerable<MultiPolygon> multiPolygons, TagList? tags) : base(tags)
     {
         Coords = multiPolygons.SelectMany(mp =>  mp.Coords).ToArray();
+        Validate();
+    }
+
+    private void Validate() => Validate(Coords);
+
+    internal static void Validate(Coord[][] coords)
+    {
+        if (coords.Length == 0)
+            throw new ArgumentException("A MultiPolygon requires at least one ring");
+        foreach (Coord[] ring in coords)
+            Polygon.Validate(ring);
     }
 
     #region Transformations
