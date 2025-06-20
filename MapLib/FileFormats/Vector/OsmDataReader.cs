@@ -263,10 +263,12 @@ public class OsmDataReader : IVectorFormatReader
         foreach (XmlNode wayMember in wayMemberNodes)
         {
             long refId = long.Parse(wayMember.Attributes?["ref"]?.Value ?? "");
+
+            Coord[] way;
             if (ways.ContainsKey(refId))
             {
                 // We have the referenced way: Use that
-                polygons.Add(ways[refId]);
+                way = ways[refId];
             }
             else
             {
@@ -274,13 +276,23 @@ public class OsmDataReader : IVectorFormatReader
                 IEnumerable<XmlNode> childNodes = wayMember.ChildNodes
                     .Cast<XmlNode>()
                     .Where(node => node.Name == "nd");
-                Coord[] way = childNodes
+                way = childNodes
                     .Select(n => new Coord(
                         double.Parse(n.Attributes?["lon"]?.Value ?? ""),
                         double.Parse(n.Attributes?["lat"]?.Value ?? "")))
                     .ToArray();
-                polygons.Add(way);
             }
+
+            // Verify polygon winding (reverse if needed)
+            string? role = wayMember.Attributes?["role"]?.Value;
+            if ((role == "outer" && way.IsInner()) ||
+                (role == "inner" && way.IsOuter()))
+            {
+                Debug.WriteLine($"Reversed way {refId}");
+                way = way.Reverse().ToArray();
+            }
+
+            polygons.Add(way);
         }
 
         try

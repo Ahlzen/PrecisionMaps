@@ -22,7 +22,7 @@ public class Polygon : Line
 
     private void Validate() => Validate(Coords);
 
-    internal static void Validate(Coord[] coords)
+    internal static new void Validate(Coord[] coords)
     {
         if (coords.Length < 3)
             throw new ArgumentException("A polygon requires at least three coordinates", "coords");
@@ -83,11 +83,21 @@ public class Polygon : Line
     /// Returns the winding of the polygon (true if CW, false if CCW).
     /// </summary>
     public bool IsClockwise => Area < 0;
-
+    
     /// <summary>
     /// Returns the winding of the polygon (false if CW, true if CCW).
     /// </summary>
     public bool IsCounterClockwise => Area > 0;
+
+    /// <summary>
+    /// True if this polygon is an outer ring (boundary).
+    /// </summary>
+    public bool IsOuter => IsCounterClockwise;
+
+    /// <summary>
+    /// True if this polygon is and inner ring (hole).
+    /// </summary>
+    public bool IsInner => IsClockwise;
 
     #endregion
 

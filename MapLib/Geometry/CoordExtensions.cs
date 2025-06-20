@@ -46,11 +46,13 @@ public static class CoordExtensions
     /// Returns the winding of the polygon (true if CW, false if CCW).
     /// </summary>
     public static bool IsClockwise(this Coord[] coords) => CalculatePolygonArea(coords) < 0;
+    public static bool IsInner(this Coord[] coords) => IsClockwise(coords);    
 
     /// <summary>
     /// Returns the winding of the polygon (false if CW, true if CCW).
     /// </summary>
     public static bool IsCounterClockwise(this Coord[] coords) => CalculatePolygonArea(coords) > 0;
+    public static bool IsOuter(this Coord[] coords) => IsCounterClockwise(coords);
 
     #endregion
 
