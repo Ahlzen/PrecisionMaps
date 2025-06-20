@@ -56,9 +56,9 @@ public class MultiPolygon : Shape, IEnumerable<Coord[]>
     public override Coord GetCenter()
         => GetBounds().Center;
 
-    public override Bounds GetBounds() {
-        if (_bounds == null)
-            _bounds = Bounds.FromBounds(Coords.Select(Bounds.FromCoords));
+    public override Bounds GetBounds()
+    {
+        _bounds ??= Bounds.FromCoords(Coords);
         return _bounds.Value;
     }
     private Bounds? _bounds; // cached bounds

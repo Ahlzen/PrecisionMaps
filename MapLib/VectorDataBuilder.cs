@@ -4,7 +4,7 @@ using Point = MapLib.Geometry.Point;
 namespace MapLib;
 
 /// <summary>
-/// Multable collection of vectory features (shapes).
+/// Mutable collection of vector features (shapes).
 /// </summary>
 public class VectorDataBuilder
 {

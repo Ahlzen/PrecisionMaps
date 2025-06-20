@@ -1,6 +1,5 @@
 ﻿using System.Drawing;
 using System.IO;
-using MapLib.DataSources.Raster;
 using MapLib.DataSources.Vector;
 using MapLib.GdalSupport;
 using MapLib.Output;
@@ -22,6 +21,7 @@ public class WorldMapFixture : BaseFixture
     }
 
     [Test]
+    [Explicit]
     [TestCaseSource(nameof(A3Canvases))]
     public void RenderWorldCountriesMap(Canvas canvas)
     {

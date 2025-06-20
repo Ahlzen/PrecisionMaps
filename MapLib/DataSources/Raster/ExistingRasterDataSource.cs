@@ -8,7 +8,7 @@ namespace MapLib.DataSources.Raster;
 
 internal class ExistingRasterDataSource : BaseRasterDataSource
 {
-    public override string Name => "Existing Raster";
+    public override string Name => "Existing Raster Data";
 
     public override string Srs => RasterData.Srs;
     public override Bounds? Bounds => RasterData.Bounds;

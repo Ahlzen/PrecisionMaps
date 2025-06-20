@@ -58,6 +58,9 @@ public struct Bounds : IEquatable<Bounds>
         return new Bounds(xMin, xMax, yMin, yMax);
     }
 
+    public static Bounds FromCoords(Coord[][] srcCoords)
+        => FromBounds(srcCoords.Select(FromCoords));
+
     public static Bounds FromBounds(IEnumerable<Bounds> srcBounds)
     {
         if (!srcBounds.Any()) throw new InvalidOperationException();

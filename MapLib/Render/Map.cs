@@ -193,10 +193,10 @@ public class Map : IHasSrs, IBounded
             if (layer is VectorMapLayer vectorLayer)
             {
                 BaseVectorDataSource? dataSource =
-                    VectorDataSources.GetValueOrDefault(vectorLayer.Name);
+                    VectorDataSources.GetValueOrDefault(vectorLayer.DataSourceName);
                 if (dataSource == null)
                     throw new InvalidOperationException(
-                        "Vector layer data source must use vector data source");
+                        $"Vector layer data source not found: \"{vectorLayer.DataSourceName}\"");
                 
                 using Transformer wgs84ToSourceTransformer = new(
                     Epsg.Wgs84, dataSource.Srs);
@@ -221,10 +221,10 @@ public class Map : IHasSrs, IBounded
             else if (layer is RasterMapLayer rasterLayer)
             {
                 BaseRasterDataSource? dataSource =
-                    RasterDataSources.GetValueOrDefault(rasterLayer.Name);
+                    RasterDataSources.GetValueOrDefault(rasterLayer.DataSourceName);
                 if (dataSource == null)
                     throw new InvalidOperationException(
-                        "Raster layer data source must use raster data source");
+                        $"Raster layer data source not found: \"{rasterLayer.DataSourceName}\"");
 
                 RasterData data = await dataSource.GetData(Srs);
                 DrawRaster(canvas, rasterLayer, data);
