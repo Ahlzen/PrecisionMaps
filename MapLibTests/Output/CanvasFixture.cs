@@ -189,7 +189,7 @@ public class CanvasFixture : BaseFixture
     }
 
     [Test]
-    public void TestRenderFilledMultipolygon_FromOSM()
+    public void TestRenderFilledMultipolygon_FromOsm()
     {
         Visualizer.LoadOSMDataAndDrawPolygons(
             Path.Join(TestDataPath, "osm-xml/Aaron River Reservoir.osm"),
@@ -198,17 +198,6 @@ public class CanvasFixture : BaseFixture
                 foreach (var multipolygon in multiPolygons)
                     layer.DrawFilledMultiPolygon(multipolygon, Color.CornflowerBlue);
             });
-        //OsmDataReader osmDataReader = new();
-        //VectorData data = osmDataReader.ReadFile(
-        //    Path.Join(TestDataPath,
-        //    "osm-xml/Weymouth Detail.osm");
-        //Visualizer.LoadOgrDataAndDrawPolygons(
-        //    Path.Join(TestDataPath, "Aaron River/Aaron River Reservoir.geojson"),
-        //    600, 600, 600, 600, Color.AntiqueWhite, (canvas, multiPolygons) => {
-        //        CanvasLayer layer = canvas.AddNewLayer("water");
-        //        foreach (var multipolygon in multiPolygons)
-        //            layer.DrawFilledMultiPolygon(multipolygon, Color.CornflowerBlue);
-        //    });
     }
 
     [Test]

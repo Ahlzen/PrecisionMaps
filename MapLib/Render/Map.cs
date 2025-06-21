@@ -261,8 +261,8 @@ public class Map : IHasSrs, IBounded
             .Union(data.MultiLines.Select(ml => (new[] { ml.GetBounds().Center }, ml.Tags)));
 
         IEnumerable<(Coord[] coords, TagList tags)> polygonCentroids =
-            data.Polygons.Select(p => (new[] { p.GetCenter() }, p.Tags))
-            .Union(data.MultiPolygons.Select(mp => (new[] { mp.GetBounds().Center }, mp.Tags)));
+            data.Polygons.Select(p => (new[] { PolyLabel.Calculate(p) }, p.Tags))
+            .Union(data.MultiPolygons.Select(mp => (new[] { PolyLabel.Calculate(mp) }, mp.Tags)));
 
         IEnumerable<(Coord[] coords, TagList tags)> allPoints =
             pointCoords.Union(lineMidpoints).Union(polygonCentroids);
