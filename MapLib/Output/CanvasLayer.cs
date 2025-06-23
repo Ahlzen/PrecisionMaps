@@ -9,8 +9,6 @@ public abstract class CanvasLayer : IDisposable
 
     public string? Name { get; set; }
 
-    // TODO: layer opacity, blending modes, mask
-
     public abstract void DrawBitmap(
         Bitmap bitmap,
         double x, double y, double width, double height,
@@ -92,18 +90,15 @@ public abstract class CanvasLayer : IDisposable
         double radius, Color color)
         => DrawFilledCircles([coord], radius, color);
 
-    /// <param name="emSizePt">
-    /// Text em-size (total body height), in canvas units.
-    /// </param>
-    [Obsolete]
-    public abstract void DrawText(string s, Coord coord,
-        Color color, string font, double emSize,
-        TextHAlign hAlign, TextVAlign vAlign);
-
-
-    /// <returns>Measured width and height of the string (in canvas units)</returns>
+    
+    /// <returns>
+    /// Measured width and height of the string (in canvas units)
+    /// </returns>
     public abstract Coord GetTextSize(string font, double emSize, string s);
 
+    /// <param name="emSize">
+    /// Text em-size (total body height), in canvas units.
+    /// </param>
     public abstract void DrawText(
         string fontName, double emSize, string s,
         Coord centerCoord, Color color);

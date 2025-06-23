@@ -4,6 +4,7 @@ using MapLib.Geometry.Helpers;
 using MapLib.Output;
 using System.Diagnostics;
 using System.Drawing;
+using System.Threading.Tasks;
 using MapLib.DataSources;
 
 namespace MapLib.Render;
@@ -55,6 +56,29 @@ public class Map : IHasSrs, IBounded
     {
         Srs = mapSrs;
         RequestedBoundsWgs84 = boundsWgs84;                       
+    }
+
+    public async void Render(Canvas canvas,
+        AspectRatioMismatchStrategy ratioMismatchStrategy = AspectRatioMismatchStrategy.CenterOnCanvas)
+    {
+        ComputeActualBounds(canvas, ratioMismatchStrategy);
+        
+        foreach (MapLayer layer in Layers)
+        {
+            if (layer is VectorMapLayer vectorLayer)
+            {
+                await RenderVectorLayer(canvas, vectorLayer);
+            }
+            else if (layer is RasterMapLayer rasterLayer)
+            {
+                await RenderRasterLayer(canvas, rasterLayer);
+            }
+            else
+            {
+                throw new NotSupportedException(
+                    "Unsupported layer type: " + layer.GetType());
+            }
+        }
     }
 
     private void ComputeActualBounds(
@@ -180,62 +204,35 @@ public class Map : IHasSrs, IBounded
         _offsetY = canvasOffsetY + -ActualBoundsMapSrs.YMin * _scaleY;
     }
 
-    public async void Render(Canvas canvas,
-        AspectRatioMismatchStrategy ratioMismatchStrategy = AspectRatioMismatchStrategy.CenterOnCanvas)
+    private async Task RenderVectorLayer(Canvas canvas, VectorMapLayer vectorLayer)
     {
-        ComputeActualBounds(canvas, ratioMismatchStrategy);
-
-        //Dictionary<string, MapDataSource> sourcesByName =
-        //    DataSources.ToDictionary(ds => ds.Name);
-        
-        foreach (MapLayer layer in Layers)
-        {
-            if (layer is VectorMapLayer vectorLayer)
-            {
-                BaseVectorDataSource? dataSource =
-                    VectorDataSources.GetValueOrDefault(vectorLayer.DataSourceName);
-                if (dataSource == null)
-                    throw new InvalidOperationException(
-                        $"Vector layer data source not found: \"{vectorLayer.DataSourceName}\"");
+        BaseVectorDataSource? dataSource =
+            VectorDataSources.GetValueOrDefault(vectorLayer.DataSourceName);
+        if (dataSource == null)
+            throw new InvalidOperationException(
+                $"Vector layer data source not found: \"{vectorLayer.DataSourceName}\"");
                 
-                using Transformer wgs84ToSourceTransformer = new(
-                    Epsg.Wgs84, dataSource.Srs);
-                using Transformer sourceToMapTransformer = new(
-                    dataSource.Srs, Srs);
-                Bounds dataSourceBounds = wgs84ToSourceTransformer.Transform(RequestedBoundsWgs84);
+        using Transformer wgs84ToSourceTransformer = new(
+            Epsg.Wgs84, dataSource.Srs);
+        using Transformer sourceToMapTransformer = new(
+            dataSource.Srs, Srs);
+        Bounds dataSourceBounds = wgs84ToSourceTransformer.Transform(RequestedBoundsWgs84);
 
-                VectorData data = await dataSource.GetData(dataSourceBounds, Srs);
+        VectorData data = await dataSource.GetData(dataSourceBounds, Srs);
 
-                // Filter features (if applicable)
-                if (vectorLayer.Filter != null)
-                    data = vectorLayer.Filter.Filter(data);
+        // Filter features (if applicable)
+        if (vectorLayer.Filter != null)
+            data = vectorLayer.Filter.Filter(data);
 
-                // Transform to canvas space
-                VectorData dataInCanvasSpace =
-                    data.Transform(_scaleX, _scaleY, _offsetX, _offsetY);
+        // Transform to canvas space
+        VectorData dataInCanvasSpace =
+            data.Transform(_scaleX, _scaleY, _offsetX, _offsetY);
 
-                // Render data onto canvas
-                DrawVectors(canvas, vectorLayer, dataInCanvasSpace);
-
-            }
-            else if (layer is RasterMapLayer rasterLayer)
-            {
-                BaseRasterDataSource? dataSource =
-                    RasterDataSources.GetValueOrDefault(rasterLayer.DataSourceName);
-                if (dataSource == null)
-                    throw new InvalidOperationException(
-                        $"Raster layer data source not found: \"{rasterLayer.DataSourceName}\"");
-
-                RasterData data = await dataSource.GetData(Srs);
-                DrawRaster(canvas, rasterLayer, data);
-            }
-            else
-            {
-                throw new NotSupportedException(
-                    "Unsupported layer type: " + layer.GetType());
-            }
-        }
+        // Render data onto canvas
+        DrawVectors(canvas, vectorLayer, dataInCanvasSpace);
     }
+
+    #region Vector helpers
 
     private void DrawVectors(Canvas canvas, VectorMapLayer mapLayer, VectorData data)
     {
@@ -267,91 +264,107 @@ public class Map : IHasSrs, IBounded
         IEnumerable<(Coord[] coords, TagList tags)> allPoints =
             pointCoords.Union(lineMidpoints).Union(polygonCentroids);
 
-        // Fill
-        if (fillColor != null)
-        {
-            foreach (Polygon p in data.Polygons)
-                layer.DrawFilledPolygon(p.Coords, fillColor.Value);
-            foreach (MultiPolygon mp in data.MultiPolygons)
-                layer.DrawFilledMultiPolygon(mp.Coords, fillColor.Value);
-        }
+        Fill(data, fillColor, layer);
+        Stroke(data, lineColor, lineWidth, layer, pointCoords);
+        DrawSymbols(canvas, style, layer, allPoints);
+        DrawTextLabels(canvas, style, allPoints, layer);
+    }
 
-        // Stroke
-        if (lineColor != null && lineWidth != null)
-        {
-            // Points
-            layer.DrawFilledCircles(pointCoords.SelectMany(c => c.coords),
-                lineWidth.Value, lineColor.Value);
+    private static void Fill(VectorData data, Color? fillColor, CanvasLayer layer)
+    {
+        if (fillColor == null) return;
 
-            // Lines
-            foreach (Line l in data.Lines)
-                layer.DrawLine(l.Coords, lineWidth.Value, lineColor.Value);
-            foreach (MultiLine ml in data.MultiLines)
-                layer.DrawLines(ml.Coords, lineWidth.Value, lineColor.Value);
+        foreach (Polygon p in data.Polygons)
+            layer.DrawFilledPolygon(p.Coords, fillColor.Value);
+        foreach (MultiPolygon mp in data.MultiPolygons)
+            layer.DrawFilledMultiPolygon(mp.Coords, fillColor.Value);
+    }
 
-            // Polygons
-            foreach (Polygon p in data.Polygons)
-                layer.DrawLine(p.Coords, lineWidth.Value, lineColor.Value);
-            foreach (MultiPolygon mp in data.MultiPolygons)
-                layer.DrawLines(mp.Coords, lineWidth.Value, lineColor.Value);
-        }
+    private static void Stroke(VectorData data, Color? lineColor, double? lineWidth, CanvasLayer layer,
+        IEnumerable<(Coord[] coords, TagList tags)> pointCoords)
+    {
+        if (lineColor == null || lineWidth == null) return;
 
-        // Symbol
-        if (style.Symbol != null)
-        {
-            SymbolType symbolType = style.Symbol.Value;
-            double symbolSize = style.SymbolSize ?? canvas.Width * 0.001;
-            Color symbolFillColor = style.SymbolColor ?? Color.Black;
+        // Points
+        layer.DrawFilledCircles(pointCoords.SelectMany(c => c.coords),
+            lineWidth.Value, lineColor.Value);
+
+        // Lines
+        foreach (Line l in data.Lines)
+            layer.DrawLine(l.Coords, lineWidth.Value, lineColor.Value);
+        foreach (MultiLine ml in data.MultiLines)
+            layer.DrawLines(ml.Coords, lineWidth.Value, lineColor.Value);
+
+        // Polygons
+        foreach (Polygon p in data.Polygons)
+            layer.DrawLine(p.Coords, lineWidth.Value, lineColor.Value);
+        foreach (MultiPolygon mp in data.MultiPolygons)
+            layer.DrawLines(mp.Coords, lineWidth.Value, lineColor.Value);
+    }
+
+    private void DrawSymbols(Canvas canvas, VectorStyle style,
+        CanvasLayer layer, IEnumerable<(Coord[] coords, TagList tags)> allPoints)
+    {
+        if (style.Symbol == null) return;
+
+        SymbolType? symbolType = style.Symbol;
+        double symbolSize = style.SymbolSize ?? canvas.Width * 0.001;
+        Color symbolFillColor = style.SymbolColor ?? Color.Black;
             
-
-            switch (style.Symbol)
-            {
-                case SymbolType.Circle:
-                    layer.DrawFilledCircles(allPoints.SelectMany(c => c.coords),
-                        symbolSize/2, symbolFillColor);
-                    foreach (Coord point in allPoints.SelectMany(p => p.coords))
-                        PlacementManager.TryAdd([new Bounds(
-                            point.X-symbolSize/2, point.X+symbolSize/2,
-                            point.Y-symbolSize/2, point.Y+symbolSize/2)]);
-                    break;
-                case SymbolType.Square:
-                    throw new NotImplementedException();
-                    break;
-                case SymbolType.Star:
-                    throw new NotImplementedException();
-                    break;
-                case SymbolType.Image:
-                    throw new NotImplementedException();
-                    break;
-            }
+        switch (symbolType)
+        {
+            case SymbolType.Circle:
+                layer.DrawFilledCircles(allPoints.SelectMany(c => c.coords),
+                    symbolSize/2, symbolFillColor);
+                foreach (Coord point in allPoints.SelectMany(p => p.coords))
+                    PlacementManager.TryAdd([new Bounds(
+                        point.X-symbolSize/2, point.X+symbolSize/2,
+                        point.Y-symbolSize/2, point.Y+symbolSize/2)]);
+                break;
+            case SymbolType.Square:
+                throw new NotImplementedException();
+                break;
+            case SymbolType.Star:
+                throw new NotImplementedException();
+                break;
+            case SymbolType.Image:
+                throw new NotImplementedException();
+                break;
         }
+    }
 
-        // Text label
-        if (style.TextTag != null)
-        {        
-            Color textColor = style.TextColor ?? Color.Black;
-            string fontName = style.TextFont ?? "Calibri";
-            double fontSize = style.TextSize ?? canvas.Width * 0.003;
-            foreach ((Coord[] coords, TagList tags) point in allPoints)
+    private void DrawTextLabels(Canvas canvas, VectorStyle style,
+        IEnumerable<(Coord[] coords, TagList tags)> allPoints,
+        CanvasLayer layer)
+    {
+        if (style.TextTag == null)  return;
+
+        Color textColor = style.TextColor ?? Color.Black;
+        string fontName = style.TextFont ?? "Calibri";
+        double fontSize = style.TextSize ?? canvas.Width * 0.003;
+        foreach ((Coord[] coords, TagList tags) point in allPoints)
+        {
+            // TODO: Factor out TagList lookup?
+            string? labelText = TagFilter.ValueOrNull(point.tags, style.TextTag);
+            if (labelText == null) continue;
+
+            double spacing = fontSize * 0.3; // spacing between point and edge of text
+            Coord textSize = layer.GetTextSize(fontName, fontSize, labelText);
+
+            // NOTE: Usually a single coord per array (since these
+            // are text labels)
+            foreach (Coord coord in point.coords)
             {
-                // TODO: Factor out TagList lookup?
-                string? labelText = TagFilter.ValueOrNull(point.tags, style.TextTag);
-                if (labelText == null) continue;
-
-                double spacing = fontSize * 0.2; // spacing between point and edge of text
-                Coord textSize = layer.GetTextSize(fontName, fontSize, labelText);
-
-                // NOTE: Usually a single coord per array (since these
-                // are text labels)
-                foreach (Coord coord in point.coords)
-                {
-                    Coord? placement = GetLabelPlacement(coord, textSize, fontSize * 0.3);
-                    if (placement != null)
-                        layer.DrawText(fontName, fontSize, labelText, placement.Value, textColor);
-                }
+                Coord? placement = GetLabelPlacement(coord, textSize, spacing);
+                if (placement != null)
+                    layer.DrawText(fontName, fontSize, labelText, placement.Value, textColor);
             }
         }
     }
+
+    #endregion
+
+    #region Label placement
 
     /// <param name="featureCoord">Feature centerpoint.</param>
     /// <param name="textSize">Measured size of text</param>
@@ -392,6 +405,22 @@ public class Map : IHasSrs, IBounded
         if (PlacementManager.TryAdd([bounds]) != null)
             return new Coord(x, y);
         return null;
+    }
+
+    #endregion
+
+    #region Raster helpers
+
+    private async Task RenderRasterLayer(Canvas canvas, RasterMapLayer rasterLayer)
+    {
+        BaseRasterDataSource? dataSource =
+            RasterDataSources.GetValueOrDefault(rasterLayer.DataSourceName);
+        if (dataSource == null)
+            throw new InvalidOperationException(
+                $"Raster layer data source not found: \"{rasterLayer.DataSourceName}\"");
+
+        RasterData data = await dataSource.GetData(Srs);
+        DrawRaster(canvas, rasterLayer, data);
     }
 
     private void DrawRaster(Canvas canvas, RasterMapLayer mapLayer, RasterData data)
@@ -439,4 +468,6 @@ public class Map : IHasSrs, IBounded
             throw new NotSupportedException("Unsupported raster data type");
         }
     }
+
+    #endregion
 }

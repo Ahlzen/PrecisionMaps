@@ -244,63 +244,30 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
         }
     }
 
-    /// <param name="emSizePt">Text em-size, in canvas units</param>
-    [Obsolete]
-    public override void DrawText(string s, Coord coord,
-        Color color, string fontName, double emSize,
-        TextHAlign hAlign, TextVAlign vAlign)
+    // TODO: Move to base class?
+    public override Coord GetTextSize(string fontName, double emSize, string s)
     {
+        // TODO: optimize. Cache Font?
         using Font font = GetFont(fontName, emSize);
-        using Brush brush = new SolidBrush(color);
-
         SizeF stringSize = _graphics.MeasureString(s, font);
-        float baseline = GetBaseline(font); // Top<->Baseline distance
+        return new Coord(stringSize.Width, stringSize.Height);
+    }
 
-        float x = (float)coord.X;
-        float y = (float)(_height - coord.Y);
+    public override void DrawText(string fontName, double emSize,
+        string s, Coord centerCoord, Color color)
+    {
+        PointF point = ToPoint(centerCoord);
 
-        // Graphics.DrawString coordinates are for top left corner.
-        // Adjust location depending on selected alignment:
-        switch (hAlign) {
-            case TextHAlign.Left: break; // no extra offset
-            case TextHAlign.Center: x -= stringSize.Width / 2.0f; break;
-            case TextHAlign.Right: x -= stringSize.Width; break;
-        }
-        switch (vAlign) {
-            case TextVAlign.Top: break; // no extra offset
-            case TextVAlign.Center: y -= stringSize.Height / 2; break;
-            case TextVAlign.Baseline: y -= baseline; break;
-            case TextVAlign.Bottom: y -= stringSize.Height; break;
-        }
+        // TODO: optimize. Cache Font?
+        using Font font = GetFont(fontName, emSize);
+        SizeF stringSize = _graphics.MeasureString(s, font);
+        // DrawString assumes top left corner, so we have to subtract
+        // half the string size to center
+        point.X -= stringSize.Width / 2;
+        point.Y -= stringSize.Height / 2;
 
-#if EXTRADEBUG
-        float lineWidth = (float)emSize * 0.03f;
-        float pointRadius = (float)emSize * 0.15f;
-        using Brush debugBrush = new SolidBrush(DebugColor);
-        using Pen debugPen = new Pen(DebugColor, lineWidth);
-        // text coordinate
-        _graphics.FillEllipse(debugBrush, new RectangleF(
-            (float)(coord.X) - pointRadius,
-            (float)(_height - coord.Y) - pointRadius,
-            pointRadius * 2,
-            pointRadius * 2));
-        // bbox
-        _graphics.DrawLines(debugPen, new PointF[] {
-            new PointF(x, y),
-            new PointF(x + stringSize.Width, y),
-            new PointF(x + stringSize.Width, y + stringSize.Height),
-            new PointF(x, y + stringSize.Height),
-            new PointF(x, y)
-            });
-        // baseline
-        _graphics.DrawLines(debugPen, new PointF[] {
-            new PointF(x, y + baseline),
-            new PointF(x + stringSize.Width, y + baseline)});
-#endif
-        // point is top left corner
-        _graphics.DrawString(s, font, brush,
-            point: new PointF(x, y));
-        _graphics.DrawEllipse(debugPen, new RectangleF(x - 2, y - 2, 4, 4));
+        using Brush brush = new SolidBrush(color);
+        _graphics.DrawString(s, font, brush, point);
     }
 
     internal Bitmap Bitmap { get; }
@@ -407,32 +374,6 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
     private Font GetFont(string fontName, double emSize)
     {
         return new Font(fontName, (float)emSize);
-    }
-
-    // TODO: Move to base class?
-    public override Coord GetTextSize(string fontName, double emSize, string s)
-    {
-        // TODO: optimize. Cache Font?
-        using Font font = GetFont(fontName, emSize);
-        SizeF stringSize = _graphics.MeasureString(s, font);
-        return new Coord(stringSize.Width, stringSize.Height);
-    }
-
-    public override void DrawText(string fontName, double emSize,
-        string s, Coord centerCoord, Color color)
-    {
-        PointF point = ToPoint(centerCoord);
-
-        // TODO: optimize. Cache Font?
-        using Font font = GetFont(fontName, emSize);
-        SizeF stringSize = _graphics.MeasureString(s, font);
-        // DrawString assumes top left corner, so we have to subtract
-        // half the string size to center
-        point.X -= stringSize.Width / 2;
-        point.Y -= stringSize.Height / 2;
-
-        using Brush brush = new SolidBrush(color);
-        _graphics.DrawString(s, font, brush, point);
     }
 
     #endregion
