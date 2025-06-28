@@ -5,9 +5,14 @@ namespace MapLib.Output;
 
 public abstract class CanvasLayer : IDisposable
 {
+    public static readonly Color MaskBackgroundColor = Color.White;
+    public static readonly Color MaskColor = Color.Black;
+
     public abstract void Dispose();
 
     public string? Name { get; set; }
+
+    public abstract void Clear(Color color);
 
     public abstract void DrawBitmap(
         Bitmap bitmap,
@@ -28,7 +33,6 @@ public abstract class CanvasLayer : IDisposable
         LineJoin join = LineJoin.Miter, // TODO: miter limit
         double[]? dasharray = null);
 
-    
 
     /// <summary>
     /// Draws the outline of a polygon.
@@ -102,4 +106,11 @@ public abstract class CanvasLayer : IDisposable
     public abstract void DrawText(
         string fontName, double emSize, string s,
         Coord centerCoord, Color color);
+
+    public abstract void DrawTextOutline(
+        string fontName, double emSize, string s,
+        Coord centerCoord, Color color, double lineWidth,
+        LineJoin join = LineJoin.Miter); // TODO: miter limit);
+
+    public abstract void ApplyMask(CanvasLayer maskSource);
 }

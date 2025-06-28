@@ -40,6 +40,20 @@ public static class FileSystemHelpers
     }
 
     /// <summary>
+    /// Adds the given suffix to the filename/path, before any file extension.
+    /// </summary>
+    /// <remarks>
+    /// For example:
+    /// Path: c:\path\to\file.txt, suffix: _suffix
+    /// c:\path\to\file.txt -> c:\path\to\file_suffix.txt
+    /// </remarks>
+    public static string AppendToFilename(string path, string? suffix)
+        => Path.Combine(
+            Path.GetDirectoryName(path) ?? "",
+            Path.GetFileNameWithoutExtension(path) + suffix ?? "" +
+            Path.GetExtension(path));
+
+    /// <summary>
     /// Attempts to delete a file. Returns true
     /// on success, false otherwise. Does not throw.
     /// </summary>

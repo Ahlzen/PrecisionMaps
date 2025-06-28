@@ -46,11 +46,14 @@ public class Map : IHasSrs, IBounded
     public OrderedDictionary<string, BaseRasterDataSource> RasterDataSources { get; } = new();
 
     public List<MapLayer> Layers { get; } = new();
+    //private Dictionary<string, CanvasMask> Masks { get; } = new();
+    private Dictionary<string, CanvasLayer> Masks { get; } = new();
 
     public ObjectPlacementManager PlacementManager { get; } = new(); 
 
     private double _scaleX, _scaleY;
     private double _offsetX, _offsetY;
+
 
     public Map(Bounds boundsWgs84, string mapSrs)
     {
@@ -63,6 +66,21 @@ public class Map : IHasSrs, IBounded
     {
         ComputeActualBounds(canvas, ratioMismatchStrategy);
         
+        // Render layer masks
+        foreach (MapLayer layer in Layers)
+        {
+            if (layer is VectorMapLayer vectorLayer)
+            {
+                if (vectorLayer.Style.MaskName == null)
+                    continue; // no mask
+
+                // Find or create mask layer
+                await RenderVectorMask(vectorLayer.Style.MaskName,
+                    canvas, vectorLayer);
+            }
+        }
+
+        // Render visible layers
         foreach (MapLayer layer in Layers)
         {
             if (layer is VectorMapLayer vectorLayer)
@@ -206,12 +224,34 @@ public class Map : IHasSrs, IBounded
 
     private async Task RenderVectorLayer(Canvas canvas, VectorMapLayer vectorLayer)
     {
+        var dataInCanvasSpace = await GetVectorDataForLayer(vectorLayer);
+        CanvasLayer layer = DrawVectors(vectorLayer.Name,
+            canvas, vectorLayer, dataInCanvasSpace, false);
+
+        // Apply any mask(s)
+        foreach (var maskName in vectorLayer.Style.MaskedBy)
+        {
+            if (!Masks.TryGetValue(maskName, out CanvasLayer? mask))
+                throw new ApplicationException("Mask not found: " + maskName);
+            layer.ApplyMask(mask);
+        }
+    }
+
+    private async Task RenderVectorMask(string maskName,
+        Canvas canvas, VectorMapLayer vectorLayer)
+    {
+        var dataInCanvasSpace = await GetVectorDataForLayer(vectorLayer);
+        DrawVectors(maskName, canvas, vectorLayer, dataInCanvasSpace, true);
+    }
+
+    private async Task<VectorData> GetVectorDataForLayer(VectorMapLayer vectorLayer)
+    {
         BaseVectorDataSource? dataSource =
             VectorDataSources.GetValueOrDefault(vectorLayer.DataSourceName);
         if (dataSource == null)
             throw new InvalidOperationException(
                 $"Vector layer data source not found: \"{vectorLayer.DataSourceName}\"");
-                
+
         using Transformer wgs84ToSourceTransformer = new(
             Epsg.Wgs84, dataSource.Srs);
         using Transformer sourceToMapTransformer = new(
@@ -227,99 +267,162 @@ public class Map : IHasSrs, IBounded
         // Transform to canvas space
         VectorData dataInCanvasSpace =
             data.Transform(_scaleX, _scaleY, _offsetX, _offsetY);
-
-        // Render data onto canvas
-        DrawVectors(canvas, vectorLayer, dataInCanvasSpace);
+        return dataInCanvasSpace;
     }
 
     #region Vector helpers
 
-    private void DrawVectors(Canvas canvas, VectorMapLayer mapLayer, VectorData data)
+    /// <returns>
+    /// The resulting CanvasLayer.
+    /// </returns>
+    private CanvasLayer DrawVectors(
+        string layerName,
+        Canvas canvas, VectorMapLayer mapLayer,
+        VectorData data, bool isMask)
     {
-        // TEST CODE (placeholder for real rendering)
-
-        CanvasLayer layer = canvas.AddNewLayer(mapLayer.Name);
+        CanvasLayer layer = canvas.AddNewLayer(layerName);
         VectorStyle style = mapLayer.Style;
 
-        Color? lineColor = style.LineColor;
-        Color? fillColor = style.FillColor;
-        double? lineWidth = style.LineWidth;
+        if (isMask)
+        {
+            layer.Clear(CanvasLayer.MaskBackgroundColor);
+            Masks.Add(layerName, layer);
+        }
 
+        // Compute coordinates
         // TODO: Only enumerate these if we really need them
         // TODO: Use better polygon centroid algorithm (at least
         // some form of point-in-polygon!)
+        GetVectorDataCoordinates(data, out var pointCoords, out var lineMidpoints, out var polygonCentroids, out var allPoints);
 
-        IEnumerable<(Coord[] coords, TagList tags)> pointCoords =
-            data.Points.Select(p => (new[] { p.Coord }, p.Tags))
-            .Union(data.MultiPoints.Select(mp => (new[] { mp.GetBounds().Center }, mp.Tags)));
+        if (isMask)
+        {
+            if (style.LineMaskWidth != null)
+                Stroke(canvas, layer, data.Lines, data.MultiLines, null, null,
+                    CanvasLayer.MaskColor, style.LineWidth + style.LineMaskWidth * 2);
+            if (style.PolygonMaskWidth != null)
+                Stroke(canvas, layer, null, null, data.Polygons, data.MultiPolygons,
+                    CanvasLayer.MaskColor, style.PolygonMaskWidth * 2);
+            if (style.SymbolMaskWidth != null)
+                DrawSymbols(canvas, layer, allPoints, style.Symbol,
+                    style.SymbolSize + style.SymbolMaskWidth * 2, style.SymbolColor);
+            if (style.TextMaskWidth != null)
+                DrawTextLabels(canvas, layer, allPoints, style, style.TextMaskWidth * 2);
+        }
+        else
+        {
+            Fill(canvas, layer, data.Polygons, data.MultiPolygons, style.FillColor);
+            Stroke(canvas, layer, data.Lines, data.MultiLines, data.Polygons, data.MultiPolygons, style.LineColor, style.LineWidth);
+            DrawSymbols(canvas, layer, allPoints, style.Symbol, style.SymbolSize, style.SymbolColor);
+            DrawTextLabels(canvas, layer, allPoints, style);
+        }
 
-        IEnumerable<(Coord[] coords, TagList tags)> lineMidpoints =
-            data.Lines.Select(l => (new[] { l.GetMidpoint() }, l.Tags))
-            .Union(data.MultiLines.Select(ml => (new[] { ml.GetBounds().Center }, ml.Tags)));
-
-        IEnumerable<(Coord[] coords, TagList tags)> polygonCentroids =
-            data.Polygons.Select(p => (new[] { PolyLabel.Calculate(p) }, p.Tags))
-            .Union(data.MultiPolygons.Select(mp => (new[] { PolyLabel.Calculate(mp) }, mp.Tags)));
-
-        IEnumerable<(Coord[] coords, TagList tags)> allPoints =
-            pointCoords.Union(lineMidpoints).Union(polygonCentroids);
-
-        Fill(data, fillColor, layer);
-        Stroke(data, lineColor, lineWidth, layer, pointCoords);
-        DrawSymbols(canvas, style, layer, allPoints);
-        DrawTextLabels(canvas, style, allPoints, layer);
+        return layer;
     }
 
-    private static void Fill(VectorData data, Color? fillColor, CanvasLayer layer)
+    //public void DrawVectorMask(Canvas canvas, VectorMapLayer mapLayer, VectorData data, boo)
+    //{
+    //    VectorStyle style = mapLayer.Style;
+
+    //    string? maskName = mapLayer.Style.MaskName;
+    //    if (maskName == null)
+    //        return;
+
+    //    CanvasMask mask = canvas.AddNewMask(maskName);
+
+    //    // TODO: DRY. Only compute these once per layer/source
+    //    GetVectorDataCoordinates(data, out var pointCoords, out var lineMidpoints, out var polygonCentroids, out var allPoints);
+
+
+    //}
+
+    private static void GetVectorDataCoordinates(VectorData data,
+        out IEnumerable<(Coord[] coords, TagList tags)> pointCoords,
+        out IEnumerable<(Coord[] coords, TagList tags)> lineMidpoints,
+        out IEnumerable<(Coord[] coords, TagList tags)> polygonCentroids,
+        out IEnumerable<(Coord[] coords, TagList tags)> allPoints)
+    {
+        pointCoords = data.Points.Select(p => (new[] { p.Coord }, p.Tags))
+            .Union(data.MultiPoints.Select(mp => (new[] { mp.GetBounds().Center }, mp.Tags)));
+        lineMidpoints = data.Lines.Select(l => (new[] { l.GetMidpoint() }, l.Tags))
+            .Union(data.MultiLines.Select(ml => (new[] { ml.GetBounds().Center }, ml.Tags)));
+        polygonCentroids = data.Polygons.Select(p => (new[] { PolyLabel.Calculate(p) }, p.Tags))
+            .Union(data.MultiPolygons.Select(mp => (new[] { PolyLabel.Calculate(mp) }, mp.Tags)));
+        allPoints = pointCoords.Union(lineMidpoints).Union(polygonCentroids);
+    }
+
+    private static void Fill(
+        Canvas canvas, CanvasLayer layer,
+        IEnumerable<Polygon>? polygons,
+        IEnumerable<MultiPolygon>? multiPolygons,
+        Color? fillColor)
     {
         if (fillColor == null) return;
 
-        foreach (Polygon p in data.Polygons)
-            layer.DrawFilledPolygon(p.Coords, fillColor.Value);
-        foreach (MultiPolygon mp in data.MultiPolygons)
-            layer.DrawFilledMultiPolygon(mp.Coords, fillColor.Value);
+        if (polygons != null)
+            foreach (Polygon p in polygons)
+                layer.DrawFilledPolygon(p.Coords, fillColor.Value);
+        if (multiPolygons != null)
+            foreach (MultiPolygon mp in multiPolygons)
+                layer.DrawFilledMultiPolygon(mp.Coords, fillColor.Value);
     }
 
-    private static void Stroke(VectorData data, Color? lineColor, double? lineWidth, CanvasLayer layer,
-        IEnumerable<(Coord[] coords, TagList tags)> pointCoords)
+    private static void Stroke(
+        Canvas canvas, CanvasLayer layer,
+        IEnumerable<Line>? lines,
+        IEnumerable<MultiLine>? multiLines,
+        IEnumerable<Polygon>? polygons,
+        IEnumerable<MultiPolygon>? multiPolygons,
+        Color? lineColor, double? lineWidth)
+        //IEnumerable<(Coord[] coords, TagList tags)> pointCoords)
+
     {
         if (lineColor == null || lineWidth == null) return;
 
-        // Points
-        layer.DrawFilledCircles(pointCoords.SelectMany(c => c.coords),
-            lineWidth.Value, lineColor.Value);
+        //// Points
+        //layer.DrawFilledCircles(pointCoords.SelectMany(c => c.coords),
+        //    lineWidth.Value, lineColor.Value);
 
         // Lines
-        foreach (Line l in data.Lines)
-            layer.DrawLine(l.Coords, lineWidth.Value, lineColor.Value);
-        foreach (MultiLine ml in data.MultiLines)
-            layer.DrawLines(ml.Coords, lineWidth.Value, lineColor.Value);
+        if (lines != null)
+            foreach (Line l in lines)
+                layer.DrawLine(l.Coords, lineWidth.Value, lineColor.Value);
+        if (multiLines != null)
+            foreach (MultiLine ml in multiLines)
+                layer.DrawLines(ml.Coords, lineWidth.Value, lineColor.Value);
 
         // Polygons
-        foreach (Polygon p in data.Polygons)
-            layer.DrawLine(p.Coords, lineWidth.Value, lineColor.Value);
-        foreach (MultiPolygon mp in data.MultiPolygons)
-            layer.DrawLines(mp.Coords, lineWidth.Value, lineColor.Value);
+        if (polygons != null)
+            foreach (Polygon p in polygons)
+                layer.DrawLine(p.Coords, lineWidth.Value, lineColor.Value);
+        if (multiPolygons != null)
+            foreach (MultiPolygon mp in multiPolygons)
+                layer.DrawLines(mp.Coords, lineWidth.Value, lineColor.Value);
     }
 
-    private void DrawSymbols(Canvas canvas, VectorStyle style,
-        CanvasLayer layer, IEnumerable<(Coord[] coords, TagList tags)> allPoints)
+    private void DrawSymbols(
+        Canvas canvas, CanvasLayer layer,
+        IEnumerable<(Coord[] coords, TagList tags)> allPoints,
+        SymbolType? symbolType, double? symbolSize, Color? symbolFillColor)
     {
-        if (style.Symbol == null) return;
+        if (symbolType == null) return;
+        double actualSymbolSize = symbolSize ?? canvas.Width * 0.001; // default size
+        Color actualSymbolFillColor = symbolFillColor ?? Color.Black; // default color
 
-        SymbolType? symbolType = style.Symbol;
-        double symbolSize = style.SymbolSize ?? canvas.Width * 0.001;
-        Color symbolFillColor = style.SymbolColor ?? Color.Black;
-            
+        //if (style.Symbol == null) return;
+        //SymbolType? symbolType = style.Symbol;
+        //double symbolSize = style.SymbolSize ?? canvas.Width * 0.001;
+        //Color symbolFillColor = style.SymbolColor ?? Color.Black;
+
         switch (symbolType)
         {
             case SymbolType.Circle:
                 layer.DrawFilledCircles(allPoints.SelectMany(c => c.coords),
-                    symbolSize/2, symbolFillColor);
+                    actualSymbolSize/2, actualSymbolFillColor);
                 foreach (Coord point in allPoints.SelectMany(p => p.coords))
                     PlacementManager.TryAdd([new Bounds(
-                        point.X-symbolSize/2, point.X+symbolSize/2,
-                        point.Y-symbolSize/2, point.Y+symbolSize/2)]);
+                        point.X-actualSymbolSize/2, point.X+actualSymbolSize/2,
+                        point.Y-actualSymbolSize/2, point.Y+actualSymbolSize/2)]);
                 break;
             case SymbolType.Square:
                 throw new NotImplementedException();
@@ -333,9 +436,9 @@ public class Map : IHasSrs, IBounded
         }
     }
 
-    private void DrawTextLabels(Canvas canvas, VectorStyle style,
+    private void DrawTextLabels(Canvas canvas, CanvasLayer layer,
         IEnumerable<(Coord[] coords, TagList tags)> allPoints,
-        CanvasLayer layer)
+        VectorStyle style, double? outlineWidth = null)
     {
         if (style.TextTag == null)  return;
 
@@ -357,7 +460,12 @@ public class Map : IHasSrs, IBounded
             {
                 Coord? placement = GetLabelPlacement(coord, textSize, spacing);
                 if (placement != null)
+                {
                     layer.DrawText(fontName, fontSize, labelText, placement.Value, textColor);
+                    if (outlineWidth != null)
+                        layer.DrawTextOutline(fontName, fontSize, labelText, placement.Value,
+                            textColor, outlineWidth.Value);
+                }
             }
         }
     }

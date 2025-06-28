@@ -1,10 +1,12 @@
 ﻿#define EXTRADEBUG
 
+using Clipper2Lib;
 using MapLib.Geometry;
+using MapLib.Util;
+using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
-using System.Drawing;
-using OSGeo.GDAL;
+using System.Threading.Tasks;
 
 namespace MapLib.Output;
 
@@ -31,7 +33,8 @@ public class BitmapCanvas : Canvas, IDisposable
     internal double ScaleFactor => _pixelScaleFactor * _userScaleFactor;
 
     private readonly Color _backgroundColor;
-    private readonly List<BitmapCanvasLayer> _layers = new List<BitmapCanvasLayer>();
+    private readonly List<BitmapCanvasLayer> _layers = new();
+    //private readonly List<BitmapCanvasMask> _masks = new();
 
     public BitmapCanvas(CanvasUnit unit, double width,
         double height, Color? backgroundColor,
@@ -105,6 +108,22 @@ public class BitmapCanvas : Canvas, IDisposable
         using Bitmap bitmap = GetBitmap();
         bitmap.Save(filename);
     }
+
+    public override void SaveLayersToFile(string baseFilename)
+    {
+        foreach (CanvasLayer layer in _layers)
+        {
+            if (layer is BitmapCanvasLayer bitmapLayer)
+            {
+                string filename = FileSystemHelpers.GetTempOutputFileName(
+                    ".png", baseFilename + "_" + layer.Name);
+                bitmapLayer.Bitmap.Save(filename);
+            }
+            else
+                throw new InvalidOperationException(
+                    "Only BitmapCanvasLayer can be saved to file.");
+        }
+    }
 }
 
 /// <remarks>
@@ -115,6 +134,9 @@ public class BitmapCanvas : Canvas, IDisposable
 internal class BitmapCanvasLayer : CanvasLayer, IDisposable
 {
     private static readonly Color DebugColor = Color.Magenta;
+
+    private static readonly Color MaskBackgroundColor = Color.Black;
+    private static readonly Color MaskColor = Color.White;
 
     private readonly BitmapCanvas _canvas;
     private readonly Graphics _graphics;
@@ -152,6 +174,11 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
     {
         _graphics.Dispose();
         Bitmap.Dispose();
+    }
+
+    public override void Clear(Color color)
+    {
+        _graphics.Clear(color);
     }
 
     public override void DrawLine(Coord[] coords,
@@ -270,6 +297,27 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
         _graphics.DrawString(s, font, brush, point);
     }
 
+    public override void DrawTextOutline(string fontName, double emSize,
+        string s, Coord centerCoord, Color color, double lineWidth,
+        LineJoin join = LineJoin.Miter)
+    {
+        PointF point = ToPoint(centerCoord);
+
+        // TODO: optimize. Cache Font?
+        using FontFamily fontFamily = new FontFamily(fontName);
+        using Font font = GetFont(fontName, emSize);
+        SizeF stringSize = _graphics.MeasureString(s, font);
+        // DrawString assumes top left corner, so we have to subtract
+        // half the string size to center
+        point.X -= stringSize.Width / 2;
+        point.Y -= stringSize.Height / 2;
+
+        using Pen pen = GetPen(lineWidth, color, LineCap.Butt, join, null);
+        using GraphicsPath path = new();
+        path.AddString(s, fontFamily, (int)FontStyle.Regular, (float)emSize, point, new StringFormat());
+        _graphics.DrawPath(pen, path);
+    }
+
     internal Bitmap Bitmap { get; }
 
     public override void DrawBitmap(Bitmap srcBitmap,
@@ -305,6 +353,46 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
         {
             _graphics.DrawImage(srcBitmap, cornerPoints);
         }
+    }
+
+    public override void ApplyMask(CanvasLayer maskSource)
+    {
+        // Loosely based on:
+        // https://stackoverflow.com/questions/3654220/alpha-masking-in-c-sharp-system-drawing
+
+        if (maskSource is not BitmapCanvasLayer bitmapCanvasLayer)
+            throw new ArgumentException(
+                "Mask source must be a BitmapCanvasLayer.", nameof(maskSource));
+
+        Bitmap dest = Bitmap;
+        Bitmap mask = bitmapCanvasLayer.Bitmap;
+        if (dest.Width != mask.Width || dest.Height != mask.Height)
+            throw new ArgumentException(
+                "Mask and destination bitmaps must have the same dimensions.");
+        
+        Rectangle rect = new(0, 0, mask.Width, mask.Height);
+        BitmapData bitsMask = mask.LockBits(rect, ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+        BitmapData bitsDest = dest.LockBits(rect, ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+        unsafe
+        {
+            for (int y = 0; y < mask.Height; y++)
+            {
+                byte* ptrMask = (byte*)bitsMask.Scan0 + y * bitsMask.Stride;
+                byte* ptrDest = (byte*)bitsDest.Scan0 + y * bitsDest.Stride;
+                for (int x = 0; x < mask.Width; x++)
+                {
+                    // Source is black mask on white background. Use any channel:
+                    byte maskByte = ptrMask[4 * x + 2]; // from R channel
+
+                    // Multiply alpha channel. RGB stays unmodified.
+                    ptrDest[4 * x + 3] = (byte)
+                        //(((UInt16)((byte)255-maskByte) * (UInt16)ptrDest[4 * x + 3]) >> 8);
+                        (((UInt16)maskByte * (UInt16)ptrDest[4 * x + 3]) >> 8);
+                }
+            }
+        }
+        mask.UnlockBits(bitsMask);
+        dest.UnlockBits(bitsDest);
     }
 
     #region Helpers
@@ -379,3 +467,34 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
     #endregion
 }
 
+//public class BitmapCanvasMask : CanvasMask
+//{
+//    /// <remarks>
+//    /// Black background, white mask.
+//    /// </remarks>
+//    private BitmapCanvasLayer _canvasLayer;
+
+//    public BitmapCanvasMask(BitmapCanvas canvas) : base()
+//    {
+//        _canvasLayer = new BitmapCanvasLayer(canvas);
+//    }
+
+//    public override void Dispose()
+//    {
+//        _canvasLayer.Dispose();
+//    }
+
+//    public override void DrawCircles(
+//        IEnumerable<Coord> coords, double radius, double lineWidth)
+//        => _canvasLayer.DrawCircles(coords, radius, lineWidth, Color.White);
+
+//    public override void DrawLines(IEnumerable<Coord[]> lines, double width,
+//        LineCap cap = LineCap.Butt, LineJoin join = LineJoin.Miter, double[]? dasharray = null)
+//        => _canvasLayer.DrawLines(lines, width, Color.White, cap, join, dasharray);
+
+//    public override void DrawText(string fontName, double emSize, string s, Coord centerCoord, Color color)
+//        => _canvasLayer.DrawText(fontName, emSize, s, centerCoord, Color.White);
+
+//    public override Coord GetTextSize(string font, double emSize, string s)
+//        => _canvasLayer.GetTextSize(font, emSize, s);
+//}

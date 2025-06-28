@@ -141,6 +141,9 @@ public class WorldMapFixture : BaseFixture
         // Render and save
         map.Render(canvas,
             ratioMismatchStrategy: AspectRatioMismatchStrategy.CenterOnCanvas);
+
+        canvas.SaveLayersToFile("WorldCountriesWithMasks");
+
         string filename = FileSystemHelpers.GetTempOutputFileName(
             canvas.DefaultFileExtension, "WorldCountries");
         canvas.SaveToFile(filename);

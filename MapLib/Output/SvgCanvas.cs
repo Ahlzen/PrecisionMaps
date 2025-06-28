@@ -86,6 +86,11 @@ public class SvgCanvas : Canvas
         string svg = GetSvg();
         File.WriteAllText(filename, svg);
     }
+
+    public override void SaveLayersToFile(string baseFilename)
+    {
+        throw new NotImplementedException();
+    }
 }
 
 /// <remarks>
@@ -128,6 +133,11 @@ public class SvgCanvasLayer : CanvasLayer, IDisposable
         return new XElement(SvgCanvas.XmlNs + "g",
             new XAttribute("id", Name ?? ""),
             _objects);
+    }
+
+    public override void Clear(Color color)
+    {
+        throw new NotImplementedException();
     }
 
     public override void DrawBitmap(Bitmap bitmap,
@@ -256,6 +266,20 @@ public class SvgCanvasLayer : CanvasLayer, IDisposable
             new XAttribute("style", $"font-size: {sizeStr}; text-anchor: middle; dominant-baseline: central;"),
             new XText(s)
             ));
+    }
+
+    public override void DrawTextOutline(string fontName, double emSize,
+        string s, Coord centerCoord, Color color, double lineWidth,
+        LineJoin join = LineJoin.Miter)
+    {
+        // TODO: implement
+        throw new NotImplementedException();
+    }
+
+    public override void ApplyMask(CanvasLayer maskSource)
+    {
+        // TODO: implement
+        throw new NotImplementedException();
     }
 
     #region SVG Raster data

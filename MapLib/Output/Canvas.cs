@@ -22,12 +22,16 @@ public abstract class Canvas : IDisposable
 
     public abstract CanvasLayer AddNewLayer(string name);
     public abstract void RemoveLayer(CanvasLayer layer);
+    
+    //public abstract CanvasMask AddNewMask(string name);
+    //public abstract void RemoveMask(CanvasMask mask);
 
     public abstract IEnumerable<CanvasLayer> Layers { get; }
     public abstract int LayerCount { get; }
 
     public abstract string DefaultFileExtension { get; }
     public abstract void SaveToFile(string filename);
+    public abstract void SaveLayersToFile(string baseFilename);
 
     public virtual string FormatSummary()
         => $"{GetType()}, {Unit}, {Width} x {Height}";
