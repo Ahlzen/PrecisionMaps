@@ -21,10 +21,8 @@ public abstract class Canvas : IDisposable
     public abstract void Dispose();
 
     public abstract CanvasLayer AddNewLayer(string name);
-    public abstract void RemoveLayer(CanvasLayer layer);
-    
-    //public abstract CanvasMask AddNewMask(string name);
-    //public abstract void RemoveMask(CanvasMask mask);
+    public abstract CanvasLayer AddNewMask(string name);
+    //public abstract void RemoveLayer(CanvasLayer layer);
 
     public abstract IEnumerable<CanvasLayer> Layers { get; }
     public abstract int LayerCount { get; }

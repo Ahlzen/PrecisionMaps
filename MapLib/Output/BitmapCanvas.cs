@@ -1,12 +1,10 @@
 ﻿#define EXTRADEBUG
 
-using Clipper2Lib;
 using MapLib.Geometry;
 using MapLib.Util;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
-using System.Threading.Tasks;
 
 namespace MapLib.Output;
 
@@ -34,7 +32,7 @@ public class BitmapCanvas : Canvas, IDisposable
 
     private readonly Color _backgroundColor;
     private readonly List<BitmapCanvasLayer> _layers = new();
-    //private readonly List<BitmapCanvasMask> _masks = new();
+    private readonly List<BitmapCanvasLayer> _masks = new();
 
     public BitmapCanvas(CanvasUnit unit, double width,
         double height, Color? backgroundColor,
@@ -59,6 +57,9 @@ public class BitmapCanvas : Canvas, IDisposable
         foreach (BitmapCanvasLayer layer in _layers)
             layer.Dispose();
         _layers.Clear();
+        foreach (BitmapCanvasLayer mask in _masks)
+            mask.Dispose();
+        _masks.Clear();
     }
 
     public override string FormatSummary()
@@ -78,12 +79,12 @@ public class BitmapCanvas : Canvas, IDisposable
         return layer;
     }
 
-    public override void RemoveLayer(CanvasLayer layer)
+    public override CanvasLayer AddNewMask(string name)
     {
-        var bitmapCanvasLayer = layer as BitmapCanvasLayer;
-        if (bitmapCanvasLayer == null) return;
-        _layers.Remove(bitmapCanvasLayer);
-        bitmapCanvasLayer.Dispose();
+        var mask = new BitmapCanvasLayer(this);
+        mask.Name = name;
+        _masks.Add(mask);
+        return mask;
     }
 
     public Bitmap GetBitmap()
@@ -111,7 +112,7 @@ public class BitmapCanvas : Canvas, IDisposable
 
     public override void SaveLayersToFile(string baseFilename)
     {
-        foreach (CanvasLayer layer in _layers)
+        foreach (CanvasLayer layer in _layers.Union(_masks))
         {
             if (layer is BitmapCanvasLayer bitmapLayer)
             {
@@ -275,7 +276,7 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
     public override Coord GetTextSize(string fontName, double emSize, string s)
     {
         // TODO: optimize. Cache Font?
-        using Font font = GetFont(fontName, emSize);
+        using Font font = new Font(fontName, (float)emSize);
         SizeF stringSize = _graphics.MeasureString(s, font);
         return new Coord(stringSize.Width, stringSize.Height);
     }
@@ -286,7 +287,7 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
         PointF point = ToPoint(centerCoord);
 
         // TODO: optimize. Cache Font?
-        using Font font = GetFont(fontName, emSize);
+        using Font font = new Font(fontName, (float)emSize);
         SizeF stringSize = _graphics.MeasureString(s, font);
         // DrawString assumes top left corner, so we have to subtract
         // half the string size to center
@@ -294,7 +295,7 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
         point.Y -= stringSize.Height / 2;
 
         using Brush brush = new SolidBrush(color);
-        _graphics.DrawString(s, font, brush, point);
+        _graphics.DrawString(s, font, brush, point); // this works
     }
 
     public override void DrawTextOutline(string fontName, double emSize,
@@ -305,7 +306,7 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
 
         // TODO: optimize. Cache Font?
         using FontFamily fontFamily = new FontFamily(fontName);
-        using Font font = GetFont(fontName, emSize);
+        using Font font = new Font(fontName, (float)emSize);
         SizeF stringSize = _graphics.MeasureString(s, font);
         // DrawString assumes top left corner, so we have to subtract
         // half the string size to center
@@ -313,8 +314,17 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
         point.Y -= stringSize.Height / 2;
 
         using Pen pen = GetPen(lineWidth, color, LineCap.Butt, join, null);
-        using GraphicsPath path = new();
-        path.AddString(s, fontFamily, (int)FontStyle.Regular, (float)emSize, point, new StringFormat());
+        using GraphicsPath path = new(FillMode.Winding);
+
+        // weird... the argument to the Font constructor (which matches
+        // MeasureString) is already in em, just like AddString. But
+        // we have to assume font size in points and convert.
+        // Something in the docs is probably a bit off.... but this does it:
+        // See: https://stackoverflow.com/questions/2292812/font-in-graphicspath-addstring-is-smaller-than-usual-font 
+        float size = _graphics.DpiY * (float)emSize / 72;
+        path.AddString(s, fontFamily, (int)FontStyle.Regular,
+            size,
+            point, new StringFormat());
         _graphics.DrawPath(pen, path);
     }
 
@@ -457,12 +467,6 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
     public PointF ToPoint(Coord coord) => new PointF(
         (float)coord.X,
         (float)_height - (float)coord.Y); // Invert Y coordinate (see class remarks)
-
-    // TODO: Move to base class?
-    private Font GetFont(string fontName, double emSize)
-    {
-        return new Font(fontName, (float)emSize);
-    }
 
     #endregion
 }

@@ -16,7 +16,8 @@ public class SvgCanvas : Canvas
     private readonly double _width;
     private readonly double _height;
     private readonly Color _backgroundColor;
-    private readonly List<SvgCanvasLayer> _layers = new List<SvgCanvasLayer>();
+    private readonly List<SvgCanvasLayer> _layers = new();
+    private readonly List<SvgCanvasLayer> _masks = new();
     internal string SvgCoordFormat { get; }
 
     public SvgCanvas(CanvasUnit unit, double width, double height,
@@ -34,6 +35,9 @@ public class SvgCanvas : Canvas
         foreach (SvgCanvasLayer layer in _layers)
             layer.Dispose();
         _layers.Clear();
+        foreach (SvgCanvasLayer mask in _masks)
+            mask.Dispose();
+        _masks.Clear();
     }
 
     public override IEnumerable<CanvasLayer> Layers => _layers;
@@ -47,12 +51,14 @@ public class SvgCanvas : Canvas
         return layer;
     }
 
-    public override void RemoveLayer(CanvasLayer layer)
+    public override CanvasLayer AddNewMask(string name)
     {
-        SvgCanvasLayer? svgCanvasLayer = layer as SvgCanvasLayer;
-        if (svgCanvasLayer == null) return;
-        _layers.Remove(svgCanvasLayer);
+        var mask = new SvgCanvasLayer(this);
+        mask.Name = name;
+        _masks.Add(mask);
+        return mask;
     }
+
 
     public string GetSvg() => GetSvgData().ToString();
     public void SaveSvg(string filename) => GetSvgData().Save(filename);
@@ -251,7 +257,7 @@ public class SvgCanvasLayer : CanvasLayer, IDisposable
         // in canvas units:
         // HACK: GDI+ measures text slightly differently (em-size) than the
         // baseline-to-baseline measurement of SVG. Add an approximate
-        // compenstation foactor (for now; long term: do own text rendering
+        // compensation factor (for now; long term: do own text rendering
         // for full control)
         const double textScaleFactor = (35.0 / 30.0); // not exact; but seems close enough for now
         double svgTextSize = emSize * textScaleFactor;

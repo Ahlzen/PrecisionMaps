@@ -46,10 +46,10 @@ public class Map : IHasSrs, IBounded
     public OrderedDictionary<string, BaseRasterDataSource> RasterDataSources { get; } = new();
 
     public List<MapLayer> Layers { get; } = new();
-    //private Dictionary<string, CanvasMask> Masks { get; } = new();
     private Dictionary<string, CanvasLayer> Masks { get; } = new();
 
-    public ObjectPlacementManager PlacementManager { get; } = new(); 
+    public ObjectPlacementManager PlacementManager { get; } = new();
+    public ObjectPlacementManager MaskPlacementManager { get; } = new(); // TODO: remove; compute once!
 
     private double _scaleX, _scaleY;
     private double _offsetX, _offsetY;
@@ -98,6 +98,8 @@ public class Map : IHasSrs, IBounded
             }
         }
     }
+
+    #region Data and projections
 
     private void ComputeActualBounds(
         Canvas canvas,
@@ -222,11 +224,20 @@ public class Map : IHasSrs, IBounded
         _offsetY = canvasOffsetY + -ActualBoundsMapSrs.YMin * _scaleY;
     }
 
+    #endregion
+
+    private async Task RenderVectorMask(string maskName,
+        Canvas canvas, VectorMapLayer vectorLayer)
+    {
+        var dataInCanvasSpace = await GetVectorDataForLayer(vectorLayer);
+        DrawVectors(maskName, canvas, vectorLayer, dataInCanvasSpace, isMask: true);
+    }
+
     private async Task RenderVectorLayer(Canvas canvas, VectorMapLayer vectorLayer)
     {
         var dataInCanvasSpace = await GetVectorDataForLayer(vectorLayer);
         CanvasLayer layer = DrawVectors(vectorLayer.Name,
-            canvas, vectorLayer, dataInCanvasSpace, false);
+            canvas, vectorLayer, dataInCanvasSpace, isMask: false);
 
         // Apply any mask(s)
         foreach (var maskName in vectorLayer.Style.MaskedBy)
@@ -236,13 +247,7 @@ public class Map : IHasSrs, IBounded
             layer.ApplyMask(mask);
         }
     }
-
-    private async Task RenderVectorMask(string maskName,
-        Canvas canvas, VectorMapLayer vectorLayer)
-    {
-        var dataInCanvasSpace = await GetVectorDataForLayer(vectorLayer);
-        DrawVectors(maskName, canvas, vectorLayer, dataInCanvasSpace, true);
-    }
+    
 
     private async Task<VectorData> GetVectorDataForLayer(VectorMapLayer vectorLayer)
     {
@@ -275,26 +280,30 @@ public class Map : IHasSrs, IBounded
     /// <returns>
     /// The resulting CanvasLayer.
     /// </returns>
-    private CanvasLayer DrawVectors(
-        string layerName,
+    private CanvasLayer DrawVectors(string layerName,
         Canvas canvas, VectorMapLayer mapLayer,
         VectorData data, bool isMask)
     {
-        CanvasLayer layer = canvas.AddNewLayer(layerName);
-        VectorStyle style = mapLayer.Style;
-
+        CanvasLayer layer;
         if (isMask)
         {
+            layer = canvas.AddNewMask(layerName);
             layer.Clear(CanvasLayer.MaskBackgroundColor);
             Masks.Add(layerName, layer);
         }
+        else
+        {
+            layer = canvas.AddNewLayer(layerName);
+        }
 
         // Compute coordinates
-        // TODO: Only enumerate these if we really need them
-        // TODO: Use better polygon centroid algorithm (at least
-        // some form of point-in-polygon!)
-        GetVectorDataCoordinates(data, out var pointCoords, out var lineMidpoints, out var polygonCentroids, out var allPoints);
+        // TODO: Only enumerate these once per data source,
+        // and only if we really need them
+        GetVectorDataCoordinates(data,
+            out var pointCoords, out var lineMidpoints,
+            out var polygonCentroids, out var allPoints);
 
+        VectorStyle style = mapLayer.Style;
         if (isMask)
         {
             if (style.LineMaskWidth != null)
@@ -304,37 +313,22 @@ public class Map : IHasSrs, IBounded
                 Stroke(canvas, layer, null, null, data.Polygons, data.MultiPolygons,
                     CanvasLayer.MaskColor, style.PolygonMaskWidth * 2);
             if (style.SymbolMaskWidth != null)
-                DrawSymbols(canvas, layer, allPoints, style.Symbol,
-                    style.SymbolSize + style.SymbolMaskWidth * 2, style.SymbolColor);
+                DrawSymbols(canvas, layer, MaskPlacementManager, allPoints, style.Symbol,
+                    style.SymbolSize, style.SymbolColor, style.SymbolMaskWidth * 2);
             if (style.TextMaskWidth != null)
-                DrawTextLabels(canvas, layer, allPoints, style, style.TextMaskWidth * 2);
+                DrawTextLabels(canvas, layer, MaskPlacementManager, allPoints,
+                    style, style.TextMaskWidth * 2);
         }
         else
         {
             Fill(canvas, layer, data.Polygons, data.MultiPolygons, style.FillColor);
             Stroke(canvas, layer, data.Lines, data.MultiLines, data.Polygons, data.MultiPolygons, style.LineColor, style.LineWidth);
-            DrawSymbols(canvas, layer, allPoints, style.Symbol, style.SymbolSize, style.SymbolColor);
-            DrawTextLabels(canvas, layer, allPoints, style);
+            DrawSymbols(canvas, layer, PlacementManager, allPoints, style.Symbol, style.SymbolSize, style.SymbolColor);
+            DrawTextLabels(canvas, layer, PlacementManager, allPoints, style);
         }
 
         return layer;
     }
-
-    //public void DrawVectorMask(Canvas canvas, VectorMapLayer mapLayer, VectorData data, boo)
-    //{
-    //    VectorStyle style = mapLayer.Style;
-
-    //    string? maskName = mapLayer.Style.MaskName;
-    //    if (maskName == null)
-    //        return;
-
-    //    CanvasMask mask = canvas.AddNewMask(maskName);
-
-    //    // TODO: DRY. Only compute these once per layer/source
-    //    GetVectorDataCoordinates(data, out var pointCoords, out var lineMidpoints, out var polygonCentroids, out var allPoints);
-
-
-    //}
 
     private static void GetVectorDataCoordinates(VectorData data,
         out IEnumerable<(Coord[] coords, TagList tags)> pointCoords,
@@ -400,29 +394,30 @@ public class Map : IHasSrs, IBounded
                 layer.DrawLines(mp.Coords, lineWidth.Value, lineColor.Value);
     }
 
-    private void DrawSymbols(
-        Canvas canvas, CanvasLayer layer,
+    private void DrawSymbols(Canvas canvas, CanvasLayer layer,
+        ObjectPlacementManager placementManager,
         IEnumerable<(Coord[] coords, TagList tags)> allPoints,
-        SymbolType? symbolType, double? symbolSize, Color? symbolFillColor)
+        SymbolType? symbolType, double? symbolSize, Color? symbolFillColor,
+        double? outlineWidth = null // for masks
+        )
     {
         if (symbolType == null) return;
         double actualSymbolSize = symbolSize ?? canvas.Width * 0.001; // default size
         Color actualSymbolFillColor = symbolFillColor ?? Color.Black; // default color
 
-        //if (style.Symbol == null) return;
-        //SymbolType? symbolType = style.Symbol;
-        //double symbolSize = style.SymbolSize ?? canvas.Width * 0.001;
-        //Color symbolFillColor = style.SymbolColor ?? Color.Black;
-
         switch (symbolType)
         {
             case SymbolType.Circle:
+                // TODO: only draw if successfully placed
                 layer.DrawFilledCircles(allPoints.SelectMany(c => c.coords),
                     actualSymbolSize/2, actualSymbolFillColor);
                 foreach (Coord point in allPoints.SelectMany(p => p.coords))
-                    PlacementManager.TryAdd([new Bounds(
+                    placementManager.TryAdd([new Bounds(
                         point.X-actualSymbolSize/2, point.X+actualSymbolSize/2,
                         point.Y-actualSymbolSize/2, point.Y+actualSymbolSize/2)]);
+                if (outlineWidth != null)
+                    layer.DrawCircles(allPoints.SelectMany(c => c.coords),
+                        actualSymbolSize/2, outlineWidth.Value, actualSymbolFillColor);
                 break;
             case SymbolType.Square:
                 throw new NotImplementedException();
@@ -437,6 +432,7 @@ public class Map : IHasSrs, IBounded
     }
 
     private void DrawTextLabels(Canvas canvas, CanvasLayer layer,
+        ObjectPlacementManager placementManager,
         IEnumerable<(Coord[] coords, TagList tags)> allPoints,
         VectorStyle style, double? outlineWidth = null)
     {
@@ -445,6 +441,12 @@ public class Map : IHasSrs, IBounded
         Color textColor = style.TextColor ?? Color.Black;
         string fontName = style.TextFont ?? "Calibri";
         double fontSize = style.TextSize ?? canvas.Width * 0.003;
+
+        // HACK: this duplicates computation. refactor to compute label
+        // placement once in a separate pass.
+        //ObjectPlacementManager placementManager =
+        //    isMask ? MaskPlacementManager : PlacementManager;
+
         foreach ((Coord[] coords, TagList tags) point in allPoints)
         {
             // TODO: Factor out TagList lookup?
@@ -458,7 +460,8 @@ public class Map : IHasSrs, IBounded
             // are text labels)
             foreach (Coord coord in point.coords)
             {
-                Coord? placement = GetLabelPlacement(coord, textSize, spacing);
+                Coord? placement = GetLabelPlacement(placementManager, coord, textSize, spacing);
+                //Coord? placement = coord;
                 if (placement != null)
                 {
                     layer.DrawText(fontName, fontSize, labelText, placement.Value, textColor);
@@ -481,7 +484,8 @@ public class Map : IHasSrs, IBounded
     /// alignment priority and existing labels. Null if no suitable
     /// placement found.
     /// </returns>
-    private Coord? GetLabelPlacement(Coord featureCoord, Coord textSize, double spacing)
+    private Coord? GetLabelPlacement(ObjectPlacementManager placementManager,
+        Coord featureCoord, Coord textSize, double spacing)
     {
         // TODO: Pick more appropriate order?
         /* Current priority order:
@@ -490,16 +494,17 @@ public class Map : IHasSrs, IBounded
          *   6 3 5
          */
         return
-            GetLabelPlacement(featureCoord, textSize, spacing, TextHAlign.Left, TextVAlign.Center) ??
-            GetLabelPlacement(featureCoord, textSize, spacing, TextHAlign.Right, TextVAlign.Center) ??
-            GetLabelPlacement(featureCoord, textSize, spacing, TextHAlign.Center, TextVAlign.Top) ??
-            GetLabelPlacement(featureCoord, textSize, spacing, TextHAlign.Center, TextVAlign.Bottom) ??
-            GetLabelPlacement(featureCoord, textSize, spacing, TextHAlign.Left, TextVAlign.Top) ??
-            GetLabelPlacement(featureCoord, textSize, spacing, TextHAlign.Right, TextVAlign.Top) ??
-            GetLabelPlacement(featureCoord, textSize, spacing, TextHAlign.Left, TextVAlign.Bottom) ??
-            GetLabelPlacement(featureCoord, textSize, spacing, TextHAlign.Right, TextVAlign.Bottom);
+            GetLabelPlacement(placementManager, featureCoord, textSize, spacing, TextHAlign.Left, TextVAlign.Center) ??
+            GetLabelPlacement(placementManager, featureCoord, textSize, spacing, TextHAlign.Right, TextVAlign.Center) ??
+            GetLabelPlacement(placementManager, featureCoord, textSize, spacing, TextHAlign.Center, TextVAlign.Top) ??
+            GetLabelPlacement(placementManager, featureCoord, textSize, spacing, TextHAlign.Center, TextVAlign.Bottom) ??
+            GetLabelPlacement(placementManager, featureCoord, textSize, spacing, TextHAlign.Left, TextVAlign.Top) ??
+            GetLabelPlacement(placementManager, featureCoord, textSize, spacing, TextHAlign.Right, TextVAlign.Top) ??
+            GetLabelPlacement(placementManager, featureCoord, textSize, spacing, TextHAlign.Left, TextVAlign.Bottom) ??
+            GetLabelPlacement(placementManager, featureCoord, textSize, spacing, TextHAlign.Right, TextVAlign.Bottom);
     }
-    private Coord? GetLabelPlacement(Coord featureCoord, Coord textSize, double spacing,
+    private Coord? GetLabelPlacement(ObjectPlacementManager placementManager,
+        Coord featureCoord, Coord textSize, double spacing,
         TextHAlign halign, TextVAlign valign)
     {
         double x = featureCoord.X, y = featureCoord.Y;
@@ -510,7 +515,7 @@ public class Map : IHasSrs, IBounded
         Bounds bounds = new Bounds(
             x - 0.5 * textSize.X, x + 0.5 * textSize.X,
             y - 0.5 * textSize.Y, y + textSize.Y);
-        if (PlacementManager.TryAdd([bounds]) != null)
+        if (placementManager.TryAdd([bounds]) != null)
             return new Coord(x, y);
         return null;
     }

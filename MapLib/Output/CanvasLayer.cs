@@ -110,7 +110,7 @@ public abstract class CanvasLayer : IDisposable
     public abstract void DrawTextOutline(
         string fontName, double emSize, string s,
         Coord centerCoord, Color color, double lineWidth,
-        LineJoin join = LineJoin.Miter); // TODO: miter limit);
+        LineJoin join = LineJoin.Round); // TODO: miter limit);
 
     public abstract void ApplyMask(CanvasLayer maskSource);
 }

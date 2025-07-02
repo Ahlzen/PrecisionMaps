@@ -81,15 +81,20 @@ public class CanvasFixture : BaseFixture
             .SelectMany(cs => cs),
             2, Color.Red);
 
-        ///// Text
-
+        ///// Solid text
         layer.DrawText("Calibri", 10, canvas.FormatSummary(),
             new Coord(canvas.Width / 2, canvas.Height - 10), Color.Green);
-
+        
         DrawTextWithBbox(layer, "Calibri", 8, "Test Text 8", (400, 220), Color.Cyan);
         DrawTextWithBbox(layer, "Calibri", 12, "Test Text 12", (400, 245), Color.Cyan);
         DrawTextWithBbox(layer, "Calibri", 20, "Test Text 18", (400, 280), Color.Cyan);
         DrawTextWithBbox(layer, "Calibri", 40, "Test Text 30", (400, 340), Color.Cyan);
+        
+        ///// Outline text
+        DrawTextWithBbox(layer, "Calibri", 8, "Test Text 8", (600, 220), Color.Cyan, 0.1f);
+        DrawTextWithBbox(layer, "Calibri", 12, "Test Text 12", (600, 245), Color.Cyan, 0.3f);
+        DrawTextWithBbox(layer, "Calibri", 20, "Test Text 18", (600, 280), Color.Cyan, 0.6f);
+        DrawTextWithBbox(layer, "Calibri", 40, "Test Text 30", (600, 340), Color.Cyan, 1.0f);
 
 
 
@@ -99,17 +104,17 @@ public class CanvasFixture : BaseFixture
         Bitmap bitmap = (Bitmap) Bitmap.FromFile(bitmapPath);
         
         // Fully opaque bitmap
-        layer.DrawBitmap(bitmap, 610, 210, 180, 180, 1.0);
+        layer.DrawBitmap(bitmap, 810, 210, 180, 180, 1.0);
 
         // Semi-transparent bitmap
-        layer.DrawBitmap(bitmap, 810, 210, 180, 180, 0.3);
+        layer.DrawBitmap(bitmap, 1010, 210, 180, 180, 0.3);
 
         Visualizer.SaveCanvas(canvas, false);
         canvas.Dispose();
     }
 
     private void DrawTextWithBbox(CanvasLayer layer, string fontName, double emSize,
-        string s, Coord centerCoord, Color color)
+        string s, Coord centerCoord, Color color, float? outlineWidth = null)
     {
         Coord textSize = layer.GetTextSize(fontName, emSize, s);
 
@@ -123,7 +128,10 @@ public class CanvasFixture : BaseFixture
         layer.DrawFilledCircle(centerCoord, emSize * 0.3, Color.Red);
 
         // Text
-        layer.DrawText(fontName, emSize, s, centerCoord, color);
+        if (outlineWidth == null)
+            layer.DrawText(fontName, emSize, s, centerCoord, color);
+        else
+            layer.DrawTextOutline(fontName, emSize, s, centerCoord, color, outlineWidth.Value);
     }
 
     #endregion

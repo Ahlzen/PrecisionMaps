@@ -127,7 +127,7 @@ public class WorldMapFixture : BaseFixture
                 MaskedBy = { "labelsMask" }
             }));
         map.Layers.Add(new VectorMapLayer(
-            "country labels", "countries", new VectorStyle {
+            "labels", "countries", new VectorStyle {
                 MaskName = "labelsMask",
                 Symbol = SymbolType.Circle,
                 SymbolSize = 1,
@@ -145,7 +145,7 @@ public class WorldMapFixture : BaseFixture
         canvas.SaveLayersToFile("WorldCountriesWithMasks");
 
         string filename = FileSystemHelpers.GetTempOutputFileName(
-            canvas.DefaultFileExtension, "WorldCountries");
+            canvas.DefaultFileExtension, "WorldCountriesWithMasks");
         canvas.SaveToFile(filename);
     }
 }
