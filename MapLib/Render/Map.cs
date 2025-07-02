@@ -247,7 +247,7 @@ public class Map : IHasSrs, IBounded
             layer.ApplyMask(mask);
         }
     }
-    
+
 
     private async Task<VectorData> GetVectorDataForLayer(VectorMapLayer vectorLayer)
     {

@@ -1,10 +1,11 @@
 ﻿using MapLib.Geometry;
-using System.Drawing.Imaging;
+using MapLib.Util;
 using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Text;
 using System.Xml.Linq;
-using System.Drawing.Drawing2D;
 
 namespace MapLib.Output;
 
@@ -71,20 +72,24 @@ public class SvgCanvas : Canvas
     public string GetSvg() => GetSvgData().ToString();
     public void SaveSvg(string filename) => GetSvgData().Save(filename);
 
-    private XDocument GetSvgData()
+    private XDocument GetSvgData() => GetSvgData(
+        _layers.Select(layer => layer.GetSvgData()).Union(
+            _masks.Select(mask => mask.GetMaskData())));
+
+    private XDocument GetSvgData(IEnumerable<XElement> layerData)
     {
         return new XDocument(
-            new XDeclaration("1.0", "utf-8", "yes"),
-            new XElement(XmlNs + "svg",
-                new XAttribute("xmlns", XmlNs),
-                new XAttribute(XNamespace.Xmlns + "xlink", XmlNsXlink),
-                new XAttribute("width", _width.ToString(SvgCoordFormat)),
-                new XAttribute("height", _height.ToString(SvgCoordFormat)),
-                Clear(_backgroundColor),
-                _layers.Select(layer => layer.GetSvgData())));
+             new XDeclaration("1.0", "utf-8", "yes"),
+             new XElement(XmlNs + "svg",
+                 new XAttribute("xmlns", XmlNs),
+                 new XAttribute(XNamespace.Xmlns + "xlink", XmlNsXlink),
+                 new XAttribute("width", _width.ToString(SvgCoordFormat)),
+                 new XAttribute("height", _height.ToString(SvgCoordFormat)),
+                 Clear(_backgroundColor),
+                 layerData));
     }
 
-    private IEnumerable<XElement> Clear(Color color)
+    internal static IEnumerable<XElement> Clear(Color color)
     {
         if (color == Color.Transparent) yield break;
         yield return new XElement(SvgCanvas.XmlNs + "rect",
@@ -103,7 +108,14 @@ public class SvgCanvas : Canvas
 
     public override void SaveLayersToFile(string baseFilename)
     {
-        throw new NotImplementedException();
+        foreach (SvgCanvasLayer layer in _layers.Union(_masks))
+        {
+            string filename = FileSystemHelpers.GetTempOutputFileName(
+                    ".svg", baseFilename + "_" + layer.Name);
+            XElement layerData = layer.GetSvgData();
+            XDocument svgData = GetSvgData([layerData]);
+            File.WriteAllText(filename, svgData.ToString());
+        }
     }
 }
 
@@ -118,6 +130,8 @@ public class SvgCanvasLayer : CanvasLayer, IDisposable
     private List<XObject> _objects = new List<XObject>();
     private double _layerHeight;
     private double _layerWidth;
+
+    private List<string> _maskedBy = new();
 
     /// <summary>
     /// Hack! Needed for certain operations, like measuring text.
@@ -146,12 +160,24 @@ public class SvgCanvasLayer : CanvasLayer, IDisposable
     {
         return new XElement(SvgCanvas.XmlNs + "g",
             new XAttribute("id", Name ?? ""),
+            // NOTE: This supports only the first mask
+            // TODO: support combined masks
+            // https://www.reddit.com/r/svg/comments/1cm6vc6/how_to_combine_two_svg_masks/
+            new XAttribute("mask", _maskedBy.Any() ? $"url(#{_maskedBy[0]})" : ""),
+            _objects);
+    }
+
+    internal XElement GetMaskData()
+    {
+        return new XElement(SvgCanvas.XmlNs + "mask",
+            new XAttribute("id", Name ?? ""),
             _objects);
     }
 
     public override void Clear(Color color)
     {
-        throw new NotImplementedException();
+        _objects.Add(new XElement(SvgCanvas.XmlNs + "g",
+            SvgCanvas.Clear(color)));
     }
 
     public override void DrawBitmap(Bitmap bitmap,
@@ -296,8 +322,7 @@ public class SvgCanvasLayer : CanvasLayer, IDisposable
 
     public override void ApplyMask(CanvasLayer maskSource)
     {
-        // TODO: implement
-        throw new NotImplementedException();
+        _maskedBy.Add(maskSource.Name ?? "");
     }
 
     #region SVG Raster data
