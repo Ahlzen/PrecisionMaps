@@ -13,6 +13,14 @@ public class SvgCanvas : Canvas
     internal static readonly XNamespace XmlNs = XNamespace.Get("http://www.w3.org/2000/svg");
     internal static readonly XNamespace XmlNsXlink = XNamespace.Get("http://www.w3.org/1999/xlink");
 
+    // Presumably, with no units, font-size is the em size
+    // in canvas units:
+    // HACK: GDI+ measures text slightly differently (em-size) than the
+    // baseline-to-baseline measurement of SVG. Add an approximate
+    // compensation factor (for now; long term: do own text rendering
+    // for full control)
+    internal const double TextScaleFactor = (35.0 / 30.0);
+
     private readonly double _width;
     private readonly double _height;
     private readonly Color _backgroundColor;
@@ -249,37 +257,41 @@ public class SvgCanvasLayer : CanvasLayer, IDisposable
         return new Coord(stringSize.Width, stringSize.Height);
     }
 
-    public override void DrawText(
-        string font, double emSize,
-        string s, Coord centerCiird, Color color)
+    public override void DrawText(string fontName, double emSize,
+        string s, Coord centerCoord, Color color)
     {
-        // Presumably, with no units, font-size is the em size
-        // in canvas units:
-        // HACK: GDI+ measures text slightly differently (em-size) than the
-        // baseline-to-baseline measurement of SVG. Add an approximate
-        // compensation factor (for now; long term: do own text rendering
-        // for full control)
-        const double textScaleFactor = (35.0 / 30.0); // not exact; but seems close enough for now
-        double svgTextSize = emSize * textScaleFactor;
+        double svgTextSize = emSize * SvgCanvas.TextScaleFactor; // see remarks above
         string sizeStr = svgTextSize.ToString();
 
         // x/y are at baseline, according to the specified anchor
         _objects.Add(new XElement(SvgCanvas.XmlNs + "text",
-            new XAttribute("font", font),
+            new XAttribute("font", fontName),
             new XAttribute("fill", color.ToHexCode()),
-            new XAttribute("x", centerCiird.X.ToString(_canvas.SvgCoordFormat)),
-            new XAttribute("y", (_layerHeight - centerCiird.Y).ToString(_canvas.SvgCoordFormat)),
+            new XAttribute("x", centerCoord.X.ToString(_canvas.SvgCoordFormat)),
+            new XAttribute("y", (_layerHeight - centerCoord.Y).ToString(_canvas.SvgCoordFormat)),
             new XAttribute("style", $"font-size: {sizeStr}; text-anchor: middle; dominant-baseline: central;"),
             new XText(s)
             ));
     }
 
     public override void DrawTextOutline(string fontName, double emSize,
-        string s, Coord centerCoord, Color color, double lineWidth,
-        LineJoin join = LineJoin.Miter)
+        string s, Coord centerCoord, Color color,
+        double lineWidth, LineJoin join = LineJoin.Miter)
     {
-        // TODO: implement
-        throw new NotImplementedException();
+        double svgTextSize = emSize * SvgCanvas.TextScaleFactor; // see remarks above
+        string sizeStr = svgTextSize.ToString();
+
+        // x/y are at baseline, according to the specified anchor
+        var strokeAttributes = GetStrokeAttributes(
+            lineWidth, color, LineCap.Butt, join);
+        _objects.Add(new XElement(SvgCanvas.XmlNs + "text",
+            strokeAttributes,
+            new XAttribute("font", fontName),
+            new XAttribute("x", centerCoord.X.ToString(_canvas.SvgCoordFormat)),
+            new XAttribute("y", (_layerHeight - centerCoord.Y).ToString(_canvas.SvgCoordFormat)),
+            new XAttribute("style", $"fill: none; font-size: {sizeStr}; text-anchor: middle; dominant-baseline: central;"),
+            new XText(s)
+            ));
     }
 
     public override void ApplyMask(CanvasLayer maskSource)
