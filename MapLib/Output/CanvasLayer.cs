@@ -5,8 +5,9 @@ namespace MapLib.Output;
 
 public abstract class CanvasLayer : IDisposable
 {
+    // Masks are black on white (black is masked; white is transparent).
     public static readonly Color MaskBackgroundColor = Color.White;
-    public static readonly Color MaskColor = Color.Black;
+    public static readonly Color MaskColor = Color.Black; 
 
     public abstract void Dispose();
 
@@ -112,5 +113,8 @@ public abstract class CanvasLayer : IDisposable
         Coord centerCoord, Color color, double lineWidth,
         LineJoin join = LineJoin.Round); // TODO: miter limit);
 
-    public abstract void ApplyMask(CanvasLayer maskSource);
+    //[Obsolete]
+    //public abstract void ApplyMask(CanvasLayer maskSource);
+
+    public abstract void ApplyMasks(IList<CanvasLayer> maskSources);
 }

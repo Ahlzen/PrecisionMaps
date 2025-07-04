@@ -83,6 +83,7 @@ public class BitmapCanvas : Canvas, IDisposable
     {
         var mask = new BitmapCanvasLayer(this);
         mask.Name = name;
+        mask.Clear(CanvasLayer.MaskBackgroundColor);
         _masks.Add(mask);
         return mask;
     }
@@ -135,9 +136,6 @@ public class BitmapCanvas : Canvas, IDisposable
 internal class BitmapCanvasLayer : CanvasLayer, IDisposable
 {
     private static readonly Color DebugColor = Color.Magenta;
-
-    private static readonly Color MaskBackgroundColor = Color.Black;
-    private static readonly Color MaskColor = Color.White;
 
     private readonly BitmapCanvas _canvas;
     private readonly Graphics _graphics;
@@ -365,14 +363,21 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
         }
     }
 
-    public override void ApplyMask(CanvasLayer maskSource)
+    public override void ApplyMasks(IList<CanvasLayer> maskSources)
+    {
+        foreach (var maskSource in maskSources)
+            ApplyMask(maskSource);
+    }
+
+    //public override void ApplyMask(CanvasLayer maskSource)
+    private void ApplyMask(CanvasLayer maskSource)
     {
         // Loosely based on:
         // https://stackoverflow.com/questions/3654220/alpha-masking-in-c-sharp-system-drawing
 
         if (maskSource is not BitmapCanvasLayer bitmapCanvasLayer)
             throw new ArgumentException(
-                "Mask source must be a BitmapCanvasLayer.", nameof(maskSource));
+                "Mask source must be BitmapCanvasLayer.", nameof(maskSource));
 
         Bitmap dest = Bitmap;
         Bitmap mask = bitmapCanvasLayer.Bitmap;
@@ -391,12 +396,11 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
                 byte* ptrDest = (byte*)bitsDest.Scan0 + y * bitsDest.Stride;
                 for (int x = 0; x < mask.Width; x++)
                 {
-                    // Source is black mask on white background. Use any channel:
-                    byte maskByte = ptrMask[4 * x + 2]; // from R channel
+                    // Mask is any R, G or B channel
+                    byte maskByte = ptrMask[4 * x + 2];
 
-                    // Multiply alpha channel. RGB stays unmodified.
+                    // Multiply alpha channels. RGB stays unmodified.
                     ptrDest[4 * x + 3] = (byte)
-                        //(((UInt16)((byte)255-maskByte) * (UInt16)ptrDest[4 * x + 3]) >> 8);
                         (((UInt16)maskByte * (UInt16)ptrDest[4 * x + 3]) >> 8);
                 }
             }

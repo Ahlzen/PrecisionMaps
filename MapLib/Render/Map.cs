@@ -240,12 +240,15 @@ public class Map : IHasSrs, IBounded
             canvas, vectorLayer, dataInCanvasSpace, isMask: false);
 
         // Apply any mask(s)
-        foreach (var maskName in vectorLayer.Style.MaskedBy)
-        {
-            if (!Masks.TryGetValue(maskName, out CanvasLayer? mask))
-                throw new ApplicationException("Mask not found: " + maskName);
-            layer.ApplyMask(mask);
-        }
+        //foreach (var maskName in vectorLayer.Style.MaskedBy)
+        //{
+        //    if (!Masks.TryGetValue(maskName, out CanvasLayer? mask))
+        //        throw new ApplicationException("Mask not found: " + maskName);
+        //    layer.ApplyMask(mask);
+        //}
+        layer.ApplyMasks(
+            vectorLayer.Style.MaskedBy.Select(maskName =>
+            Masks[maskName]).ToList());
     }
 
 
@@ -288,7 +291,6 @@ public class Map : IHasSrs, IBounded
         if (isMask)
         {
             layer = canvas.AddNewMask(layerName);
-            layer.Clear(CanvasLayer.MaskBackgroundColor);
             Masks.Add(layerName, layer);
         }
         else
@@ -314,17 +316,18 @@ public class Map : IHasSrs, IBounded
                     CanvasLayer.MaskColor, style.PolygonMaskWidth * 2);
             if (style.SymbolMaskWidth != null)
                 DrawSymbols(canvas, layer, MaskPlacementManager, allPoints, style.Symbol,
-                    style.SymbolSize, style.SymbolColor, style.SymbolMaskWidth * 2);
+                    style.SymbolSize, CanvasLayer.MaskColor, style.SymbolMaskWidth * 2);
             if (style.TextMaskWidth != null)
                 DrawTextLabels(canvas, layer, MaskPlacementManager, allPoints,
-                    style, style.TextMaskWidth * 2);
+                    style.TextTag, style.TextColor, style.TextFont, style.TextSize,
+                    style.TextMaskWidth * 2);
         }
         else
         {
             Fill(canvas, layer, data.Polygons, data.MultiPolygons, style.FillColor);
             Stroke(canvas, layer, data.Lines, data.MultiLines, data.Polygons, data.MultiPolygons, style.LineColor, style.LineWidth);
             DrawSymbols(canvas, layer, PlacementManager, allPoints, style.Symbol, style.SymbolSize, style.SymbolColor);
-            DrawTextLabels(canvas, layer, PlacementManager, allPoints, style);
+            DrawTextLabels(canvas, layer, PlacementManager, allPoints, style.TextTag, style.TextColor, style.TextFont, style.TextSize);
         }
 
         return layer;
@@ -368,8 +371,6 @@ public class Map : IHasSrs, IBounded
         IEnumerable<Polygon>? polygons,
         IEnumerable<MultiPolygon>? multiPolygons,
         Color? lineColor, double? lineWidth)
-        //IEnumerable<(Coord[] coords, TagList tags)> pointCoords)
-
     {
         if (lineColor == null || lineWidth == null) return;
 
@@ -421,26 +422,29 @@ public class Map : IHasSrs, IBounded
                 break;
             case SymbolType.Square:
                 throw new NotImplementedException();
-                break;
             case SymbolType.Star:
                 throw new NotImplementedException();
-                break;
             case SymbolType.Image:
                 throw new NotImplementedException();
-                break;
         }
     }
 
     private void DrawTextLabels(Canvas canvas, CanvasLayer layer,
         ObjectPlacementManager placementManager,
         IEnumerable<(Coord[] coords, TagList tags)> allPoints,
-        VectorStyle style, double? outlineWidth = null)
+        //VectorStyle style,
+        string? textTag, Color? textColor, string? fontName, double? fontSize,
+        double? outlineWidth = null)
     {
-        if (style.TextTag == null)  return;
+        //if (style.TextTag == null)  return;
+        if (textTag == null) return;
 
-        Color textColor = style.TextColor ?? Color.Black;
-        string fontName = style.TextFont ?? "Calibri";
-        double fontSize = style.TextSize ?? canvas.Width * 0.003;
+        //Color textColor = style.TextColor ?? Color.Black;
+        Color effectiveTextColor = textColor ?? Color.Black; // default color
+        //string fontName = style.TextFont ?? "Calibri";
+        string effectiveFontName = fontName ?? "Calibri"; // default font
+        //double fontSize = style.TextSize ?? canvas.Width * 0.003;
+        double effectiveFontSize = fontSize ?? canvas.Width * 0.003; // default size
 
         // HACK: this duplicates computation. refactor to compute label
         // placement once in a separate pass.
@@ -450,11 +454,11 @@ public class Map : IHasSrs, IBounded
         foreach ((Coord[] coords, TagList tags) point in allPoints)
         {
             // TODO: Factor out TagList lookup?
-            string? labelText = TagFilter.ValueOrNull(point.tags, style.TextTag);
+            string? labelText = TagFilter.ValueOrNull(point.tags, textTag);
             if (labelText == null) continue;
 
-            double spacing = fontSize * 0.3; // spacing between point and edge of text
-            Coord textSize = layer.GetTextSize(fontName, fontSize, labelText);
+            double spacing = effectiveFontSize * 0.3; // spacing between point and edge of text
+            Coord textSize = layer.GetTextSize(effectiveFontName, effectiveFontSize, labelText);
 
             // NOTE: Usually a single coord per array (since these
             // are text labels)
@@ -464,10 +468,10 @@ public class Map : IHasSrs, IBounded
                 //Coord? placement = coord;
                 if (placement != null)
                 {
-                    layer.DrawText(fontName, fontSize, labelText, placement.Value, textColor);
+                    layer.DrawText(effectiveFontName, effectiveFontSize, labelText, placement.Value, effectiveTextColor);
                     if (outlineWidth != null)
-                        layer.DrawTextOutline(fontName, fontSize, labelText, placement.Value,
-                            textColor, outlineWidth.Value);
+                        layer.DrawTextOutline(effectiveFontName, effectiveFontSize, labelText, placement.Value,
+                            effectiveTextColor, outlineWidth.Value);
                 }
             }
         }
