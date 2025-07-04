@@ -239,13 +239,6 @@ public class Map : IHasSrs, IBounded
         CanvasLayer layer = DrawVectors(vectorLayer.Name,
             canvas, vectorLayer, dataInCanvasSpace, isMask: false);
 
-        // Apply any mask(s)
-        //foreach (var maskName in vectorLayer.Style.MaskedBy)
-        //{
-        //    if (!Masks.TryGetValue(maskName, out CanvasLayer? mask))
-        //        throw new ApplicationException("Mask not found: " + maskName);
-        //    layer.ApplyMask(mask);
-        //}
         layer.ApplyMasks(
             vectorLayer.Style.MaskedBy.Select(maskName =>
             Masks[maskName]).ToList());
@@ -432,24 +425,14 @@ public class Map : IHasSrs, IBounded
     private void DrawTextLabels(Canvas canvas, CanvasLayer layer,
         ObjectPlacementManager placementManager,
         IEnumerable<(Coord[] coords, TagList tags)> allPoints,
-        //VectorStyle style,
         string? textTag, Color? textColor, string? fontName, double? fontSize,
         double? outlineWidth = null)
     {
-        //if (style.TextTag == null)  return;
         if (textTag == null) return;
 
-        //Color textColor = style.TextColor ?? Color.Black;
         Color effectiveTextColor = textColor ?? Color.Black; // default color
-        //string fontName = style.TextFont ?? "Calibri";
         string effectiveFontName = fontName ?? "Calibri"; // default font
-        //double fontSize = style.TextSize ?? canvas.Width * 0.003;
         double effectiveFontSize = fontSize ?? canvas.Width * 0.003; // default size
-
-        // HACK: this duplicates computation. refactor to compute label
-        // placement once in a separate pass.
-        //ObjectPlacementManager placementManager =
-        //    isMask ? MaskPlacementManager : PlacementManager;
 
         foreach ((Coord[] coords, TagList tags) point in allPoints)
         {
@@ -465,7 +448,6 @@ public class Map : IHasSrs, IBounded
             foreach (Coord coord in point.coords)
             {
                 Coord? placement = GetLabelPlacement(placementManager, coord, textSize, spacing);
-                //Coord? placement = coord;
                 if (placement != null)
                 {
                     layer.DrawText(effectiveFontName, effectiveFontSize, labelText, placement.Value, effectiveTextColor);

@@ -113,8 +113,6 @@ public abstract class CanvasLayer : IDisposable
         Coord centerCoord, Color color, double lineWidth,
         LineJoin join = LineJoin.Round); // TODO: miter limit);
 
-    //[Obsolete]
-    //public abstract void ApplyMask(CanvasLayer maskSource);
-
-    public abstract void ApplyMasks(IList<CanvasLayer> maskSources);
+    public abstract void ApplyMasks(
+        IList<CanvasLayer> maskSources);
 }

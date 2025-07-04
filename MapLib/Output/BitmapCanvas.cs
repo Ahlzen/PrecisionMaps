@@ -474,35 +474,3 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
 
     #endregion
 }
-
-//public class BitmapCanvasMask : CanvasMask
-//{
-//    /// <remarks>
-//    /// Black background, white mask.
-//    /// </remarks>
-//    private BitmapCanvasLayer _canvasLayer;
-
-//    public BitmapCanvasMask(BitmapCanvas canvas) : base()
-//    {
-//        _canvasLayer = new BitmapCanvasLayer(canvas);
-//    }
-
-//    public override void Dispose()
-//    {
-//        _canvasLayer.Dispose();
-//    }
-
-//    public override void DrawCircles(
-//        IEnumerable<Coord> coords, double radius, double lineWidth)
-//        => _canvasLayer.DrawCircles(coords, radius, lineWidth, Color.White);
-
-//    public override void DrawLines(IEnumerable<Coord[]> lines, double width,
-//        LineCap cap = LineCap.Butt, LineJoin join = LineJoin.Miter, double[]? dasharray = null)
-//        => _canvasLayer.DrawLines(lines, width, Color.White, cap, join, dasharray);
-
-//    public override void DrawText(string fontName, double emSize, string s, Coord centerCoord, Color color)
-//        => _canvasLayer.DrawText(fontName, emSize, s, centerCoord, Color.White);
-
-//    public override Coord GetTextSize(string font, double emSize, string s)
-//        => _canvasLayer.GetTextSize(font, emSize, s);
-//}

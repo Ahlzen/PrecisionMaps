@@ -321,37 +321,15 @@ public class SvgCanvasLayer : CanvasLayer, IDisposable
             ));
     }
 
-    //[Obsolete]
-    
-
     public override void ApplyMasks(IList<CanvasLayer> maskSources)
     {
         foreach (var maskSource in maskSources)
             ApplyMask(maskSource);
-
-        //if (maskSources.Count == 0)
-        //    return;
-        //else if (maskSources.Count == 1)
-        //    // Single mask
-        //    _maskedBy.Add(maskSources.Single().Name ?? "");
-        //else
-        //{
-        //    // Composite mask (multiple masks combined)
-        //    string compositeMaskName = String.Join('_',
-        //        maskSources.Select(m => m.Name));
-
-        //    CreateCompositeMask(compositeMaskName, maskSources);
-        //    _maskedBy.Add(compositeMaskName);
-        //}
-
-
-
-        //_maskedBy.AddRange(maskSources.Select(m => m.Name ?? ""));
     }
 
     private void ApplyMask(CanvasLayer maskSource)
     {
-        // Wrap all current objects in a group with the mask applied
+        // Wrap current objects in a group with the mask applied
         // (for multiple masks, this may be a nested set)
 
         List<XObject> children = _objects.ToList();
@@ -361,48 +339,6 @@ public class SvgCanvasLayer : CanvasLayer, IDisposable
             children
         ));
     }
-
-    //private void CreateCompositeMask(string name,  IList<CanvasLayer> maskSources)
-    //{
-    //    /*
-    //    Composite mask example:
-    //    <svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
-    //      <defs>
-    //        <mask id="mask1" x="0" y="0" width="200" height="200">
-    //          <rect x="0" y="0" width="100" height="100" fill="white"/>
-    //        </mask>
-    //        <mask id="mask2" x="0" y="0" width="200" height="200">
-    //          <rect x="100" y="100" width="100" height="100" fill="white"/>
-    //        </mask>
-    //        <mask id="combinedMask" x="0" y="0" width="200" height="200">
-    //          <rect width="200" height="200" fill="white" mask="url(#mask1)"/>
-    //          <rect width="200" height="200" fill="white" mask="url(#mask2)"/>
-    //        </mask>
-    //      </defs>
-    //      <rect x="0" y="0" width="200" height="200" fill="red" mask="url(#combinedMask)"/>
-    //    </svg>
-    //    */
-
-    //    List<XElement> maskRects = new();
-    //    maskRects.Add(new XElement(SvgCanvas.XmlNs + "rect",
-    //        new XAttribute("width", "100%"),
-    //        new XAttribute("height", "100%"),
-    //        new XAttribute("fill", "white"))); // white background
-    //    foreach (CanvasLayer maskSource in maskSources)
-    //    {
-    //        maskRects.Add(new XElement(SvgCanvas.XmlNs + "rect",
-    //            new XAttribute("width", "100%"),
-    //            new XAttribute("height", "100%"),
-    //            new XAttribute("fill", "black"),
-    //            //new XAttribute("blend-mode", "multiply")
-    //            new XAttribute("mask", maskSource.Name ?? "")));
-    //    }
-
-    //    return new XElement(SvgCanvas.XmlNs + "mask",
-    //        new XAttribute("id", name),
-    //        maskRects
-    //        );
-    //}
 
     #region SVG Raster data
 
