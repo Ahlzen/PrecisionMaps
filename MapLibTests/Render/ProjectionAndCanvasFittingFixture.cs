@@ -77,7 +77,7 @@ public class ProjectionAndCanvasFittingFixture : BaseFixture
         string prefix = $"{projectionSummary}_{canvasSize.Width}x{canvasSize.Height}_{strategy}_";
 
         var sw4 = new QuickStopwatch("Creating canvas");
-        Canvas canvas = new BitmapCanvas(
+        CanvasStack canvas = new BitmapCanvasStack(
             CanvasUnit.In, canvasSize.Width, canvasSize.Height,
             Color.White, 2.0);
         sw4.Dispose();

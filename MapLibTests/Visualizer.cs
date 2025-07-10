@@ -86,7 +86,7 @@ internal class Visualizer
     internal static void LoadOgrDataAndDrawPolygons(string inputFilename,
         double geometryWidth, double geometryHeight,
         int canvasWidth, int canvasHeight,
-        Color background, Action<Canvas, IEnumerable<MultiPolygon>> drawingFunc)
+        Color background, Action<CanvasStack, IEnumerable<MultiPolygon>> drawingFunc)
         => DrawPolygons(new OgrDataReader().ReadFile(inputFilename),
             geometryWidth, geometryHeight,
             canvasWidth, canvasHeight, background, drawingFunc);
@@ -94,7 +94,7 @@ internal class Visualizer
     internal static void LoadOSMDataAndDrawPolygons(string inputFilename,
         double geometryWidth, double geometryHeight,
         int canvasWidth, int canvasHeight,
-        Color background, Action<Canvas, IEnumerable<MultiPolygon>> drawingFunc)
+        Color background, Action<CanvasStack, IEnumerable<MultiPolygon>> drawingFunc)
         => DrawPolygons(new OsmDataReader().ReadFile(inputFilename),
             geometryWidth, geometryHeight,
             canvasWidth, canvasHeight, background, drawingFunc);
@@ -102,26 +102,26 @@ internal class Visualizer
     internal static void DrawPolygons(VectorData data,
         double geometryWidth, double geometryHeight,
         int canvasWidth, int canvasHeight,
-        Color background, Action<Canvas, IEnumerable<MultiPolygon>> drawingFunc)
+        Color background, Action<CanvasStack, IEnumerable<MultiPolygon>> drawingFunc)
     {
         Console.WriteLine(FormatVectorDataSummary(data));
         VectorData transformedData = TransformToFit(data, geometryWidth, geometryHeight);
-        BitmapCanvas bitmapCanvas = new BitmapCanvas(CanvasUnit.Pixel, canvasWidth, canvasHeight, background);
-        SvgCanvas svgCanvas = new SvgCanvas(CanvasUnit.Pixel, canvasWidth, canvasHeight, background);
+        BitmapCanvasStack bitmapCanvas = new BitmapCanvasStack(CanvasUnit.Pixel, canvasWidth, canvasHeight, background);
+        SvgCanvasStack svgCanvas = new SvgCanvasStack(CanvasUnit.Pixel, canvasWidth, canvasHeight, background);
 
         // Use multipolygons for everything
         List<MultiPolygon> multiPolygons = new();
         multiPolygons.AddRange(transformedData.MultiPolygons);
         multiPolygons.AddRange(transformedData.Polygons.Select(p => p.AsMultiPolygon()));
 
-        foreach (Canvas canvas in new Canvas[] { bitmapCanvas, svgCanvas })
+        foreach (CanvasStack canvas in new CanvasStack[] { bitmapCanvas, svgCanvas })
         {
             drawingFunc(canvas, multiPolygons);
             SaveCanvas(canvas, false);
         }
     }
 
-    public static string SaveCanvas(Canvas canvas, bool show, string? extraSuffix = null)
+    public static string SaveCanvas(CanvasStack canvas, bool show, string? extraSuffix = null)
     {
         string prefix = TestName + (extraSuffix == null ? null : "_" + extraSuffix);
         string filename = FileSystemHelpers.GetTempOutputFileName(

@@ -11,15 +11,15 @@ public class CanvasFixture : BaseFixture
 {
     #region Artificial tests
 
-    public static IEnumerable<Canvas> TestCanvasFactory()
+    public static IEnumerable<CanvasStack> TestCanvasFactory()
     {
         int width = 1600;
         int height = 800;
-        yield return new BitmapCanvas(CanvasUnit.Mm, width, height, Color.Transparent, 1.0);
-        yield return new BitmapCanvas(CanvasUnit.Pixel, width, height, Color.Transparent, 1.0);
-        yield return new BitmapCanvas(CanvasUnit.Pixel, width, height, Color.Transparent, 5.0);
-        yield return new SvgCanvas(CanvasUnit.Mm, width, height, Color.Transparent);
-        yield return new SvgCanvas(CanvasUnit.Pixel, width, height, Color.Transparent);
+        yield return new BitmapCanvasStack(CanvasUnit.Mm, width, height, Color.Transparent, 1.0);
+        yield return new BitmapCanvasStack(CanvasUnit.Pixel, width, height, Color.Transparent, 1.0);
+        yield return new BitmapCanvasStack(CanvasUnit.Pixel, width, height, Color.Transparent, 5.0);
+        yield return new SvgCanvasStack(CanvasUnit.Mm, width, height, Color.Transparent);
+        yield return new SvgCanvasStack(CanvasUnit.Pixel, width, height, Color.Transparent);
     }
 
     /// <summary>
@@ -28,7 +28,7 @@ public class CanvasFixture : BaseFixture
     /// </summary>
     [Test]
     [TestCaseSource("TestCanvasFactory")]
-    public void DrawTestCanvas(Canvas canvas)
+    public void DrawTestCanvas(CanvasStack canvas)
     {
         OgrDataReader reader = new();
 
@@ -44,7 +44,7 @@ public class CanvasFixture : BaseFixture
         Assert.That(reservoirPolygon.Count(cs => cs.IsCounterClockwise()), Is.EqualTo(1)); // outer ring (perimeter)
         Assert.That(reservoirPolygon.Count(cs => cs.IsClockwise()), Is.GreaterThan(1)); // inner rings (islands)
 
-        CanvasLayer layer = canvas.AddNewLayer("main");
+        Canvas layer = canvas.AddNewLayer("main");
 
         ///// Polygon styles
 
@@ -113,7 +113,7 @@ public class CanvasFixture : BaseFixture
         canvas.Dispose();
     }
 
-    private void DrawTextWithBbox(CanvasLayer layer, string fontName, double emSize,
+    private void DrawTextWithBbox(Canvas layer, string fontName, double emSize,
         string s, Coord centerCoord, Color color, float? outlineWidth = null)
     {
         Coord textSize = layer.GetTextSize(fontName, emSize, s);
@@ -158,12 +158,12 @@ public class CanvasFixture : BaseFixture
         };
         MultiPolygon multipolygon = new([outerRing, innerRing], null);
 
-        using BitmapCanvas bitmapCanvas = new(CanvasUnit.Pixel, 500, 500, Color.White);
-        using SvgCanvas svgCanvas = new(CanvasUnit.Pixel, 500, 500, Color.White);
+        using BitmapCanvasStack bitmapCanvas = new(CanvasUnit.Pixel, 500, 500, Color.White);
+        using SvgCanvasStack svgCanvas = new(CanvasUnit.Pixel, 500, 500, Color.White);
 
-        foreach (Canvas canvas in new Canvas[] { bitmapCanvas, svgCanvas })
+        foreach (CanvasStack canvas in new CanvasStack[] { bitmapCanvas, svgCanvas })
         {
-            CanvasLayer layer = canvas.AddNewLayer("test layer");
+            Canvas layer = canvas.AddNewLayer("test layer");
             layer.DrawFilledMultiPolygon(multipolygon, Color.CadetBlue);
             layer.DrawPolygon(outerRing, 5.0, Color.DarkRed);
             layer.DrawPolygon(innerRing, 5.0, Color.DarkGreen);
@@ -177,7 +177,7 @@ public class CanvasFixture : BaseFixture
         Visualizer.LoadOgrDataAndDrawPolygons(
             Path.Join(TestDataPath, "Aaron River/Aaron River Reservoir.geojson"),
             600, 600, 600, 600, Color.AntiqueWhite, (canvas, multiPolygons) => {
-                CanvasLayer layer = canvas.AddNewLayer("water");
+                Canvas layer = canvas.AddNewLayer("water");
                 foreach (MultiPolygon multipolygon in multiPolygons)
                     foreach (Coord[] polygon in multipolygon)
                         layer.DrawPolygon(polygon, 1.2, Color.Navy, LineJoin.Round);
@@ -190,7 +190,7 @@ public class CanvasFixture : BaseFixture
         Visualizer.LoadOgrDataAndDrawPolygons(
             Path.Join(TestDataPath, "Aaron River/Aaron River Reservoir.geojson"),
             600, 600, 600, 600, Color.AntiqueWhite, (canvas, multiPolygons) => {
-                CanvasLayer layer = canvas.AddNewLayer("water");
+                Canvas layer = canvas.AddNewLayer("water");
                 foreach (var multipolygon in multiPolygons)
                     layer.DrawFilledMultiPolygon(multipolygon, Color.CornflowerBlue);
             });
@@ -202,7 +202,7 @@ public class CanvasFixture : BaseFixture
         Visualizer.LoadOSMDataAndDrawPolygons(
             Path.Join(TestDataPath, "osm-xml/Aaron River Reservoir.osm"),
             600, 600, 600, 600, Color.AntiqueWhite, (canvas, multiPolygons) => {
-                CanvasLayer layer = canvas.AddNewLayer("water");
+                Canvas layer = canvas.AddNewLayer("water");
                 foreach (var multipolygon in multiPolygons)
                     layer.DrawFilledMultiPolygon(multipolygon, Color.CornflowerBlue);
             });
@@ -214,7 +214,7 @@ public class CanvasFixture : BaseFixture
         Visualizer.LoadOgrDataAndDrawPolygons(
             Path.Join(TestDataPath, "Aaron River/Aaron River Reservoir.geojson"),
             600, 600, 600, 600, Color.AntiqueWhite, (canvas, multiPolygons) => {
-                CanvasLayer layer = canvas.AddNewLayer("water");
+                Canvas layer = canvas.AddNewLayer("water");
                 foreach (var multipolygon in multiPolygons)
                 {
                     DrawShorelineFromPolygon(layer, multipolygon,
@@ -230,7 +230,7 @@ public class CanvasFixture : BaseFixture
             Path.Join(TestDataPath, "Natural Earth/ne_110m_land.shp"),
             600, 600, 1200, 600, Color.AntiqueWhite, (canvas, multiPolygons) => {
                 MultiPolygon world = new(multiPolygons, null);
-                CanvasLayer layer = canvas.AddNewLayer("shore");
+                Canvas layer = canvas.AddNewLayer("shore");
                 DrawShorelineFromPolygon(layer, world,
                         Color.Navy, 1.3, 1.0, 0.8, 0.6, 3.5, 5);
             });
@@ -241,7 +241,7 @@ public class CanvasFixture : BaseFixture
 
     ///// Helpers
 
-    private void DrawShorelineFromPolygon(CanvasLayer layer,
+    private void DrawShorelineFromPolygon(Canvas layer,
         MultiPolygon polygon, Color baseColor,
         double firstLineWidth, double secondLineWidth,
         double lineWidthMultiplier, double opacityMultiplier,

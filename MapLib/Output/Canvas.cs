@@ -1,110 +1,121 @@
-﻿namespace MapLib.Output;
+﻿using MapLib.Geometry;
+using System.Drawing;
+
+namespace MapLib.Output;
 
 public abstract class Canvas : IDisposable
 {
-    public const double PixelsPerInch = 90; // may make this non-const
-    public const double MmPerInch = 25.4;
-    public const double MmPerPoint = MmPerInch / 72.0; // 1 pt = 1/72 in
-    public const double PointsPerMm = 1.0 / MmPerPoint;
+    // Masks are black on white (black is masked; white is transparent).
+    public static readonly Color MaskBackgroundColor = Color.White;
+    public static readonly Color MaskColor = Color.Black;
 
-    public CanvasUnit Unit { get; }
-    public double Width { get; }
-    public double Height { get; }
+    public static readonly Color DebugColor = Color.Magenta;
 
-    public Canvas(CanvasUnit unit, double width, double height)
-    {
-        Unit = unit;
-        Width = width;
-        Height = height;
-    }
 
     public abstract void Dispose();
 
-    public abstract CanvasLayer AddNewLayer(string name);
-    public abstract CanvasLayer AddNewMask(string name);
-    //public abstract void RemoveLayer(CanvasLayer layer);
+    public string? Name { get; set; }
 
-    public abstract IEnumerable<CanvasLayer> Layers { get; }
-    public abstract int LayerCount { get; }
+    public abstract void Clear(Color color);
 
-    public abstract string DefaultFileExtension { get; }
-    public abstract void SaveToFile(string filename);
-    public abstract void SaveLayersToFile(string baseFilename);
+    public abstract void DrawBitmap(
+        Bitmap bitmap,
+        double x, double y, double width, double height,
+        double opacity);
 
-    public virtual string FormatSummary()
-        => $"{GetType()}, {Unit}, {Width} x {Height}";
+    public abstract void DrawLine(
+        Coord[] coords,
+        double width, Color color,
+        LineCap cap = LineCap.Butt,
+        LineJoin join = LineJoin.Miter, // TODO: miter limit
+        double[]? dasharray = null);
 
-    /// <summary>
-    /// Translate mm -> canvas units.
-    /// </summary>
-    public double FromMm(double mm) => mm * FromMmFactor();
+    public abstract void DrawLines(
+        IEnumerable<Coord[]> lines,
+        double width, Color color,
+        LineCap cap = LineCap.Butt,
+        LineJoin join = LineJoin.Miter, // TODO: miter limit
+        double[]? dasharray = null);
 
-    /// <summary>
-    /// Translate canvas units -> mm.
-    /// </summary>
-    public double ToMm(double units) => units * ToMmFactor();
-
-    /// <summary>
-    /// Conversion factor mm -> Canvas Units
-    /// </summary>
-    public double FromMmFactor()
-    {
-        switch (Unit)
-        {
-            case CanvasUnit.Mm:
-                return 1;
-            case CanvasUnit.In:
-                return 1 / MmPerInch;
-            case CanvasUnit.Pixel:
-                return PixelsPerInch / MmPerInch;
-            default:
-                throw new NotSupportedException(
-                    "Unsupported canvas unit type");
-        }
-    }
-    /// <summary>
-    /// Conversion factor Canvas Units -> mm
-    /// </summary>
-    public double ToMmFactor() => 1.0 / FromMmFactor();
 
     /// <summary>
-    /// Translate points (as used e.g. in typography) -> canvas units.
+    /// Draws the outline of a polygon.
+    /// This is similar to DrawLine with equal start and end point,
+    /// except it guarantees the proper line join.
     /// </summary>
-    public double FromPt(double pt) => FromMm(pt * MmPerPoint);
+    public abstract void DrawPolygon(
+        Coord[] coords,
+        double width, Color color,
+        LineJoin join = LineJoin.Miter, // TODO: miter limit
+        double[]? dasharray = null);
 
     /// <summary>
-    /// Translate canvas units -> points.
+    /// Fills a polygon specified by the given coordinates.
     /// </summary>
-    public double ToPt(double units) => ToMm(units) * PointsPerMm;
+    public abstract void DrawFilledPolygon(
+        Coord[] coords,
+        Color color);
 
     /// <summary>
-    /// Translate canvas units -> pixels.
+    /// Fills the polygons specified by the given coordinates.
     /// </summary>
-    public double ToPixels(double units) =>
-        units * ToPixelsFactor();
+    /// <remarks>
+    /// NOTE: The polygons, including any CW (holes), are drawn
+    /// individually. Use DrawFilledMultiPolygon if CW polygons
+    /// should be rendered as holes.
+    /// </remarks>
+    public abstract void DrawFilledPolygons(
+        IEnumerable<Coord[]> polygons,
+        Color color);
 
     /// <summary>
-    /// Translate canvas pixels -> units.
+    /// Fills the multipolygon specified by the given coordinates.
     /// </summary>
-    public double FromPixels(double units) =>
-        units / ToPixelsFactor();
+    /// <remarks>
+    /// CCW polygons are outer polygons, CW are holes.
+    /// </remarks>
+    public abstract void DrawFilledMultiPolygon(
+        IEnumerable<Coord[]> multiPolygon,
+        Color color);
 
     /// <summary>
-    /// Conversion factor canvas units -> Pixels
+    /// Fills the multipolygons specified by the given coordinates.
     /// </summary>
-    public double ToPixelsFactor()
-    {
-        switch (Unit)
-        {
-            case CanvasUnit.Mm:
-                return PixelsPerInch / MmPerInch;
-            case CanvasUnit.In:
-                return PixelsPerInch;
-            case CanvasUnit.Pixel:
-                return 1;
-            default:
-                throw new NotSupportedException(
-                    "Unsupported canvas unit type");
-        }
-    }
+    public abstract void DrawFilledMultiPolygons(
+        IEnumerable<IEnumerable<Coord[]>> multiPolygons,
+        Color color);
+
+
+    public abstract void DrawCircles(IEnumerable<Coord> coords,
+        double radius, double lineWidth, Color color);
+    public virtual void DrawCircle(Coord coord,
+        double radius, double lineWidth, Color color)
+        => DrawCircles([coord], radius, lineWidth, color);
+
+    public abstract void DrawFilledCircles(IEnumerable<Coord> coords,
+        double radius, Color color);
+    public virtual void DrawFilledCircle(Coord coord,
+        double radius, Color color)
+        => DrawFilledCircles([coord], radius, color);
+
+    
+    /// <returns>
+    /// Measured width and height of the string (in canvas units)
+    /// </returns>
+    public abstract Coord GetTextSize(string font, double emSize, string s);
+
+    /// <param name="emSize">
+    /// Text em-size (total body height), in canvas units.
+    /// </param>
+    public abstract void DrawText(
+        string fontName, double emSize, string s,
+        Coord centerCoord, Color color);
+
+    public abstract void DrawTextOutline(
+        string fontName, double emSize, string s,
+        Coord centerCoord, Color color, double lineWidth,
+        LineJoin join = LineJoin.Round); // TODO: miter limit);
+
+    public abstract void ApplyMasks(
+        IList<Canvas> maskSources);
 }

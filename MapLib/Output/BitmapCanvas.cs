@@ -1,157 +1,32 @@
-﻿#define EXTRADEBUG
-
-using MapLib.Geometry;
-using MapLib.Util;
-using System.Drawing;
+﻿using MapLib.Geometry;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
+using System.Drawing;
 
 namespace MapLib.Output;
-
-public class BitmapCanvas : Canvas, IDisposable
-{
-    internal readonly double _width; // canvas width in canvas units
-    internal readonly double _height; // canvas height in canvas units
-    internal readonly int _pixelsX; // canvas width in pixels
-    internal readonly int _pixelsY; // canvas height in pixels
-    
-    /// <summary>
-    /// Scale to convert canvas units to pixels.
-    /// </summary>
-    private readonly double _pixelScaleFactor;
-
-    /// <summary>
-    /// User scale (under/oversampling).
-    /// </summary>
-    private readonly double _userScaleFactor;
-
-    /// <summary>
-    /// The total scale factor at which the graphics is to be rendered.
-    /// </summary>
-    internal double ScaleFactor => _pixelScaleFactor * _userScaleFactor;
-
-    private readonly Color _backgroundColor;
-    private readonly List<BitmapCanvasLayer> _layers = new();
-    private readonly List<BitmapCanvasLayer> _masks = new();
-
-    public BitmapCanvas(CanvasUnit unit, double width,
-        double height, Color? backgroundColor,
-        double? scaleFactor = null)
-        : base(unit, width, height)
-    {
-        _width = width;
-        _height = height;
-        
-        // Values to final scale factor
-        _pixelScaleFactor = ToPixelsFactor();
-        _userScaleFactor = scaleFactor ?? 1.0;
-
-        _pixelsX = (int)(width * ScaleFactor);
-        _pixelsY = (int)(height * ScaleFactor);
-
-        _backgroundColor = backgroundColor ?? Color.Transparent;
-    }
-
-    public override void Dispose()
-    {
-        foreach (BitmapCanvasLayer layer in _layers)
-            layer.Dispose();
-        _layers.Clear();
-        foreach (BitmapCanvasLayer mask in _masks)
-            mask.Dispose();
-        _masks.Clear();
-    }
-
-    public override string FormatSummary()
-    {
-        return base.FormatSummary() +
-            $" ({_pixelsX}x{_pixelsY} px) Scale: {_pixelScaleFactor} (pixel) * {_userScaleFactor} (user) = {ScaleFactor}";
-    }
-
-    public override IEnumerable<CanvasLayer> Layers => _layers;
-    public override int LayerCount => _layers.Count;
-
-    public override CanvasLayer AddNewLayer(string name)
-    {
-        var layer = new BitmapCanvasLayer(this);
-        layer.Name = name;
-        _layers.Add(layer);
-        return layer;
-    }
-
-    public override CanvasLayer AddNewMask(string name)
-    {
-        var mask = new BitmapCanvasLayer(this);
-        mask.Name = name;
-        mask.Clear(CanvasLayer.MaskBackgroundColor);
-        _masks.Add(mask);
-        return mask;
-    }
-
-    public Bitmap GetBitmap()
-    {
-        // Render composite bitmap from layers
-        var canvasBitmap = new Bitmap(_pixelsX, _pixelsY, PixelFormat.Format32bppArgb);
-        canvasBitmap.MakeTransparent(canvasBitmap.GetPixel(0, 0));
-        using (Graphics g = Graphics.FromImage(canvasBitmap))
-        {
-            if (_backgroundColor != Color.Transparent)
-                g.Clear(_backgroundColor);
-            foreach (BitmapCanvasLayer layer in _layers)
-                g.DrawImage(layer.Bitmap, new PointF(0f, 0f));
-        }
-        return canvasBitmap;
-    }
-
-    public override string DefaultFileExtension => ".png";
-
-    public override void SaveToFile(string filename)
-    {
-        using Bitmap bitmap = GetBitmap();
-        bitmap.Save(filename);
-    }
-
-    public override void SaveLayersToFile(string baseFilename)
-    {
-        foreach (CanvasLayer layer in _layers.Union(_masks))
-        {
-            if (layer is BitmapCanvasLayer bitmapLayer)
-            {
-                string filename = FileSystemHelpers.GetTempOutputFileName(
-                    ".png", baseFilename + "_" + layer.Name);
-                bitmapLayer.Bitmap.Save(filename);
-            }
-            else
-                throw new InvalidOperationException(
-                    "Only BitmapCanvasLayer can be saved to file.");
-        }
-    }
-}
 
 /// <remarks>
 /// NOTE: Since the GDI+ coordinate system has positive Y down,
 /// and our coordinates are positive Y up, the Y-coordinate needs
 /// top be flipped (offset and negate).
 /// </remarks>
-internal class BitmapCanvasLayer : CanvasLayer, IDisposable
+internal class BitmapCanvas : Canvas, IDisposable
 {
-    private static readonly Color DebugColor = Color.Magenta;
-
-    private readonly BitmapCanvas _canvas;
+    private readonly BitmapCanvasStack _stack;
     private readonly Graphics _graphics;
-    private int pixelsX => _canvas._pixelsX;
-    private int pixelsY => _canvas._pixelsY;
-    private double _height => _canvas.Height;
+    
+    private int PixelsX => _stack._pixelsX;
+    private int PixelsY => _stack._pixelsY;
+    private double Height => _stack.Height;
 
-    private double scaleFactor => _canvas.ScaleFactor;
+    private double ScaleFactor => _stack.ScaleFactor;
 
-    /// <param name="height">Height, in canvas units.</param>
-    internal BitmapCanvasLayer(
-        BitmapCanvas canvas)
+
+    internal BitmapCanvas(BitmapCanvasStack stack)
     {
-        _canvas = canvas;
+        _stack = stack;
 
-        Bitmap = new Bitmap(pixelsX, pixelsY, PixelFormat.Format32bppArgb);
+        Bitmap = new Bitmap(PixelsX, PixelsY, PixelFormat.Format32bppArgb);
         Bitmap.MakeTransparent(Bitmap.GetPixel(0, 0));
         _graphics = Graphics.FromImage(Bitmap);
         _graphics.PageUnit = GraphicsUnit.Pixel;
@@ -166,7 +41,7 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
         //_graphics.ScaleTransform((float)scaleFactor, -(float)scaleFactor);
 
         // Scale drawing ops
-        _graphics.ScaleTransform((float)scaleFactor, (float)scaleFactor);
+        _graphics.ScaleTransform((float)ScaleFactor, (float)ScaleFactor);
     }
 
     public override void Dispose()
@@ -217,7 +92,7 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
             => _graphics.DrawEllipse(pen, x - radius, y - radius, radius * 2f, radius * 2f);
         using Pen pen = new(color, (float)lineWidth);
         foreach (Coord coord in coords)
-            DrawCircleAtPoint((float)coord.X, (float)(_height - coord.Y), (float)radius, pen);
+            DrawCircleAtPoint((float)coord.X, (float)(Height - coord.Y), (float)radius, pen);
     }
 
     public override void DrawFilledCircles(
@@ -227,7 +102,7 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
             => _graphics.FillEllipse(brush, x - radius, y - radius, radius * 2f, radius * 2f);
         using SolidBrush brush = new(color);
         foreach (Coord coord in coords)
-            FillCircleAtPoint((float)coord.X, (float)(_height - coord.Y), (float)radius, brush);
+            FillCircleAtPoint((float)coord.X, (float)(Height - coord.Y), (float)radius, brush);
     }
 
 
@@ -332,9 +207,9 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
         double x, double y, double width, double height, double opacity)
     {
         PointF[] cornerPoints = [ // order: [UL, UR, LL]
-            new PointF((float)x, (float)(_height - y - height)), // UL
-            new PointF((float)(x + width), (float)(_height - y - height)), // UR
-            new PointF((float)x, (float)(_height - y)) // LL
+            new PointF((float)x, (float)(Height - y - height)), // UL
+            new PointF((float)(x + width), (float)(Height - y - height)), // UR
+            new PointF((float)x, (float)(Height - y)) // LL
         ];
 
         if (opacity < 1.0)
@@ -363,19 +238,19 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
         }
     }
 
-    public override void ApplyMasks(IList<CanvasLayer> maskSources)
+    public override void ApplyMasks(IList<Canvas> maskSources)
     {
         foreach (var maskSource in maskSources)
             ApplyMask(maskSource);
     }
 
     //public override void ApplyMask(CanvasLayer maskSource)
-    private void ApplyMask(CanvasLayer maskSource)
+    private void ApplyMask(Canvas maskSource)
     {
         // Loosely based on:
         // https://stackoverflow.com/questions/3654220/alpha-masking-in-c-sharp-system-drawing
 
-        if (maskSource is not BitmapCanvasLayer bitmapCanvasLayer)
+        if (maskSource is not BitmapCanvas bitmapCanvasLayer)
             throw new ArgumentException(
                 "Mask source must be BitmapCanvasLayer.", nameof(maskSource));
 
@@ -384,7 +259,7 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
         if (dest.Width != mask.Width || dest.Height != mask.Height)
             throw new ArgumentException(
                 "Mask and destination bitmaps must have the same dimensions.");
-        
+
         Rectangle rect = new(0, 0, mask.Width, mask.Height);
         BitmapData bitsMask = mask.LockBits(rect, ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
         BitmapData bitsDest = dest.LockBits(rect, ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
@@ -470,7 +345,7 @@ internal class BitmapCanvasLayer : CanvasLayer, IDisposable
 
     public PointF ToPoint(Coord coord) => new PointF(
         (float)coord.X,
-        (float)_height - (float)coord.Y); // Invert Y coordinate (see class remarks)
+        (float)Height - (float)coord.Y); // Invert Y coordinate (see class remarks)
 
     #endregion
 }

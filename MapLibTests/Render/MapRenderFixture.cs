@@ -14,17 +14,17 @@ namespace MapLib.Tests.Render;
 [TestFixture]
 public class MapRenderFixture : BaseFixture
 {
-    public static IEnumerable<Canvas> LetterSizeCanvases()
+    public static IEnumerable<CanvasStack> LetterSizeCanvases()
     {
-        yield return new BitmapCanvas(CanvasUnit.In, 11.0, 8.5, Color.White, 1.0);
-        yield return new BitmapCanvas(CanvasUnit.In, 11.0, 8.5, Color.White, 4.0);
-        yield return new SvgCanvas(CanvasUnit.In, 11.0, 8.5, Color.White);
+        yield return new BitmapCanvasStack(CanvasUnit.In, 11.0, 8.5, Color.White, 1.0);
+        yield return new BitmapCanvasStack(CanvasUnit.In, 11.0, 8.5, Color.White, 4.0);
+        yield return new SvgCanvasStack(CanvasUnit.In, 11.0, 8.5, Color.White);
     }
 
     [Test]
     [Explicit]
     [TestCaseSource(nameof(LetterSizeCanvases))]
-    public void RenderSimpleOsmData(Canvas canvas)
+    public void RenderSimpleOsmData(CanvasStack canvas)
     {
         Map map = new Map(
             new Bounds(-70.944, -70.915, 42.187, 42.207),
@@ -63,7 +63,7 @@ public class MapRenderFixture : BaseFixture
     [Test]
     [Explicit]
     [TestCaseSource("LetterSizeCanvases")]
-    public void RenderSimpleOsmDataAndRaster(Canvas canvas)
+    public void RenderSimpleOsmDataAndRaster(CanvasStack canvas)
     {
         Map map = new Map(
             new Bounds(-70.944, -70.915, 42.187, 42.207),
@@ -134,7 +134,7 @@ public class MapRenderFixture : BaseFixture
     [Test]
     [Explicit]
     [TestCaseSource("LetterSizeCanvases")]
-    public async Task TestRenderMassachusettsTopoMap(Canvas canvas)
+    public async Task TestRenderMassachusettsTopoMap(CanvasStack canvas)
     {
         // Get 3DEP DEM data
         Usgs3depDataSource source = new(scaleFactor: 0.1);

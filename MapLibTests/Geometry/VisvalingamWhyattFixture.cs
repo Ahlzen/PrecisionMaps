@@ -15,7 +15,7 @@ public class VisvalingamWhyattFixture : BaseFixture
             Path.Join(TestDataPath, "Aaron River/Aaron River Reservoir.geojson"),
             400, 400, 1600, 800, Color.AntiqueWhite, (canvas, multiPolygons) =>
             {
-                CanvasLayer layer = canvas.AddNewLayer("water");
+                Canvas layer = canvas.AddNewLayer("water");
                 foreach (MultiPolygon multipolygon in multiPolygons)
                 {
                     foreach (Coord[] polygon in multipolygon)

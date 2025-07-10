@@ -43,7 +43,7 @@ public class PointInPolygonFixture : BaseFixture
         vb.Points.AddRange(countryData.MultiPolygons.Select(mp => new Point(PolyLabel.Calculate(mp), tags)));
         VectorData polyLabelPoints = vb.ToVectorData(srs);
 
-        BitmapCanvas canvas = new(CanvasUnit.Mm, 420.0, 297.0, Color.White, 4.0);
+        BitmapCanvasStack canvas = new(CanvasUnit.Mm, 420.0, 297.0, Color.White, 4.0);
         Map map = new(new Bounds(-180.0, 180.0, -80.0, 80.0), srs);
         map.VectorDataSources.Add("countries", new ExistingVectorDataSource(countryData));
         map.VectorDataSources.Add("bboxCenterPoints", new ExistingVectorDataSource(bboxCenterPoints));

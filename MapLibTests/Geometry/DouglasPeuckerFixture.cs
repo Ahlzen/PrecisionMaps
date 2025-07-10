@@ -15,7 +15,7 @@ public class DouglasPeuckerFixture : BaseFixture
             Path.Join(TestDataPath, "Aaron River/Aaron River Reservoir.geojson"),
             400, 400, 1600, 400, Color.AntiqueWhite, (canvas, multiPolygons) =>
             {
-                CanvasLayer layer = canvas.AddNewLayer("water");
+                Canvas layer = canvas.AddNewLayer("water");
                 foreach (MultiPolygon multipolygon in multiPolygons)
                 {
                     double size = multipolygon.GetBounds().Size; // overall size of feature
@@ -47,7 +47,7 @@ public class DouglasPeuckerFixture : BaseFixture
             Path.Join(TestDataPath, "GeoJSON/Aaron River Reservoir.geojson"),
             400, 400, 1600, 400, Color.AntiqueWhite, (canvas, multiPolygons) =>
             {
-                CanvasLayer layer = canvas.AddNewLayer("water");
+                Canvas layer = canvas.AddNewLayer("water");
                 foreach (MultiPolygon multipolygon in multiPolygons)
                 {
                     foreach (Coord[] polygon in multipolygon)

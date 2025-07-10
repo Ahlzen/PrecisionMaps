@@ -13,17 +13,17 @@ public class WorldMapFixture : BaseFixture
 {
     private static Color WaterColor = Color.CornflowerBlue;
 
-    public static IEnumerable<Canvas> A3Canvases()
+    public static IEnumerable<CanvasStack> A3Canvases()
     {
-        yield return new BitmapCanvas(CanvasUnit.Mm, 420.0, 297.0, WaterColor, 1.0);
-        yield return new BitmapCanvas(CanvasUnit.Mm, 420.0, 297.0, WaterColor, 4.0);
-        yield return new SvgCanvas(CanvasUnit.Mm, 420.0, 297.0, WaterColor);
+        yield return new BitmapCanvasStack(CanvasUnit.Mm, 420.0, 297.0, WaterColor, 1.0);
+        yield return new BitmapCanvasStack(CanvasUnit.Mm, 420.0, 297.0, WaterColor, 4.0);
+        yield return new SvgCanvasStack(CanvasUnit.Mm, 420.0, 297.0, WaterColor);
     }
 
     [Test]
     [Explicit]
     [TestCaseSource(nameof(A3Canvases))]
-    public void RenderWorldCountriesMap(Canvas canvas)
+    public void RenderWorldCountriesMap(CanvasStack canvas)
     {
         // Try something different: Van Der Grinten projection
         // (not uncommon for world maps)
@@ -82,7 +82,7 @@ public class WorldMapFixture : BaseFixture
     [Test]
     [Explicit]
     [TestCaseSource(nameof(A3Canvases))]
-    public void RenderWorldCountriesMap_WithMasks(Canvas canvas)
+    public void RenderWorldCountriesMap_WithMasks(CanvasStack canvas)
     {
         // Try something different: Van Der Grinten projection
         // (not uncommon for world maps)

@@ -92,7 +92,7 @@ internal class ChaikinFixture : BaseFixture
             Path.Join(TestDataPath, "GeoJSON/Aaron River Reservoir.geojson"),
             400, 400, 1200, 400, Color.AntiqueWhite, (canvas, multiPolygons) =>
             {
-                CanvasLayer layer = canvas.AddNewLayer("water");
+                Canvas layer = canvas.AddNewLayer("water");
                 foreach (MultiPolygon multipolygon in multiPolygons)
                     foreach (Coord[] polygon in multipolygon)
                     {

@@ -46,7 +46,7 @@ public class Map : IHasSrs, IBounded
     public OrderedDictionary<string, BaseRasterDataSource> RasterDataSources { get; } = new();
 
     public List<MapLayer> Layers { get; } = new();
-    private Dictionary<string, CanvasLayer> Masks { get; } = new();
+    private Dictionary<string, Canvas> Masks { get; } = new();
 
     public ObjectPlacementManager PlacementManager { get; } = new();
     public ObjectPlacementManager MaskPlacementManager { get; } = new(); // TODO: remove; compute once!
@@ -61,7 +61,7 @@ public class Map : IHasSrs, IBounded
         RequestedBoundsWgs84 = boundsWgs84;                       
     }
 
-    public async void Render(Canvas canvas,
+    public async void Render(CanvasStack canvas,
         AspectRatioMismatchStrategy ratioMismatchStrategy = AspectRatioMismatchStrategy.CenterOnCanvas)
     {
         ComputeActualBounds(canvas, ratioMismatchStrategy);
@@ -102,7 +102,7 @@ public class Map : IHasSrs, IBounded
     #region Data and projections
 
     private void ComputeActualBounds(
-        Canvas canvas,
+        CanvasStack canvas,
         AspectRatioMismatchStrategy strategy)
     {
         Transformer wgs84ToMapSrs = new(Epsg.Wgs84, this.Srs);
@@ -227,16 +227,16 @@ public class Map : IHasSrs, IBounded
     #endregion
 
     private async Task RenderVectorMask(string maskName,
-        Canvas canvas, VectorMapLayer vectorLayer)
+        CanvasStack canvas, VectorMapLayer vectorLayer)
     {
         var dataInCanvasSpace = await GetVectorDataForLayer(vectorLayer);
         DrawVectors(maskName, canvas, vectorLayer, dataInCanvasSpace, isMask: true);
     }
 
-    private async Task RenderVectorLayer(Canvas canvas, VectorMapLayer vectorLayer)
+    private async Task RenderVectorLayer(CanvasStack canvas, VectorMapLayer vectorLayer)
     {
         var dataInCanvasSpace = await GetVectorDataForLayer(vectorLayer);
-        CanvasLayer layer = DrawVectors(vectorLayer.Name,
+        Canvas layer = DrawVectors(vectorLayer.Name,
             canvas, vectorLayer, dataInCanvasSpace, isMask: false);
 
         layer.ApplyMasks(
@@ -276,11 +276,11 @@ public class Map : IHasSrs, IBounded
     /// <returns>
     /// The resulting CanvasLayer.
     /// </returns>
-    private CanvasLayer DrawVectors(string layerName,
-        Canvas canvas, VectorMapLayer mapLayer,
+    private Canvas DrawVectors(string layerName,
+        CanvasStack canvas, VectorMapLayer mapLayer,
         VectorData data, bool isMask)
     {
-        CanvasLayer layer;
+        Canvas layer;
         if (isMask)
         {
             layer = canvas.AddNewMask(layerName);
@@ -303,13 +303,13 @@ public class Map : IHasSrs, IBounded
         {
             if (style.LineMaskWidth != null)
                 Stroke(canvas, layer, data.Lines, data.MultiLines, null, null,
-                    CanvasLayer.MaskColor, style.LineWidth + style.LineMaskWidth * 2);
+                    Canvas.MaskColor, style.LineWidth + style.LineMaskWidth * 2);
             if (style.PolygonMaskWidth != null)
                 Stroke(canvas, layer, null, null, data.Polygons, data.MultiPolygons,
-                    CanvasLayer.MaskColor, style.PolygonMaskWidth * 2);
+                    Canvas.MaskColor, style.PolygonMaskWidth * 2);
             if (style.SymbolMaskWidth != null)
                 DrawSymbols(canvas, layer, MaskPlacementManager, allPoints, style.Symbol,
-                    style.SymbolSize, CanvasLayer.MaskColor, style.SymbolMaskWidth * 2);
+                    style.SymbolSize, Canvas.MaskColor, style.SymbolMaskWidth * 2);
             if (style.TextMaskWidth != null)
                 DrawTextLabels(canvas, layer, MaskPlacementManager, allPoints,
                     style.TextTag, style.TextColor, style.TextFont, style.TextSize,
@@ -342,7 +342,7 @@ public class Map : IHasSrs, IBounded
     }
 
     private static void Fill(
-        Canvas canvas, CanvasLayer layer,
+        CanvasStack canvas, Canvas layer,
         IEnumerable<Polygon>? polygons,
         IEnumerable<MultiPolygon>? multiPolygons,
         Color? fillColor)
@@ -358,7 +358,7 @@ public class Map : IHasSrs, IBounded
     }
 
     private static void Stroke(
-        Canvas canvas, CanvasLayer layer,
+        CanvasStack canvas, Canvas layer,
         IEnumerable<Line>? lines,
         IEnumerable<MultiLine>? multiLines,
         IEnumerable<Polygon>? polygons,
@@ -388,7 +388,7 @@ public class Map : IHasSrs, IBounded
                 layer.DrawLines(mp.Coords, lineWidth.Value, lineColor.Value);
     }
 
-    private void DrawSymbols(Canvas canvas, CanvasLayer layer,
+    private void DrawSymbols(CanvasStack canvas, Canvas layer,
         ObjectPlacementManager placementManager,
         IEnumerable<(Coord[] coords, TagList tags)> allPoints,
         SymbolType? symbolType, double? symbolSize, Color? symbolFillColor,
@@ -422,7 +422,7 @@ public class Map : IHasSrs, IBounded
         }
     }
 
-    private void DrawTextLabels(Canvas canvas, CanvasLayer layer,
+    private void DrawTextLabels(CanvasStack canvas, Canvas layer,
         ObjectPlacementManager placementManager,
         IEnumerable<(Coord[] coords, TagList tags)> allPoints,
         string? textTag, Color? textColor, string? fontName, double? fontSize,
@@ -510,7 +510,7 @@ public class Map : IHasSrs, IBounded
 
     #region Raster helpers
 
-    private async Task RenderRasterLayer(Canvas canvas, RasterMapLayer rasterLayer)
+    private async Task RenderRasterLayer(CanvasStack canvas, RasterMapLayer rasterLayer)
     {
         BaseRasterDataSource? dataSource =
             RasterDataSources.GetValueOrDefault(rasterLayer.DataSourceName);
@@ -522,9 +522,9 @@ public class Map : IHasSrs, IBounded
         DrawRaster(canvas, rasterLayer, data);
     }
 
-    private void DrawRaster(Canvas canvas, RasterMapLayer mapLayer, RasterData data)
+    private void DrawRaster(CanvasStack canvas, RasterMapLayer mapLayer, RasterData data)
     {
-        CanvasLayer layer = canvas.AddNewLayer(mapLayer.Name);
+        Canvas layer = canvas.AddNewLayer(mapLayer.Name);
 
         Console.WriteLine("Map SRS: " + Srs);
         Console.WriteLine("Raster SRS: " + data.Srs);
