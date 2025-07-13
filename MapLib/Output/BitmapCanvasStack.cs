@@ -31,8 +31,6 @@ public class BitmapCanvasStack : CanvasStack, IDisposable
     internal double ScaleFactor => _pixelScaleFactor * _userScaleFactor;
 
     private readonly Color _backgroundColor;
-    private readonly List<BitmapCanvas> _layers = new();
-    private readonly List<BitmapCanvas> _masks = new();
 
     public BitmapCanvasStack(CanvasUnit unit, double width,
         double height, Color? backgroundColor,
@@ -54,10 +52,10 @@ public class BitmapCanvasStack : CanvasStack, IDisposable
 
     public override void Dispose()
     {
-        _layers.Each(l => l.Dispose());
-        _layers.Clear();
-        _masks.Each(m => m.Dispose());
-        _masks.Clear();
+        Layers.Values.Each(l => (l as IDisposable)?.Dispose());
+        Layers.Clear();
+        Masks.Values.Each(m => (m as IDisposable)?.Dispose());
+        Masks.Clear();
     }
 
     public override string FormatSummary()
@@ -66,24 +64,20 @@ public class BitmapCanvasStack : CanvasStack, IDisposable
             $" ({_pixelsX}x{_pixelsY} px) Scale: {_pixelScaleFactor} (pixel) * {_userScaleFactor} (user) = {ScaleFactor}";
     }
 
-    public override IEnumerable<Canvas> Layers => _layers;
-    public override int LayerCount => _layers.Count;
     public override Canvas AddNewLayer(string name)
     {
         var layer = new BitmapCanvas(this);
         layer.Name = name;
-        _layers.Add(layer);
+        Layers.Add(name, layer);
         return layer;
     }
 
-    public override IEnumerable<Canvas> Masks => _masks;
-    public override int MaskCount => _masks.Count;
     public override Canvas AddNewMask(string name)
     {
         var mask = new BitmapCanvas(this);
         mask.Name = name;
         mask.Clear(Canvas.MaskBackgroundColor);
-        _masks.Add(mask);
+        Masks.Add(name, mask);
         return mask;
     }
 
@@ -96,7 +90,7 @@ public class BitmapCanvasStack : CanvasStack, IDisposable
         {
             if (_backgroundColor != Color.Transparent)
                 g.Clear(_backgroundColor);
-            foreach (BitmapCanvas layer in _layers)
+            foreach (BitmapCanvas layer in Layers.Values)
                 g.DrawImage(layer.Bitmap, new PointF(0f, 0f));
         }
         return canvasBitmap;
@@ -110,19 +104,20 @@ public class BitmapCanvasStack : CanvasStack, IDisposable
         bitmap.Save(filename);
     }
 
-    public override void SaveLayersToFile(string baseFilename)
+    public override void SaveLayerToFile(string baseFilename, string layerName)
     {
-        foreach (Canvas layer in _layers.Union(_masks))
+        Canvas canvas =
+            Layers.GetValueOrDefault(layerName) ??
+            Masks.GetValueOrDefault(layerName) ??
+            throw new ApplicationException($"Layer or mask \"{layerName}\" not found.");
+        if (canvas is BitmapCanvas bitmapCanvas)
         {
-            if (layer is BitmapCanvas bitmapLayer)
-            {
-                string filename = FileSystemHelpers.GetTempOutputFileName(
-                    ".png", baseFilename + "_" + layer.Name);
-                bitmapLayer.Bitmap.Save(filename);
-            }
-            else
-                throw new InvalidOperationException(
-                    "Only BitmapCanvasLayer can be saved to file.");
+            string filename = FileSystemHelpers.GetTempOutputFileName(
+                ".png", baseFilename + "_" + canvas.Name);
+            bitmapCanvas.Bitmap.Save(filename);
         }
+        else
+            throw new InvalidOperationException(
+                "Only BitmapCanvas can be saved to file.");
     }
 }

@@ -54,20 +54,20 @@ public class ProjectionAndCanvasFittingFixture : BaseFixture
         sw2.Dispose();
 
         var sw3 = new QuickStopwatch("Adding layers");
-        map.Layers.Add(
+        map.MapLayers.Add(
             new VectorMapLayer("Water", "osmdata",
                 style: new VectorStyle {
                     FillColor = Color.CornflowerBlue,
                     LineColor = Color.Blue,
                     LineWidth = 0.005 },
                 filter: new TagFilter("natural", "water")));
-        map.Layers.Add(
+        map.MapLayers.Add(
             new VectorMapLayer("Highway", "osmdata",
                 style: new VectorStyle { 
                     LineColor = Color.Black,
                     LineWidth = 0.02 },
                 filter: new TagFilter("highway")));
-        map.Layers.Add(
+        map.MapLayers.Add(
             new VectorMapLayer("Building", "osmdata",
                 style: new VectorStyle { FillColor = Color.Tan },
                 filter: new TagFilter("building")));

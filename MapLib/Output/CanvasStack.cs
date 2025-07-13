@@ -1,4 +1,6 @@
-﻿namespace MapLib.Output;
+﻿using OSGeo.OGR;
+
+namespace MapLib.Output;
 
 public abstract class CanvasStack : IDisposable
 {
@@ -20,20 +22,45 @@ public abstract class CanvasStack : IDisposable
 
     public abstract void Dispose();
 
-    public abstract IEnumerable<Canvas> Layers { get; }
-    public abstract int LayerCount { get; }
+    // NOTE: This determines layer order (bottom to top)
+    public OrderedDictionary<string, Canvas> Layers { get; } = new();
+    public int LayerCount => Layers.Count;
     public abstract Canvas AddNewLayer(string name);
+    public Canvas GetLayer(string layerName) {
+        if (!Layers.ContainsKey(layerName))
+            throw new ApplicationException($"Layer \"{layerName}\" not found.");
+        return Layers[layerName];
+    }
+    public IList<Canvas> GetLayers(IEnumerable<string> layerNames)
+        => layerNames.Select(l => GetLayer(l)).ToList();
 
-    public abstract IEnumerable<Canvas> Masks { get; }
-    public abstract int MaskCount { get; }
+    public Dictionary<string, Canvas> Masks { get; } = new();
+    public int MaskCount => Masks.Count;
     public abstract Canvas AddNewMask(string name);
+    public Canvas GetMask(string maskName) {
+        if (!Masks.ContainsKey(maskName))
+            throw new ApplicationException($"Mask \"{maskName}\" not found.");
+        return Masks[maskName];
+    }
+    public IList<Canvas> GetMasks(IEnumerable<string> maskNames)
+        => maskNames.Select(m => GetMask(m)).ToList();
 
     public abstract string DefaultFileExtension { get; }
     public abstract void SaveToFile(string filename);
-    public abstract void SaveLayersToFile(string baseFilename);
+    public abstract void SaveLayerToFile(string baseFilename, string layerName);
+    public virtual void SaveAllLayersToFile(string baseFilename)
+    {
+        foreach (var layer in Layers)
+            SaveLayerToFile(baseFilename, layer.Key);
+        foreach (var mask in Masks)
+            SaveLayerToFile(baseFilename, mask.Key);
+    }
 
     public virtual string FormatSummary()
         => $"{GetType()}, {Unit}, {Width} x {Height}";
+
+
+    // Unit conversion
 
     /// <summary>
     /// Translate mm -> canvas units.

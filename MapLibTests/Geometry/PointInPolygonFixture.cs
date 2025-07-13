@@ -48,18 +48,18 @@ public class PointInPolygonFixture : BaseFixture
         map.VectorDataSources.Add("countries", new ExistingVectorDataSource(countryData));
         map.VectorDataSources.Add("bboxCenterPoints", new ExistingVectorDataSource(bboxCenterPoints));
         map.VectorDataSources.Add("polyLabelPoints", new ExistingVectorDataSource(polyLabelPoints));
-        map.Layers.Add(new VectorMapLayer(
+        map.MapLayers.Add(new VectorMapLayer(
             "borders", "countries", new VectorStyle {
                 LineColor = Color.DimGray,
                 LineWidth = 0.3
             }));
-        map.Layers.Add(new VectorMapLayer(
+        map.MapLayers.Add(new VectorMapLayer(
             "bboxCenterPoints", "bboxCenterPoints", new VectorStyle {
                 SymbolSize = pointSize,
                 Symbol = SymbolType.Circle,
                 SymbolColor = Color.Red
             }));
-        map.Layers.Add(new VectorMapLayer(
+        map.MapLayers.Add(new VectorMapLayer(
             "bboxCenterPoints", "polyLabelPoints", new VectorStyle {
                 SymbolSize = pointSize,
                 Symbol = SymbolType.Circle,

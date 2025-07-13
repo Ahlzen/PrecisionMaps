@@ -4,7 +4,7 @@ using System.Drawing;
 namespace MapLib.Render;
 
 /// <remarks>
-/// All sizes/distances are in map units unless otherwise specified.
+/// Any sizes/distances are in map units unless otherwise specified.
 /// </remarks>
 public record class VectorStyle
 {

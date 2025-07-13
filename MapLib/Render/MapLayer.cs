@@ -17,9 +17,12 @@ public abstract class MapLayer
 
 public class RasterMapLayer : MapLayer
 {
-    public RasterMapLayer(string name, string dataSourceName)
-        : base(name, dataSourceName)
+    public RasterStyle Style { get; }
+
+    public RasterMapLayer(string name, string dataSourceName,
+        RasterStyle style) : base(name, dataSourceName)
     {
+        Style = style;
     }
 }
 

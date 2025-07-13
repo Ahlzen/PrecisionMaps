@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Threading.Tasks;
 using MapLib.DataSources;
+using System.Reflection.Metadata;
 
 namespace MapLib.Render;
 
@@ -45,11 +46,9 @@ public class Map : IHasSrs, IBounded
     public OrderedDictionary<string, BaseVectorDataSource> VectorDataSources { get; } = new();
     public OrderedDictionary<string, BaseRasterDataSource> RasterDataSources { get; } = new();
 
-    public List<MapLayer> Layers { get; } = new();
-    private Dictionary<string, Canvas> Masks { get; } = new();
+    public List<MapLayer> MapLayers { get; } = new();
 
     public ObjectPlacementManager PlacementManager { get; } = new();
-    public ObjectPlacementManager MaskPlacementManager { get; } = new(); // TODO: remove; compute once!
 
     private double _scaleX, _scaleY;
     private double _offsetX, _offsetY;
@@ -61,40 +60,48 @@ public class Map : IHasSrs, IBounded
         RequestedBoundsWgs84 = boundsWgs84;                       
     }
 
-    public async void Render(CanvasStack canvas,
+    public async void Render(CanvasStack stack,
         AspectRatioMismatchStrategy ratioMismatchStrategy = AspectRatioMismatchStrategy.CenterOnCanvas)
     {
-        ComputeActualBounds(canvas, ratioMismatchStrategy);
-        
-        // Render layer masks
-        foreach (MapLayer layer in Layers)
+        ComputeActualBounds(stack, ratioMismatchStrategy);
+
+        // Render all layers
+        foreach (MapLayer layer in MapLayers)
         {
+            // Add main layer canvas
+            Canvas canvas = stack.AddNewLayer(layer.Name);
+
             if (layer is VectorMapLayer vectorLayer)
             {
-                if (vectorLayer.Style.MaskName == null)
-                    continue; // no mask
+                // Get or add mask canvas (if applicable)
+                string? maskName = vectorLayer.Style.MaskName;
+                Canvas? mask = null;
+                if (maskName != null)
+                {
+                    if (!stack.Masks.ContainsKey(maskName))
+                        stack.AddNewMask(maskName);
+                    mask = stack.Masks[maskName];
+                }
 
-                // Find or create mask layer
-                await RenderVectorMask(vectorLayer.Style.MaskName,
-                    canvas, vectorLayer);
-            }
-        }
-
-        // Render visible layers
-        foreach (MapLayer layer in Layers)
-        {
-            if (layer is VectorMapLayer vectorLayer)
-            {
-                await RenderVectorLayer(canvas, vectorLayer);
+                // Draw vectors
+                VectorData dataInCanvasSpace = await GetVectorDataForLayer(vectorLayer);
+                DrawVectors(dataInCanvasSpace, canvas, mask, vectorLayer.Style);
             }
             else if (layer is RasterMapLayer rasterLayer)
             {
-                await RenderRasterLayer(canvas, rasterLayer);
+                RasterData rasterData = await GetRasterDataForLayer(rasterLayer);
+                DrawRaster(canvas, rasterLayer.Style, rasterData);
             }
-            else
+        }
+
+        // Apply masks
+        foreach (MapLayer layer in MapLayers)
+        {
+            if (layer is VectorMapLayer vectorLayer)
             {
-                throw new NotSupportedException(
-                    "Unsupported layer type: " + layer.GetType());
+                Canvas canvas = stack.GetLayer(layer.Name);
+                IList<Canvas> masks = stack.GetMasks(vectorLayer.Style.MaskedBy);
+                canvas.ApplyMasks(masks);
             }
         }
     }
@@ -225,26 +232,7 @@ public class Map : IHasSrs, IBounded
     }
 
     #endregion
-
-    private async Task RenderVectorMask(string maskName,
-        CanvasStack canvas, VectorMapLayer vectorLayer)
-    {
-        var dataInCanvasSpace = await GetVectorDataForLayer(vectorLayer);
-        DrawVectors(maskName, canvas, vectorLayer, dataInCanvasSpace, isMask: true);
-    }
-
-    private async Task RenderVectorLayer(CanvasStack canvas, VectorMapLayer vectorLayer)
-    {
-        var dataInCanvasSpace = await GetVectorDataForLayer(vectorLayer);
-        Canvas layer = DrawVectors(vectorLayer.Name,
-            canvas, vectorLayer, dataInCanvasSpace, isMask: false);
-
-        layer.ApplyMasks(
-            vectorLayer.Style.MaskedBy.Select(maskName =>
-            Masks[maskName]).ToList());
-    }
-
-
+   
     private async Task<VectorData> GetVectorDataForLayer(VectorMapLayer vectorLayer)
     {
         BaseVectorDataSource? dataSource =
@@ -273,24 +261,11 @@ public class Map : IHasSrs, IBounded
 
     #region Vector helpers
 
-    /// <returns>
-    /// The resulting CanvasLayer.
-    /// </returns>
-    private Canvas DrawVectors(string layerName,
-        CanvasStack canvas, VectorMapLayer mapLayer,
-        VectorData data, bool isMask)
+    private void DrawVectors(
+        VectorData data, // in canvas space
+        Canvas canvas, Canvas? mask,
+        VectorStyle style)
     {
-        Canvas layer;
-        if (isMask)
-        {
-            layer = canvas.AddNewMask(layerName);
-            Masks.Add(layerName, layer);
-        }
-        else
-        {
-            layer = canvas.AddNewLayer(layerName);
-        }
-
         // Compute coordinates
         // TODO: Only enumerate these once per data source,
         // and only if we really need them
@@ -298,32 +273,14 @@ public class Map : IHasSrs, IBounded
             out var pointCoords, out var lineMidpoints,
             out var polygonCentroids, out var allPoints);
 
-        VectorStyle style = mapLayer.Style;
-        if (isMask)
-        {
-            if (style.LineMaskWidth != null)
-                Stroke(canvas, layer, data.Lines, data.MultiLines, null, null,
-                    Canvas.MaskColor, style.LineWidth + style.LineMaskWidth * 2);
-            if (style.PolygonMaskWidth != null)
-                Stroke(canvas, layer, null, null, data.Polygons, data.MultiPolygons,
-                    Canvas.MaskColor, style.PolygonMaskWidth * 2);
-            if (style.SymbolMaskWidth != null)
-                DrawSymbols(canvas, layer, MaskPlacementManager, allPoints, style.Symbol,
-                    style.SymbolSize, Canvas.MaskColor, style.SymbolMaskWidth * 2);
-            if (style.TextMaskWidth != null)
-                DrawTextLabels(canvas, layer, MaskPlacementManager, allPoints,
-                    style.TextTag, style.TextColor, style.TextFont, style.TextSize,
-                    style.TextMaskWidth * 2);
-        }
-        else
-        {
-            Fill(canvas, layer, data.Polygons, data.MultiPolygons, style.FillColor);
-            Stroke(canvas, layer, data.Lines, data.MultiLines, data.Polygons, data.MultiPolygons, style.LineColor, style.LineWidth);
-            DrawSymbols(canvas, layer, PlacementManager, allPoints, style.Symbol, style.SymbolSize, style.SymbolColor);
-            DrawTextLabels(canvas, layer, PlacementManager, allPoints, style.TextTag, style.TextColor, style.TextFont, style.TextSize);
-        }
-
-        return layer;
+        Fill(canvas, mask, data.Polygons, data.MultiPolygons, style.FillColor,
+            style.PolygonMaskWidth);
+        Stroke(canvas, mask, data.Lines, data.MultiLines, data.Polygons,
+            data.MultiPolygons, style.LineColor, style.LineWidth, style.LineMaskWidth);
+        DrawSymbols(canvas, mask, PlacementManager, allPoints, style.Symbol,
+            style.SymbolSize, style.SymbolColor, style.SymbolMaskWidth);
+        DrawTextLabels(canvas, mask, PlacementManager, allPoints, style.TextTag,
+            style.TextColor, style.TextFont, style.TextSize, null, null, style.TextMaskWidth);
     }
 
     private static void GetVectorDataCoordinates(VectorData data,
@@ -342,76 +299,88 @@ public class Map : IHasSrs, IBounded
     }
 
     private static void Fill(
-        CanvasStack canvas, Canvas layer,
+        Canvas layer, Canvas? mask,
         IEnumerable<Polygon>? polygons,
         IEnumerable<MultiPolygon>? multiPolygons,
-        Color? fillColor)
+        Color? fillColor,
+        double? maskWidth = null)
     {
         if (fillColor == null) return;
 
-        if (polygons != null)
-            foreach (Polygon p in polygons)
+        if (polygons != null) {
+            foreach (Polygon p in polygons) {
                 layer.DrawFilledPolygon(p.Coords, fillColor.Value);
-        if (multiPolygons != null)
-            foreach (MultiPolygon mp in multiPolygons)
+                mask?.DrawFilledPolygon(p.Coords, Canvas.MaskColor);
+                mask?.DrawLine(p.Coords, (maskWidth ?? 0) * 2, Canvas.MaskColor);
+            }}
+        if (multiPolygons != null) {
+            foreach (MultiPolygon mp in multiPolygons) {
                 layer.DrawFilledMultiPolygon(mp.Coords, fillColor.Value);
+                mask?.DrawFilledMultiPolygon(mp.Coords, Canvas.MaskColor);
+                mask?.DrawLines(mp.Coords, (maskWidth ?? 0) * 2, Canvas.MaskColor);
+            }}
     }
 
     private static void Stroke(
-        CanvasStack canvas, Canvas layer,
+        Canvas layer, Canvas? mask,
         IEnumerable<Line>? lines,
         IEnumerable<MultiLine>? multiLines,
         IEnumerable<Polygon>? polygons,
         IEnumerable<MultiPolygon>? multiPolygons,
-        Color? lineColor, double? lineWidth)
+        Color? lineColor, double? lineWidth, double? maskWidth = null)
     {
         if (lineColor == null || lineWidth == null) return;
 
-        //// Points
-        //layer.DrawFilledCircles(pointCoords.SelectMany(c => c.coords),
-        //    lineWidth.Value, lineColor.Value);
-
         // Lines
-        if (lines != null)
-            foreach (Line l in lines)
+        if (lines != null) {
+            foreach (Line l in lines) {
                 layer.DrawLine(l.Coords, lineWidth.Value, lineColor.Value);
-        if (multiLines != null)
-            foreach (MultiLine ml in multiLines)
+                mask?.DrawLine(l.Coords, (maskWidth ?? 0) * 2, Canvas.MaskColor);
+            }}
+        if (multiLines != null) {
+            foreach (MultiLine ml in multiLines) {
                 layer.DrawLines(ml.Coords, lineWidth.Value, lineColor.Value);
+                mask?.DrawLines(ml.Coords, (maskWidth ?? 0) * 2, Canvas.MaskColor);
+            }
+        }
 
         // Polygons
-        if (polygons != null)
-            foreach (Polygon p in polygons)
+        if (polygons != null) { 
+            foreach (Polygon p in polygons) {
                 layer.DrawLine(p.Coords, lineWidth.Value, lineColor.Value);
-        if (multiPolygons != null)
-            foreach (MultiPolygon mp in multiPolygons)
+                mask?.DrawLine(p.Coords, (maskWidth ?? 0) * 2, Canvas.MaskColor);
+            }}
+        if (multiPolygons != null) {
+            foreach (MultiPolygon mp in multiPolygons) {
                 layer.DrawLines(mp.Coords, lineWidth.Value, lineColor.Value);
+                mask?.DrawLines(mp.Coords, (maskWidth ?? 0) * 2, Canvas.MaskColor);
+            }}
     }
 
-    private void DrawSymbols(CanvasStack canvas, Canvas layer,
+    private void DrawSymbols(Canvas canvas, Canvas? mask,
         ObjectPlacementManager placementManager,
         IEnumerable<(Coord[] coords, TagList tags)> allPoints,
         SymbolType? symbolType, double? symbolSize, Color? symbolFillColor,
-        double? outlineWidth = null // for masks
-        )
+        double? maskWidth = null)
     {
         if (symbolType == null) return;
-        double actualSymbolSize = symbolSize ?? canvas.Width * 0.001; // default size
-        Color actualSymbolFillColor = symbolFillColor ?? Color.Black; // default color
+        double effectiveSymbolSize = symbolSize ?? canvas.Width * 0.001; // default size
+        double radius = effectiveSymbolSize / 2;
+        Color effectiveSymbolFillColor = symbolFillColor ?? Color.Black; // default color
 
         switch (symbolType)
         {
             case SymbolType.Circle:
-                // TODO: only draw if successfully placed
-                layer.DrawFilledCircles(allPoints.SelectMany(c => c.coords),
-                    actualSymbolSize/2, actualSymbolFillColor);
                 foreach (Coord point in allPoints.SelectMany(p => p.coords))
-                    placementManager.TryAdd([new Bounds(
-                        point.X-actualSymbolSize/2, point.X+actualSymbolSize/2,
-                        point.Y-actualSymbolSize/2, point.Y+actualSymbolSize/2)]);
-                if (outlineWidth != null)
-                    layer.DrawCircles(allPoints.SelectMany(c => c.coords),
-                        actualSymbolSize/2, outlineWidth.Value, actualSymbolFillColor);
+                {
+                    Bounds? bounds = placementManager.TryAdd([new Bounds(
+                        point.X-radius, point.X+radius,
+                        point.Y-radius, point.Y+radius)]);
+                    if (bounds == null)
+                        continue; // failed to place point (likely overlap)
+                    canvas.DrawFilledCircle(point, radius, effectiveSymbolFillColor);
+                    mask?.DrawFilledCircle(point, radius + (maskWidth ?? 0), Canvas.MaskColor);
+                }
                 break;
             case SymbolType.Square:
                 throw new NotImplementedException();
@@ -422,11 +391,12 @@ public class Map : IHasSrs, IBounded
         }
     }
 
-    private void DrawTextLabels(CanvasStack canvas, Canvas layer,
+    private void DrawTextLabels(Canvas canvas, Canvas? mask,
         ObjectPlacementManager placementManager,
         IEnumerable<(Coord[] coords, TagList tags)> allPoints,
         string? textTag, Color? textColor, string? fontName, double? fontSize,
-        double? outlineWidth = null)
+        Color? outlineColor = null, double? outlineWidth = null,
+        double? maskWidth = null)
     {
         if (textTag == null) return;
 
@@ -441,7 +411,7 @@ public class Map : IHasSrs, IBounded
             if (labelText == null) continue;
 
             double spacing = effectiveFontSize * 0.3; // spacing between point and edge of text
-            Coord textSize = layer.GetTextSize(effectiveFontName, effectiveFontSize, labelText);
+            Coord textSize = canvas.GetTextSize(effectiveFontName, effectiveFontSize, labelText);
 
             // NOTE: Usually a single coord per array (since these
             // are text labels)
@@ -450,10 +420,20 @@ public class Map : IHasSrs, IBounded
                 Coord? placement = GetLabelPlacement(placementManager, coord, textSize, spacing);
                 if (placement != null)
                 {
-                    layer.DrawText(effectiveFontName, effectiveFontSize, labelText, placement.Value, effectiveTextColor);
-                    if (outlineWidth != null)
-                        layer.DrawTextOutline(effectiveFontName, effectiveFontSize, labelText, placement.Value,
-                            effectiveTextColor, outlineWidth.Value);
+                    canvas.DrawText(effectiveFontName, effectiveFontSize, labelText, placement.Value, effectiveTextColor);
+                    mask?.DrawText(effectiveFontName, effectiveFontSize, labelText, placement.Value, Canvas.MaskColor);
+                    if (outlineColor != null && outlineWidth != null)
+                    {
+                        canvas.DrawTextOutline(effectiveFontName, effectiveFontSize, labelText, placement.Value,
+                            outlineColor.Value, outlineWidth.Value * 2);
+                        mask?.DrawTextOutline(effectiveFontName, effectiveFontSize, labelText, placement.Value,
+                            Canvas.MaskColor, outlineWidth.Value * 2);
+                    }
+                    if (maskWidth != null)
+                    {
+                        mask?.DrawTextOutline(effectiveFontName, effectiveFontSize, labelText, placement.Value,
+                            Canvas.MaskColor, ((outlineWidth ?? 0) + (maskWidth ?? 0)) * 2);
+                    }
                 }
             }
         }
@@ -510,7 +490,10 @@ public class Map : IHasSrs, IBounded
 
     #region Raster helpers
 
-    private async Task RenderRasterLayer(CanvasStack canvas, RasterMapLayer rasterLayer)
+    /// <summary>
+    /// Returns the raster data for the given raster layer (projected ot map SRS).
+    /// </summary>
+    private async Task<RasterData> GetRasterDataForLayer(RasterMapLayer rasterLayer)
     {
         BaseRasterDataSource? dataSource =
             RasterDataSources.GetValueOrDefault(rasterLayer.DataSourceName);
@@ -519,12 +502,25 @@ public class Map : IHasSrs, IBounded
                 $"Raster layer data source not found: \"{rasterLayer.DataSourceName}\"");
 
         RasterData data = await dataSource.GetData(Srs);
-        DrawRaster(canvas, rasterLayer, data);
+        return data;
     }
 
-    private void DrawRaster(CanvasStack canvas, RasterMapLayer mapLayer, RasterData data)
+    //[Obsolete]
+    //private async Task RenderRasterLayer(CanvasStack canvas, RasterMapLayer rasterLayer)
+    //{
+    //    BaseRasterDataSource? dataSource =
+    //        RasterDataSources.GetValueOrDefault(rasterLayer.DataSourceName);
+    //    if (dataSource == null)
+    //        throw new InvalidOperationException(
+    //            $"Raster layer data source not found: \"{rasterLayer.DataSourceName}\"");
+
+    //    RasterData data = await dataSource.GetData(Srs);
+    //    DrawRaster(canvas, rasterLayer, data);
+    //}
+
+    private void DrawRaster(Canvas canvas, RasterStyle style, RasterData data)
     {
-        Canvas layer = canvas.AddNewLayer(mapLayer.Name);
+        //Canvas layer = canvas.AddNewLayer(mapLayer.Name);
 
         Console.WriteLine("Map SRS: " + Srs);
         Console.WriteLine("Raster SRS: " + data.Srs);
@@ -557,7 +553,7 @@ public class Map : IHasSrs, IBounded
             Bounds rasterBoundsInCanvasSrs = rasterBoundsInMapSrs.Transform(
                 _scaleX, _scaleY, _offsetX, _offsetY);
 
-            layer.DrawBitmap(imageData.Bitmap,
+            canvas.DrawBitmap(imageData.Bitmap,
                 rasterBoundsInCanvasSrs.XMin, rasterBoundsInCanvasSrs.YMin,
                 rasterBoundsInCanvasSrs.Width, rasterBoundsInCanvasSrs.Height,
                 1.0);

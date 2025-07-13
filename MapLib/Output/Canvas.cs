@@ -3,7 +3,7 @@ using System.Drawing;
 
 namespace MapLib.Output;
 
-public abstract class Canvas : IDisposable
+public abstract class Canvas(CanvasStack stack) : IDisposable
 {
     // Masks are black on white (black is masked; white is transparent).
     public static readonly Color MaskBackgroundColor = Color.White;
@@ -11,10 +11,14 @@ public abstract class Canvas : IDisposable
 
     public static readonly Color DebugColor = Color.Magenta;
 
-
     public abstract void Dispose();
 
     public string? Name { get; set; }
+
+    public CanvasStack Stack { get; } = stack;
+    public CanvasUnit Unit => Stack.Unit;
+    public double Width => Stack.Width;
+    public double Height => Stack.Height;
 
     public abstract void Clear(Color color);
 
@@ -27,14 +31,16 @@ public abstract class Canvas : IDisposable
         Coord[] coords,
         double width, Color color,
         LineCap cap = LineCap.Butt,
-        LineJoin join = LineJoin.Miter, // TODO: miter limit
+        LineJoin join = LineJoin.Round,
+        // TODO: miter limit
         double[]? dasharray = null);
 
     public abstract void DrawLines(
         IEnumerable<Coord[]> lines,
         double width, Color color,
         LineCap cap = LineCap.Butt,
-        LineJoin join = LineJoin.Miter, // TODO: miter limit
+        LineJoin join = LineJoin.Round,
+        // TODO: miter limit
         double[]? dasharray = null);
 
 

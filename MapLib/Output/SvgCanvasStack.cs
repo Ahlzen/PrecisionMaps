@@ -1,4 +1,5 @@
 ﻿using MapLib.Util;
+using OSGeo.OGR;
 using System.Drawing;
 using System.IO;
 using System.Xml.Linq;
@@ -21,8 +22,6 @@ public class SvgCanvasStack : CanvasStack
     private readonly double _width;
     private readonly double _height;
     private readonly Color _backgroundColor;
-    private readonly List<SvgCanvas> _layers = new();
-    private readonly List<SvgCanvas> _masks = new();
     internal string SvgCoordFormat { get; }
 
     public SvgCanvasStack(CanvasUnit unit, double width, double height,
@@ -37,30 +36,26 @@ public class SvgCanvasStack : CanvasStack
 
     public override void Dispose()
     {
-        _layers.Each(l => l.Dispose());
-        _layers.Clear();
-        _masks.Each(m => m.Dispose());
-        _masks.Clear();
+        Layers.Values.Each(l => (l as IDisposable)?.Dispose());
+        Layers.Clear();
+        Masks.Values.Each(m => (m as IDisposable)?.Dispose());
+        Masks.Clear();
     }
 
-    public override IEnumerable<Canvas> Layers => _layers;
-    public override int LayerCount => _layers.Count;
     public override Canvas AddNewLayer(string name)
     {
         var layer = new SvgCanvas(this);
         layer.Name = name;
-        _layers.Add(layer);
+        Layers.Add(name, layer);
         return layer;
     }
 
-    public override IEnumerable<Canvas> Masks => _masks;
-    public override int MaskCount => _masks.Count;
     public override Canvas AddNewMask(string name)
     {
         var mask = new SvgCanvas(this);
         mask.Name = name;
         mask.Clear(Canvas.MaskBackgroundColor);
-        _masks.Add(mask);
+        Masks.Add(name, mask);
         return mask;
     }
 
@@ -69,8 +64,8 @@ public class SvgCanvasStack : CanvasStack
     public void SaveSvg(string filename) => GetSvgData().Save(filename);
 
     private XDocument GetSvgData() => GetSvgData(
-        _layers.Select(layer => layer.GetSvgData()).Union(
-            _masks.Select(mask => mask.GetMaskData())));
+        Layers.Values.OfType<SvgCanvas>().Select(layer => layer.GetSvgData()).Union(
+            Masks.Values.OfType<SvgCanvas>().Select(mask => mask.GetMaskData())));
 
     private XDocument GetSvgData(IEnumerable<XElement> layerData)
     {
@@ -102,15 +97,22 @@ public class SvgCanvasStack : CanvasStack
         File.WriteAllText(filename, svg);
     }
 
-    public override void SaveLayersToFile(string baseFilename)
+    public override void SaveLayerToFile(string baseFilename, string layerName)
     {
-        foreach (SvgCanvas layer in _layers.Union(_masks))
+        Canvas canvas =
+            Layers.GetValueOrDefault(layerName) ??
+            Masks.GetValueOrDefault(layerName) ??
+            throw new ApplicationException($"Layer or mask \"{layerName}\" not found.");
+        if (canvas is SvgCanvas svgCanvas)
         {
             string filename = FileSystemHelpers.GetTempOutputFileName(
-                    ".svg", baseFilename + "_" + layer.Name);
-            XElement layerData = layer.GetSvgData();
+                ".svg", baseFilename + "_" + canvas.Name);
+            XElement layerData = svgCanvas.GetSvgData();
             XDocument svgData = GetSvgData([layerData]);
             File.WriteAllText(filename, svgData.ToString());
         }
+        else
+            throw new InvalidOperationException(
+                "Only SvgCanvas can be saved to file.");
     }
 }

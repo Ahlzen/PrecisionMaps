@@ -12,19 +12,18 @@ namespace MapLib.Output;
 /// </remarks>
 internal class BitmapCanvas : Canvas, IDisposable
 {
-    private readonly BitmapCanvasStack _stack;
+    private readonly BitmapCanvasStack _bitmapCanvasStack;
     private readonly Graphics _graphics;
     
-    private int PixelsX => _stack._pixelsX;
-    private int PixelsY => _stack._pixelsY;
-    private double Height => _stack.Height;
+    private int PixelsX => _bitmapCanvasStack._pixelsX;
+    private int PixelsY => _bitmapCanvasStack._pixelsY;
 
-    private double ScaleFactor => _stack.ScaleFactor;
+    private double ScaleFactor => _bitmapCanvasStack.ScaleFactor;
 
 
-    internal BitmapCanvas(BitmapCanvasStack stack)
+    internal BitmapCanvas(BitmapCanvasStack stack): base(stack)
     {
-        _stack = stack;
+        _bitmapCanvasStack = stack;
 
         Bitmap = new Bitmap(PixelsX, PixelsY, PixelFormat.Format32bppArgb);
         Bitmap.MakeTransparent(Bitmap.GetPixel(0, 0));

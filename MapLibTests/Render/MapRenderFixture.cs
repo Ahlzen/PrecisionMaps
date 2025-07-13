@@ -33,20 +33,20 @@ public class MapRenderFixture : BaseFixture
         map.VectorDataSources.Add("osmdata",
             new VectorFileDataSource(Path.Join(TestDataPath, "osm-xml/Weymouth Detail.osm")));
 
-        map.Layers.Add(
+        map.MapLayers.Add(
             new VectorMapLayer("Water", "osmdata",
                 style: new VectorStyle {
                     FillColor = Color.CornflowerBlue,
                     LineColor = Color.Blue,
                     LineWidth = 0.005 },
                 filter: new TagFilter("natural", "water")));
-        map.Layers.Add(
+        map.MapLayers.Add(
             new VectorMapLayer("Highway", "osmdata",
                 style: new VectorStyle {
                     LineColor = Color.Black,
                     LineWidth = 0.02 },
                 filter: new TagFilter("highway")));
-        map.Layers.Add(
+        map.MapLayers.Add(
             new VectorMapLayer("Building", "osmdata",
                 style: new VectorStyle {
                     FillColor = Color.Tan },
@@ -74,10 +74,10 @@ public class MapRenderFixture : BaseFixture
         map.RasterDataSources.Add("ortophoto",
             new GdalDataSource(Path.Join(TestDataPath, "MassGIS Aerial/19TCG390725.jp2")));
 
-        map.Layers.Add(
-            new RasterMapLayer("ortophoto", "ortophoto"));
+        map.MapLayers.Add(
+            new RasterMapLayer("ortophoto", "ortophoto", new RasterStyle()));
 
-        map.Layers.Add(
+        map.MapLayers.Add(
             new VectorMapLayer("Water", "osmdata",
                 style: new VectorStyle {
                     FillColor = Color.CornflowerBlue,
@@ -86,39 +86,39 @@ public class MapRenderFixture : BaseFixture
                 filter: new TagFilter("natural", "water")));
         
         VectorStyle roadCasing = new() { LineColor = Color.Black };
-        map.Layers.Add(
+        map.MapLayers.Add(
             new VectorMapLayer("Highway-1", "osmdata",
                 style: roadCasing with { LineWidth = 0.04 },
                 filter: new TagFilter(("highway", "motorway"), ("highway", "trunk"), ("highway", "primary"))));
-        map.Layers.Add(
+        map.MapLayers.Add(
             new VectorMapLayer("Highway-2", "osmdata",
                 style: roadCasing with { LineWidth = 0.03 },
                 filter: new TagFilter(("highway", "secondary"), ("highway", "tertiary"))));
-        map.Layers.Add(
+        map.MapLayers.Add(
             new VectorMapLayer("Highway-3", "osmdata",
                 style: roadCasing with { LineWidth = 0.02 },
                 filter: new TagFilter(("highway", "residential"), ("highway", "unclassified"))));
 
-        map.Layers.Add(
+        map.MapLayers.Add(
             new VectorMapLayer("Highway-1-fill", "osmdata",
                 style: new VectorStyle {
                     LineColor = ColorUtil.FromHex("#fe9"),
                     LineWidth = 0.02 },
                 filter: new TagFilter(("highway", "motorway"), ("highway", "trunk"), ("highway", "primary"))));
-        map.Layers.Add(
+        map.MapLayers.Add(
             new VectorMapLayer("Highway-2-fill", "osmdata",
                 style: new VectorStyle {
                     LineColor = ColorUtil.FromHex("#fb9"),
                     LineWidth = 0.015 },
                 filter: new TagFilter(("highway", "secondary"), ("highway", "tertiary"))));
-        map.Layers.Add(
+        map.MapLayers.Add(
             new VectorMapLayer("Highway-3-fill", "osmdata",
                 style: new VectorStyle {
                     LineColor = ColorUtil.FromHex("#fee"),
                     LineWidth = 0.01 },
                 filter: new TagFilter(("highway", "residential"), ("highway", "unclassified"))));
 
-        map.Layers.Add(
+        map.MapLayers.Add(
             new VectorMapLayer("Building", "osmdata",
                 style: new VectorStyle { FillColor = Color.Tan },
                 filter: new TagFilter("building"))); 
@@ -179,8 +179,8 @@ public class MapRenderFixture : BaseFixture
         map.VectorDataSources.Add("contours",
             new VectorFileDataSource(contourTempPath));
 
-        map.Layers.Add(new RasterMapLayer("hillshadeComposite", "hillshadeComposite"));
-        map.Layers.Add(new VectorMapLayer("contours", "contours",
+        map.MapLayers.Add(new RasterMapLayer("hillshadeComposite", "hillshadeComposite", new RasterStyle()));
+        map.MapLayers.Add(new VectorMapLayer("contours", "contours",
             style: new VectorStyle {
                 LineColor = Color.FromArgb(120, 0, 0, 0),
                 LineWidth = 0.003f}));

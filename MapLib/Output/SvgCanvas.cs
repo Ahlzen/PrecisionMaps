@@ -16,12 +16,9 @@ namespace MapLib.Output;
 /// </remarks>
 public class SvgCanvas : Canvas, IDisposable
 {
-    private readonly SvgCanvasStack _stack;
+    private readonly SvgCanvasStack _svgCanvasStack;
     private readonly List<XObject> _objects = new();
     
-    private double Height => _stack.Height;
-    private double Width => _stack.Width;
-
     private List<string> _maskedBy = new();
 
     /// <summary>
@@ -30,9 +27,9 @@ public class SvgCanvas : Canvas, IDisposable
     private readonly Graphics _graphics;
     private readonly Bitmap _bitmap;
 
-    internal SvgCanvas(SvgCanvasStack stack)
+    internal SvgCanvas(SvgCanvasStack stack) : base(stack)
     {
-        _stack = stack;
+        _svgCanvasStack = stack;
         
         _bitmap = new Bitmap(1, 1, PixelFormat.Format32bppArgb);
         _graphics = Graphics.FromImage(_bitmap);
@@ -182,8 +179,8 @@ public class SvgCanvas : Canvas, IDisposable
         _objects.Add(new XElement(SvgCanvasStack.XmlNs + "text",
             new XAttribute("font", fontName),
             new XAttribute("fill", color.ToHexCode()),
-            new XAttribute("x", centerCoord.X.ToString(_stack.SvgCoordFormat)),
-            new XAttribute("y", (Height - centerCoord.Y).ToString(_stack.SvgCoordFormat)),
+            new XAttribute("x", centerCoord.X.ToString(_svgCanvasStack.SvgCoordFormat)),
+            new XAttribute("y", (Height - centerCoord.Y).ToString(_svgCanvasStack.SvgCoordFormat)),
             new XAttribute("style", $"font-size: {sizeStr}; text-anchor: middle; dominant-baseline: central;"),
             new XText(s)
             ));
@@ -202,8 +199,8 @@ public class SvgCanvas : Canvas, IDisposable
         _objects.Add(new XElement(SvgCanvasStack.XmlNs + "text",
             strokeAttributes,
             new XAttribute("font", fontName),
-            new XAttribute("x", centerCoord.X.ToString(_stack.SvgCoordFormat)),
-            new XAttribute("y", (Height - centerCoord.Y).ToString(_stack.SvgCoordFormat)),
+            new XAttribute("x", centerCoord.X.ToString(_svgCanvasStack.SvgCoordFormat)),
+            new XAttribute("y", (Height - centerCoord.Y).ToString(_svgCanvasStack.SvgCoordFormat)),
             new XAttribute("style", $"fill: none; font-size: {sizeStr}; text-anchor: middle; dominant-baseline: central;"),
             new XText(s)
             ));
@@ -235,7 +232,7 @@ public class SvgCanvas : Canvas, IDisposable
         if (opacity < 1.0)
         {
             yield return new XAttribute("opacity",
-                opacity.ToString(_stack.SvgCoordFormat));
+                opacity.ToString(_svgCanvasStack.SvgCoordFormat));
         }
     }
 
@@ -243,10 +240,10 @@ public class SvgCanvas : Canvas, IDisposable
         double x, double y, double width, double height)
     {
         return new XElement(SvgCanvasStack.XmlNs + "image",
-            new XAttribute("x", x.ToString(_stack.SvgCoordFormat)),
-            new XAttribute("y", y.ToString(_stack.SvgCoordFormat)),
-            new XAttribute("width", width.ToString(_stack.SvgCoordFormat)),
-            new XAttribute("height", height.ToString(_stack.SvgCoordFormat)),
+            new XAttribute("x", x.ToString(_svgCanvasStack.SvgCoordFormat)),
+            new XAttribute("y", y.ToString(_svgCanvasStack.SvgCoordFormat)),
+            new XAttribute("width", width.ToString(_svgCanvasStack.SvgCoordFormat)),
+            new XAttribute("height", height.ToString(_svgCanvasStack.SvgCoordFormat)),
             new XAttribute(SvgCanvasStack.XmlNsXlink + "href", "data:image/png;base64," +
                 GetBase64PngData(bitmap)
             ));
@@ -297,7 +294,7 @@ public class SvgCanvas : Canvas, IDisposable
         }
         if (dasharray != null)
             yield return new XAttribute("stroke-dasharray",
-                string.Join(",", dasharray.Select(d => d.ToString(_stack.SvgCoordFormat))));
+                string.Join(",", dasharray.Select(d => d.ToString(_svgCanvasStack.SvgCoordFormat))));
     }
 
     private IEnumerable<XAttribute> GetFillAttributes(Color color)
@@ -355,9 +352,9 @@ public class SvgCanvas : Canvas, IDisposable
         foreach (Coord coord in coords)
         {
             sb.Append(isFirst ? "M " : " L ");
-            sb.Append(coord.X.ToString(_stack.SvgCoordFormat));
+            sb.Append(coord.X.ToString(_svgCanvasStack.SvgCoordFormat));
             sb.Append(" ");
-            sb.Append((Height - coord.Y).ToString(_stack.SvgCoordFormat));
+            sb.Append((Height - coord.Y).ToString(_svgCanvasStack.SvgCoordFormat));
             isFirst = false;
         }
 
@@ -370,9 +367,9 @@ public class SvgCanvas : Canvas, IDisposable
     private XElement GetSvgCircle(Coord point, double radius)
     {
         return new XElement(SvgCanvasStack.XmlNs + "circle",
-            new XAttribute("cx", point.X.ToString(_stack.SvgCoordFormat)),
-            new XAttribute("cy", (Height-point.Y).ToString(_stack.SvgCoordFormat)),
-            new XAttribute("r", radius.ToString(_stack.SvgCoordFormat))
+            new XAttribute("cx", point.X.ToString(_svgCanvasStack.SvgCoordFormat)),
+            new XAttribute("cy", (Height-point.Y).ToString(_svgCanvasStack.SvgCoordFormat)),
+            new XAttribute("r", radius.ToString(_svgCanvasStack.SvgCoordFormat))
             );
     }
 

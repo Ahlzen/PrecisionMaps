@@ -13,7 +13,7 @@ public class WorldMapFixture : BaseFixture
 {
     private static Color WaterColor = Color.CornflowerBlue;
 
-    public static IEnumerable<CanvasStack> A3Canvases()
+    public static IEnumerable<CanvasStack> A3CanvasStacks()
     {
         yield return new BitmapCanvasStack(CanvasUnit.Mm, 420.0, 297.0, WaterColor, 1.0);
         yield return new BitmapCanvasStack(CanvasUnit.Mm, 420.0, 297.0, WaterColor, 4.0);
@@ -22,8 +22,8 @@ public class WorldMapFixture : BaseFixture
 
     [Test]
     [Explicit]
-    [TestCaseSource(nameof(A3Canvases))]
-    public void RenderWorldCountriesMap(CanvasStack canvas)
+    [TestCaseSource(nameof(A3CanvasStacks))]
+    public void RenderWorldCountriesMap(CanvasStack canvasStack)
     {
         // Try something different: Van Der Grinten projection
         // (not uncommon for world maps)
@@ -43,26 +43,26 @@ public class WorldMapFixture : BaseFixture
             new GraticuleDataSource { XInterval = 10, YInterval = 10 });
 
         // Add styles
-        map.Layers.Add(new VectorMapLayer(
+        map.MapLayers.Add(new VectorMapLayer(
             "graticule", "graticule", new VectorStyle {
                 LineColor = Color.Navy,
                 LineWidth = 0.15
             }));
-        map.Layers.Add(new VectorMapLayer(
+        map.MapLayers.Add(new VectorMapLayer(
             "landFill", "land", new VectorStyle {
                 FillColor = ColorUtil.FromHex("#efc"),
             }));
-        map.Layers.Add(new VectorMapLayer(
+        map.MapLayers.Add(new VectorMapLayer(
             "borders", "countries", new VectorStyle {
                 LineColor = Color.Silver,
                 LineWidth = 0.2
             }));
-        map.Layers.Add(new VectorMapLayer(
+        map.MapLayers.Add(new VectorMapLayer(
             "coastline", "land", new VectorStyle {
                 LineColor = Color.Navy,
                 LineWidth = 0.15
             }));
-        map.Layers.Add(new VectorMapLayer(
+        map.MapLayers.Add(new VectorMapLayer(
             "country labels", "countries", new VectorStyle {
                 Symbol = SymbolType.Circle,
                 SymbolSize = 1,
@@ -72,17 +72,17 @@ public class WorldMapFixture : BaseFixture
             }));;
 
         // Render and save
-        map.Render(canvas,
+        map.Render(canvasStack,
             ratioMismatchStrategy: AspectRatioMismatchStrategy.CenterOnCanvas);
         string filename = FileSystemHelpers.GetTempOutputFileName(
-            canvas.DefaultFileExtension, "WorldCountries");
-        canvas.SaveToFile(filename);
+            canvasStack.DefaultFileExtension, "WorldCountries");
+        canvasStack.SaveToFile(filename);
     }
 
     [Test]
     [Explicit]
-    [TestCaseSource(nameof(A3Canvases))]
-    public void RenderWorldCountriesMap_WithMasks(CanvasStack canvas)
+    [TestCaseSource(nameof(A3CanvasStacks))]
+    public void RenderWorldCountriesMap_WithMasks(CanvasStack canvasStack)
     {
         // Try something different: Van Der Grinten projection
         // (not uncommon for world maps)
@@ -102,31 +102,31 @@ public class WorldMapFixture : BaseFixture
             new GraticuleDataSource { XInterval = 10, YInterval = 10 });
 
         // Add styles
-        map.Layers.Add(new VectorMapLayer(
+        map.MapLayers.Add(new VectorMapLayer(
             "graticule", "graticule", new VectorStyle {
                 LineColor = Color.Navy,
                 LineWidth = 0.15,
                 MaskedBy = { "landMask", "labelsMask" }
             }));
-        map.Layers.Add(new VectorMapLayer(
+        map.MapLayers.Add(new VectorMapLayer(
             "landFill", "land", new VectorStyle {
                 MaskName = "landMask",
                 FillColor = ColorUtil.FromHex("#efc"),
                 PolygonMaskWidth = 0.5
             }));
-        map.Layers.Add(new VectorMapLayer(
+        map.MapLayers.Add(new VectorMapLayer(
             "borders", "countries", new VectorStyle {
                 LineColor = Color.Silver,
-                LineWidth = 0.2,
+                LineWidth = 0.15,
                 MaskedBy = { "labelsMask" }
             }));
-        map.Layers.Add(new VectorMapLayer(
+        map.MapLayers.Add(new VectorMapLayer(
             "coastline", "land", new VectorStyle {
                 LineColor = Color.Navy,
                 LineWidth = 0.15,
                 MaskedBy = { "labelsMask" }
             }));
-        map.Layers.Add(new VectorMapLayer(
+        map.MapLayers.Add(new VectorMapLayer(
             "labels", "countries", new VectorStyle {
                 MaskName = "labelsMask",
                 Symbol = SymbolType.Circle,
@@ -139,13 +139,13 @@ public class WorldMapFixture : BaseFixture
             }));
 
         // Render and save
-        map.Render(canvas,
+        map.Render(canvasStack,
             ratioMismatchStrategy: AspectRatioMismatchStrategy.CenterOnCanvas);
 
-        canvas.SaveLayersToFile("WorldCountriesWithMasks");
+        canvasStack.SaveAllLayersToFile("WorldCountriesWithMasks");
 
         string filename = FileSystemHelpers.GetTempOutputFileName(
-            canvas.DefaultFileExtension, "WorldCountriesWithMasks");
-        canvas.SaveToFile(filename);
+            canvasStack.DefaultFileExtension, "WorldCountriesWithMasks");
+        canvasStack.SaveToFile(filename);
     }
 }
