@@ -34,9 +34,9 @@ public class WorldMapFixture : BaseFixture
 
         // Add data
         map.VectorDataSources.Add("land",
-            new NaturalEarthVectorDataSource(NaturalEarthVectorDataSet.NE110m_Land));
+            new NaturalEarthVectorDataSource(NaturalEarthVectorDataSet.LandPolygons_110m));
         map.VectorDataSources.Add("countries",
-            new NaturalEarthVectorDataSource(NaturalEarthVectorDataSet.NE110m_Admin0_Countries));
+            new NaturalEarthVectorDataSource(NaturalEarthVectorDataSet.Admin0_Countries_110m));
         map.VectorDataSources.Add("graticule",
             new GraticuleDataSource { XInterval = 10, YInterval = 10 });
 
