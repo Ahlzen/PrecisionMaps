@@ -13,7 +13,7 @@ public class OsmDataSource : BaseVectorDataSource
 
     public override bool IsBounded => false;
 
-    private static readonly Bounds _bounds = new Bounds(-180, 180, -90, 90);
+    private static readonly Bounds _bounds = Geometry.Bounds.GlobalWgs84;
     public override Bounds? Bounds => _bounds;
 
     // Cache OSM data for up to a week by default. Set the CacheDuration

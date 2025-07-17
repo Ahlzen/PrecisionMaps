@@ -2,6 +2,7 @@
 using MapLib.Geometry;
 using MapLib.Util;
 using System.IO;
+using System.IO.Compression;
 using System.Threading.Tasks;
 
 namespace MapLib.DataSources;
@@ -73,7 +74,7 @@ public abstract class BaseDataSource<TData>
     #region Data file caching
 
     //public static readonly string DataCachePath =
-        //;
+    //;
 
     /// <summary>
     /// Downloads a file to the data cache, unless it already exists.
@@ -81,12 +82,14 @@ public abstract class BaseDataSource<TData>
     /// <param name="url">Source URL</param>
     /// <param name="subdirectory">Optional. Sub-directory under data cache directory.</param>
     /// <param name="filename">Optional. If null, file name is derived from the URL.</param>
+    /// <param name="unpackArchives">If archive (e.g. .zip) unpack it.</param>
     /// <returns>Path to downloaded or cached file.</returns>
     /// <exception cref="ApplicationException">
     /// Thrown if download failed. Message contains details.
     /// </exception>
     protected virtual async Task<string> DownloadAndCache(
-        string url, string? subdirectory = null, string? filename = null)
+        string url, string? subdirectory = null, string? filename = null,
+        bool unpackArchives = true)
     {
         // TODO: Merge with DataFileCacheManager
 
@@ -118,6 +121,11 @@ public abstract class BaseDataSource<TData>
         }
 
         await UrlHelper.DownloadUrl(url, destPath);
+
+        // If archive, unpack it
+        if (filename.EndsWith(".zip") && unpackArchives)
+            ZipFile.ExtractToDirectory(destPath, destDirectory, true);
+
         return destPath;
     }
 

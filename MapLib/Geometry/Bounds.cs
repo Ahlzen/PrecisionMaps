@@ -7,6 +7,8 @@ namespace MapLib.Geometry;
 /// </summary>
 public struct Bounds : IEquatable<Bounds>
 {
+    public static Bounds GlobalWgs84 { get; } = new(-180, 180, -90, 90);
+
     public double XMin { get; }
     public double XMax { get; }
     public double YMin { get; }
@@ -194,8 +196,6 @@ public struct Bounds : IEquatable<Bounds>
         => new Bounds(
             transformer.Transform(TopLeft),
             transformer.Transform(BottomRight));
-
-
 
     #endregion
 }
