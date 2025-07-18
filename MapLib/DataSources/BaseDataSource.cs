@@ -77,7 +77,8 @@ public abstract class BaseDataSource<TData>
     //;
 
     /// <summary>
-    /// Downloads a file to the data cache, unless it already exists.
+    /// Downloads a file to the data cache, unless it already exists, in which
+    /// case the path of the existing file is returned.
     /// </summary>
     /// <param name="url">Source URL</param>
     /// <param name="subdirectory">Optional. Sub-directory under data cache directory.</param>

@@ -50,7 +50,12 @@ public class OgrDataReader : IVectorFormatReader
                     TagList tags = ReadTags(feature);
 
                     // Get geometry
-                    OSGeo.OGR.Geometry geometry = feature.GetGeometryRef();
+                    OSGeo.OGR.Geometry? geometry = feature.GetGeometryRef();
+                    if (geometry == null)
+                    {
+                        // No geometry? Skip this feature
+                        continue;
+                    }
                     wkbGeometryType type = geometry.GetGeometryType();
                     switch (type)
                     {

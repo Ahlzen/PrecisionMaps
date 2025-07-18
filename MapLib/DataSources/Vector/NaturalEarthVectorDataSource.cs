@@ -131,6 +131,7 @@ public enum NaturalEarthVectorDataSet
     Ocean_50m,
     Ocean_110m,
     Ocean_WithScaleRank_10m,
+
     // Rivers
     RiversAndLakeCenterlines_10m,
     RiversAndLakeCenterlines_50m,
@@ -140,6 +141,7 @@ public enum NaturalEarthVectorDataSet
     RiversAndLakeCenterlines_AustraliaSupplement_10m,
     RiversAndLakeCenterlines_EuropeSupplement_10m,
     RiversAndLakeCenterlines_NorthAmericaSupplement_10m,
+    
     // Lakes
     Lakes_10m,
     Lakes_50m,
@@ -150,6 +152,7 @@ public enum NaturalEarthVectorDataSet
     Lakes_AustraliaSupplement_10m,
     Lakes_EuropeSupplement_10m,
     Lakes_NorthAmericaSupplement_10m,
+    
     // Physical labels
     LabelAreas_10m,
     LabelAreas_50m,
@@ -163,6 +166,7 @@ public enum NaturalEarthVectorDataSet
     MarineAreas_10m,
     MarineAreas_50m,
     MarineAreas_110m,
+
     // Misc
     Playas_10m,
     Playas_50m,
