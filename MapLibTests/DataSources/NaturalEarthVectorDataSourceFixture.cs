@@ -10,7 +10,7 @@ namespace MapLib.Tests.DataSources;
 public class NaturalEarthVectorDataSourceFixture : BaseFixture
 {
     /// <summary>
-    /// Downloads and caches all NE vector data sets.
+    /// Downloads and caches all NE vector data sets (~260 MB download, ~1.1 GB on disk).
     /// </summary>
     [Test]
     [Explicit]

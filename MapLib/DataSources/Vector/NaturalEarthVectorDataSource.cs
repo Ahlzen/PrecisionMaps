@@ -5,10 +5,9 @@ using MapLib.Util;
 
 namespace MapLib.DataSources.Vector;
 
-
 public enum NaturalEarthVectorDataSet
 {
-    // Many layers available in:
+    // Layers may be available in:
     //   1:10m (large scale data; high detail)
     //   1:50m (medium scale data; medium detail)
     //   1:110m (small scale data; low detail)
@@ -198,6 +197,38 @@ public enum NaturalEarthVectorDataSet
 public class NaturalEarthVectorDataSource(NaturalEarthVectorDataSet dataSet)
     : BaseVectorDataSource
 {
+    public override string Name => "Natural Earth Vector Data";
+    public override string Srs => Epsg.Wgs84;
+
+    private string Subdirectory => "NaturalEarth";
+
+    public override Bounds? Bounds => Geometry.Bounds.GlobalWgs84;
+    public override bool IsBounded => true;
+
+    public NaturalEarthVectorDataSet DataSet { get; } = dataSet;
+
+    public override async Task<VectorData> GetData()
+    {
+        string url = BaseUrl + DataSetUrls[DataSet];
+        string filePath = await DownloadAndCache(url, Subdirectory);
+
+        // If zip archive, return the corresponding .shp file
+        if (filePath.EndsWith(".zip"))
+            filePath = filePath.TrimEnd(".zip") + "/" +
+                filePath.TrimEnd(".zip") + ".shp";
+
+        VectorFileDataSource source = new(filePath);
+        VectorData data = await source.GetData();
+        return data;
+    }
+
+    public override async Task<VectorData> GetData(Bounds boundsWgs84)
+        => await GetData();
+
+
+
+    // Here's how/where to obtain the data...
+
     // NOTE: Downloading directly from naturalearthdata.com returns a HTTP 500
     // (known limitation; intentional?) so we get the files from the NACIS CDN instead.
     private static readonly string BaseUrl = "https://naciscdn.org/naturalearth/";
@@ -362,32 +393,4 @@ public class NaturalEarthVectorDataSource(NaturalEarthVectorDataSet dataSet)
             { NaturalEarthVectorDataSet.LandAndOceanSeams_10m, "10m/physical/ne_10m_land_ocean_seams.zip" },
             { NaturalEarthVectorDataSet.Physical_Building_Blocks_10m, "10m/physical/ne_10m_physical_building_blocks_all.zip" }
         };
-
-    public override string Name => "Natural Earth Vector Data";
-
-    public override string Srs => Epsg.Wgs84;
-
-    private string Subdirectory => "NaturalEarth";
-
-    public override Bounds? Bounds => Geometry.Bounds.GlobalWgs84;
-    public override bool IsBounded => true;
-
-    public NaturalEarthVectorDataSet DataSet { get; } = dataSet;
-
-    public override async Task<VectorData> GetData()
-    {
-        string url = BaseUrl + DataSetUrls[DataSet];
-        string filePath = await DownloadAndCache(url, Subdirectory);
-
-        // If zip archive, return the corresponding .shp file
-        if (filePath.EndsWith(".zip"))
-            filePath = filePath.TrimEnd(".zip") + ".shp";
-
-        VectorFileDataSource source = new(filePath);
-        VectorData data = await source.GetData();
-        return data;
-    }
-
-    public override async Task<VectorData> GetData(Bounds boundsWgs84)
-        => await GetData();
 }
