@@ -212,11 +212,6 @@ public class NaturalEarthVectorDataSource(NaturalEarthVectorDataSet dataSet)
         string url = BaseUrl + DataSetUrls[DataSet];
         string filePath = await DownloadAndCache(url, Subdirectory);
 
-        // If zip archive, return the corresponding .shp file
-        if (filePath.EndsWith(".zip"))
-            filePath = filePath.TrimEnd(".zip") + "/" +
-                filePath.TrimEnd(".zip") + ".shp";
-
         VectorFileDataSource source = new(filePath);
         VectorData data = await source.GetData();
         return data;

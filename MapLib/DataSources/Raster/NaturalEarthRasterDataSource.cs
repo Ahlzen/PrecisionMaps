@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.IO;
+using System.Threading.Tasks;
 using MapLib.GdalSupport;
 using MapLib.Geometry;
 using MapLib.Util;
@@ -83,7 +84,7 @@ public class NaturalEarthRasterDataSource(NaturalEarthRasterDataSet dataSet)
     public override Bounds? Bounds => Geometry.Bounds.GlobalWgs84;
     public override bool IsBounded => true;
 
-    public NaturalEarthRasterDataSet DataSet { get; }
+    public NaturalEarthRasterDataSet DataSet => dataSet;
 
     public override async Task<RasterData> GetData()
     {
@@ -112,18 +113,36 @@ public class NaturalEarthRasterDataSource(NaturalEarthRasterDataSet dataSet)
     private async Task<GdalDataSource> GetDataSource()
     {
         string url = BaseUrl + DataSetUrls[DataSet];
-        string filePath = await DownloadAndCache(url, Subdirectory);
 
-        // If zip archive, return the corresponding GeoTIFF
-        if (filePath.EndsWith(".zip"))
-            filePath = filePath.TrimEnd(".zip") + ".tif";
+        // Most target files are named the same as their .zip archives.
+        // These are some special cases:
+        string targetFile;
+        switch (DataSet)
+        {
+            case NaturalEarthRasterDataSet.PrismaShadedRelief_Small:
+                // Probably a typo by the maintainers of the dataset.
+                // TODO: See if we can fix upstream instead of working around it.
+                targetFile = "PRIMSA_SR_50M.tif";
+                break;
+            case NaturalEarthRasterDataSet.Bathymetry_Small:
+                // This data set appears to be distributed as a Photoshop (.psd) file.
+                targetFile = "BATH_50M.psd";
+                break;
+            case NaturalEarthRasterDataSet.ManualShadedRelief_ContiguousUS_Medium:
+                // Just another inconsistency in naming
+                targetFile = "US_MSR.tif";
+                break;
+            default:
+                targetFile = UrlHelper.GetFilenameFromUrl(url).TrimEnd(".zip") + ".tif";
+                break;
+        }
 
-        GdalDataSource source = new(filePath);
-        return source;
+        string targetFilePath = await DownloadAndCache(url, Subdirectory, targetFile);
+        return new GdalDataSource(targetFilePath);
     }
 
 
-    // Here's how/where to obtain the data...
+    // Here's how/where to obtain the data:
 
     // NOTE: Downloading directly from naturalearthdata.com returns a HTTP 500
     // (known limitation; intentional?) so we get the files from the NACIS CDN instead.
@@ -149,7 +168,7 @@ public class NaturalEarthRasterDataSource(NaturalEarthRasterDataSet dataSet)
             { NaturalEarthRasterDataSet.NaturalEarth1_Medium, "10m/raster/NE1_LR_LC.zip" },
             { NaturalEarthRasterDataSet.NaturalEarth1WithRelief_Large, "10m/raster/NE1_HR_LC_SR.zip" },
             { NaturalEarthRasterDataSet.NaturalEarth1WithRelief_Medium, "10m/raster/NE1_LR_LC_SR.zip" },
-            { NaturalEarthRasterDataSet.NaturalEarth1WithRelief_Small, "10m/raster/NE1_50M_SR.zip" },
+            { NaturalEarthRasterDataSet.NaturalEarth1WithRelief_Small, "10m/raster/NE1_50M_SR.zip" }, // NOTE: This dataset seems to be unavailable on both naturalearthdata.com and the mirrors (403 forbidden)
             { NaturalEarthRasterDataSet.NaturalEarth1WithReliefAndWater_Large, "10m/raster/NE1_HR_LC_SR_W.zip" },
             { NaturalEarthRasterDataSet.NaturalEarth1WithReliefAndWater_Medium, "10m/raster/NE1_LR_LC_SR_W.zip" },
             { NaturalEarthRasterDataSet.NaturalEarth1WithReliefAndWater_Small, "10m/raster/NE1_50M_SR_W.zip" },

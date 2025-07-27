@@ -73,61 +73,87 @@ public abstract class BaseDataSource<TData>
 
     #region Data file caching
 
-    //public static readonly string DataCachePath =
-    //;
 
     /// <summary>
-    /// Downloads a file to the data cache, unless it already exists, in which
-    /// case the path of the existing file is returned.
+    /// Download a file to the data cache (if needed) and returns path
+    /// to the target file. Unpacks archives and moves files if needed.
     /// </summary>
-    /// <param name="url">Source URL</param>
-    /// <param name="subdirectory">Optional. Sub-directory under data cache directory.</param>
-    /// <param name="filename">Optional. If null, file name is derived from the URL.</param>
-    /// <param name="unpackArchives">If archive (e.g. .zip) unpack it.</param>
-    /// <returns>Path to downloaded or cached file.</returns>
+    /// <param name="url">
+    /// URL to download.
+    /// E.g. https://path.to.cdn/rasters/relief_50.zip
+    /// </param>
+    /// <param name="subdirectory">
+    /// Optional. Destination directory under the data cache. Created if necessary.
+    /// </param>
+    /// <param name="targetFileName">
+    /// Optional.  The file of interest, whose path is returned.
+    /// May be different from the file name in the URL, e.g. for archives.
+    /// E.g. "relief_50.tif" for the above URL.
+    /// If null, this is derived directly from the URL.
+    /// </param>
+    /// <returns>Full path to the target file in the data cache.</returns>
     /// <exception cref="ApplicationException">
     /// Thrown if download failed. Message contains details.
     /// </exception>
     protected virtual async Task<string> DownloadAndCache(
-        string url, string? subdirectory = null, string? filename = null,
-        bool unpackArchives = true)
+        string url, string? subdirectory, string? targetFileName = null)
     {
-        // TODO: Merge with DataFileCacheManager
-
+        // Create destination directory
         string destDirectory = subdirectory == null ?
             FileSystemHelpers.DataCachePath :
             Path.Combine(FileSystemHelpers.DataCachePath, subdirectory);
-
-        if (!Directory.Exists(destDirectory))
+        try 
         {
-            try
-            {
-                Directory.CreateDirectory(destDirectory);
-            }
-            catch (Exception ex)
-            {
-                throw new ApplicationException(
-                    "Failed to create destination directory \"\": "
-                    + ex.Message, ex);
-            }
+            Directory.CreateDirectory(destDirectory);
+        }
+        catch (Exception ex)
+        {
+            throw new ApplicationException(
+                "Failed to create destination directory \"\": "
+                + ex.Message, ex);
         }
 
-        filename ??= UrlHelper.GetFilenameFromUrl(url);
-        string destPath = Path.Combine(destDirectory, filename);
-
-        if (File.Exists(destPath))
+        string urlFilename = UrlHelper.GetFilenameFromUrl(url);
+        string destPath = Path.Combine(destDirectory, urlFilename);
+        targetFileName ??= urlFilename;
+        string targetPath = Path.Combine(destDirectory, targetFileName);
+        if (File.Exists(targetPath))
         {
-            // File exists. We're done!
-            return destPath;
+            // Target exists. We're done!
+            return targetPath;
         }
 
+        // Download the file (this may throw ApplicationException)
         await UrlHelper.DownloadUrl(url, destPath);
 
         // If archive, unpack it
-        if (filename.EndsWith(".zip") && unpackArchives)
+        if (destPath.EndsWith(".zip"))
+        {
             ZipFile.ExtractToDirectory(destPath, destDirectory, true);
 
-        return destPath;
+            // NOTE: Some unzip into a subdirectory of the same name,
+            // in which case we move the files up one level and remove
+            // the subdirectory.
+
+            string datasetSubdirectory = destPath.TrimEnd(".zip");
+            if (Directory.Exists(datasetSubdirectory))
+            {
+                MoveFilesUpOneLevel(datasetSubdirectory);
+                Directory.Delete(datasetSubdirectory);
+            }
+        }
+
+        if (!File.Exists(targetPath))
+            throw new ApplicationException($"Expected target file not found: {targetPath}");
+        return targetPath;
+    }
+
+    private static void MoveFilesUpOneLevel(string subdirectoryPath)
+    {
+        string parentDir = Directory.GetParent(subdirectoryPath)!.FullName;
+        foreach (var sourcefile in Directory.GetFiles(subdirectoryPath))
+            File.Move(sourcefile,
+                Path.Combine(parentDir, Path.GetFileName(sourcefile)));
     }
 
     #endregion

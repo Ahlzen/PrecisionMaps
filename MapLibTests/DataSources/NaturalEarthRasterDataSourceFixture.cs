@@ -1,5 +1,6 @@
 ﻿using MapLib.DataSources.Raster;
 using MapLib.DataSources.Vector;
+using System.Diagnostics.CodeAnalysis;
 
 namespace MapLib.Tests.DataSources;
 
@@ -15,6 +16,7 @@ public class NaturalEarthRasterDataSourceFixture : BaseFixture
     {
         foreach (NaturalEarthRasterDataSet dataSet in Enum.GetValues<NaturalEarthRasterDataSet>())
         {
+            Console.WriteLine("Downloading " + dataSet);
             try
             {
                 await new NaturalEarthRasterDataSource(dataSet).GetData();
