@@ -1,13 +1,22 @@
-﻿using MapLib.DataSources.Vector;
+﻿using MapLib.DataSources.Raster;
+using MapLib.DataSources.Vector;
 using MapLib.Output;
 using MapLib.Render;
+using System;
+using System.Collections.Generic;
 using System.Drawing;
-using System.Threading;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace MapLib.Tests.DataSources;
 
+/// <summary>
+/// Test fixture for Natural Earth data sources
+/// (both vector and raster).
+/// </summary>
 [TestFixture]
-public class NaturalEarthVectorDataSourceFixture : BaseFixture
+public class NaturalEarthDataSourceFixture : BaseFixture
 {
     /// <summary>
     /// Downloads and caches all NE vector data sets (~260 MB download, ~1.1 GB on disk).
@@ -64,6 +73,27 @@ public class NaturalEarthVectorDataSourceFixture : BaseFixture
             catch (Exception ex)
             {
                 Console.WriteLine($"{dataSetName}: {ex.Message}");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Downloads and caches all NE raster data sets.
+    /// </summary>
+    [Test]
+    [Explicit]
+    public async Task DownloadAllNaturalEarthRasterData()
+    {
+        foreach (NaturalEarthRasterDataSet dataSet in Enum.GetValues<NaturalEarthRasterDataSet>())
+        {
+            Console.WriteLine("Downloading " + dataSet);
+            try
+            {
+                await new NaturalEarthRasterDataSource(dataSet).GetData();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
             }
         }
     }
