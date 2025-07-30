@@ -153,7 +153,8 @@ public abstract class BaseDataSource<TData>
         string parentDir = Directory.GetParent(subdirectoryPath)!.FullName;
         foreach (var sourcefile in Directory.GetFiles(subdirectoryPath))
             File.Move(sourcefile,
-                Path.Combine(parentDir, Path.GetFileName(sourcefile)));
+                Path.Combine(parentDir, Path.GetFileName(sourcefile)),
+                true);
     }
 
     #endregion

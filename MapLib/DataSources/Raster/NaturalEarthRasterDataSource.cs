@@ -30,10 +30,10 @@ public enum NaturalEarthRasterDataSet
     NaturalEarth1_Medium,
     NaturalEarth1WithRelief_Large,
     NaturalEarth1WithRelief_Medium,
-    NaturalEarth1WithRelief_Small,
+    //NaturalEarth1WithRelief_Small, // unavailable? (403 forbidden)
     NaturalEarth1WithReliefAndWater_Large,
     NaturalEarth1WithReliefAndWater_Medium,
-    NaturalEarth1WithReliefAndWater_Small,
+    //NaturalEarth1WithReliefAndWater_Small, // unavailable? (403 forbidden)
     NaturalEarth1WithReliefWaterAndDrains_Large,
     NaturalEarth1WithReliefWaterAndDrains_Medium,
 
@@ -50,7 +50,7 @@ public enum NaturalEarthRasterDataSet
 
     OceanBottom_Medium,
     OceanBottom_Small,
-    Bathymetry_Small,
+    //Bathymetry_Small, // distributed only as .psd (which GDAL does not support)
 
     ShadedRelief_Large,
     ShadedRelief_Medium,
@@ -68,7 +68,7 @@ public enum NaturalEarthRasterDataSet
     GrayEarthWithReliefHypsographyOceanBottomAndDrains_Large,
     GrayEarthWithReliefHypsographyOceanBottomAndDrains_Medium,
 
-    ManualShadedRelief_ContiguousUS_Medium,
+    //ManualShadedRelief_ContiguousUS_Medium, // 'PROJ: webmerc: Invalid latitude'
     ManualShadedRelief_Small,
     PrismaShadedRelief_Small,
 }
@@ -79,7 +79,7 @@ public class NaturalEarthRasterDataSource(NaturalEarthRasterDataSet dataSet)
     public override string Name => "Natural Earth Raster Data";
     public override string Srs => Epsg.Wgs84;
 
-    private string Subdirectory => "NaturalEarth";
+    private string Subdirectory => "NaturalEarth_Raster";
 
     public override Bounds? Bounds => Geometry.Bounds.GlobalWgs84;
     public override bool IsBounded => true;
@@ -95,22 +95,24 @@ public class NaturalEarthRasterDataSource(NaturalEarthRasterDataSet dataSet)
     public override async Task<RasterData> GetData(string destSrs)
     {
         GdalDataSource source = await GetDataSource();
-        return await GetData(destSrs);
+        return await source.GetData(destSrs);
     }
 
     public override async Task<RasterData> GetData(Bounds boundsWgs84)
     {
         GdalDataSource source = await GetDataSource();
-        return await GetData(boundsWgs84);
+        return await source.GetData(boundsWgs84);
     }
 
     public override async Task<RasterData> GetData(Bounds boundsWgs84, string destSrs)
     {
         GdalDataSource source = await GetDataSource();
-        return await GetData(boundsWgs84, destSrs);
+        return await source.GetData(boundsWgs84, destSrs);
     }
 
-    private async Task<GdalDataSource> GetDataSource()
+    /// <summary>Downloads the data file to cache (if not already there).</summary>
+    /// <returns>Path to the target file.</returns>
+    public async Task<string> Download()
     {
         string url = BaseUrl + DataSetUrls[DataSet];
 
@@ -124,20 +126,24 @@ public class NaturalEarthRasterDataSource(NaturalEarthRasterDataSet dataSet)
                 // TODO: See if we can fix upstream instead of working around it.
                 targetFile = "PRIMSA_SR_50M.tif";
                 break;
-            case NaturalEarthRasterDataSet.Bathymetry_Small:
-                // This data set appears to be distributed as a Photoshop (.psd) file.
-                targetFile = "BATH_50M.psd";
-                break;
-            case NaturalEarthRasterDataSet.ManualShadedRelief_ContiguousUS_Medium:
-                // Just another inconsistency in naming
-                targetFile = "US_MSR.tif";
-                break;
+            //case NaturalEarthRasterDataSet.Bathymetry_Small:
+            //    // This data set appears to be distributed as a Photoshop (.psd) file.
+            //    targetFile = "BATH_50M.psd";
+            //    break;
+            //case NaturalEarthRasterDataSet.ManualShadedRelief_ContiguousUS_Medium:
+            //    // Just another inconsistency in naming
+            //    targetFile = "US_MSR.tif";
+            //    break;
             default:
                 targetFile = UrlHelper.GetFilenameFromUrl(url).TrimEnd(".zip") + ".tif";
                 break;
         }
+        return await DownloadAndCache(url, Subdirectory, targetFile);
+    }
 
-        string targetFilePath = await DownloadAndCache(url, Subdirectory, targetFile);
+    private async Task<GdalDataSource> GetDataSource()
+    {
+        string targetFilePath = await Download();
         return new GdalDataSource(targetFilePath);
     }
 
@@ -168,10 +174,10 @@ public class NaturalEarthRasterDataSource(NaturalEarthRasterDataSet dataSet)
             { NaturalEarthRasterDataSet.NaturalEarth1_Medium, "10m/raster/NE1_LR_LC.zip" },
             { NaturalEarthRasterDataSet.NaturalEarth1WithRelief_Large, "10m/raster/NE1_HR_LC_SR.zip" },
             { NaturalEarthRasterDataSet.NaturalEarth1WithRelief_Medium, "10m/raster/NE1_LR_LC_SR.zip" },
-            { NaturalEarthRasterDataSet.NaturalEarth1WithRelief_Small, "10m/raster/NE1_50M_SR.zip" }, // NOTE: This dataset seems to be unavailable on both naturalearthdata.com and the mirrors (403 forbidden)
+            //{ NaturalEarthRasterDataSet.NaturalEarth1WithRelief_Small, "10m/raster/NE1_50M_SR.zip" }, // unavailable? (403 forbidden)
             { NaturalEarthRasterDataSet.NaturalEarth1WithReliefAndWater_Large, "10m/raster/NE1_HR_LC_SR_W.zip" },
             { NaturalEarthRasterDataSet.NaturalEarth1WithReliefAndWater_Medium, "10m/raster/NE1_LR_LC_SR_W.zip" },
-            { NaturalEarthRasterDataSet.NaturalEarth1WithReliefAndWater_Small, "10m/raster/NE1_50M_SR_W.zip" },
+            //{ NaturalEarthRasterDataSet.NaturalEarth1WithReliefAndWater_Small, "10m/raster/NE1_50M_SR_W.zip" }, // unavailable? (403 forbidden)
             { NaturalEarthRasterDataSet.NaturalEarth1WithReliefWaterAndDrains_Large, "10m/raster/NE1_HR_LC_SR_W_DR.zip" },
             { NaturalEarthRasterDataSet.NaturalEarth1WithReliefWaterAndDrains_Medium, "10m/raster/NE1_LR_LC_SR_W_DR.zip" },
 
@@ -188,7 +194,7 @@ public class NaturalEarthRasterDataSource(NaturalEarthRasterDataSet dataSet)
 
             { NaturalEarthRasterDataSet.OceanBottom_Medium, "10m/raster/OB_LR.zip" },
             { NaturalEarthRasterDataSet.OceanBottom_Small, "50m/raster/OB_50M.zip" },
-            { NaturalEarthRasterDataSet.Bathymetry_Small, "50m/raster/BATH_50M.zip" },
+            //{ NaturalEarthRasterDataSet.Bathymetry_Small, "50m/raster/BATH_50M.zip" },
 
             { NaturalEarthRasterDataSet.ShadedRelief_Large, "10m/raster/SR_HR.zip" },
             { NaturalEarthRasterDataSet.ShadedRelief_Medium, "10m/raster/SR_LR.zip" },
@@ -206,7 +212,7 @@ public class NaturalEarthRasterDataSource(NaturalEarthRasterDataSet dataSet)
             { NaturalEarthRasterDataSet.GrayEarthWithReliefHypsographyOceanBottomAndDrains_Large, "10m/raster/GRAY_HR_SR_OB_DR.zip" },
             { NaturalEarthRasterDataSet.GrayEarthWithReliefHypsographyOceanBottomAndDrains_Medium, "10m/raster/GRAY_LR_SR_OB_DR.zip" },
             
-            { NaturalEarthRasterDataSet.ManualShadedRelief_ContiguousUS_Medium, "10m/raster/US_MSR_10M.zip" },
+            //{ NaturalEarthRasterDataSet.ManualShadedRelief_ContiguousUS_Medium, "10m/raster/US_MSR_10M.zip" }, // 'PROJ: webmerc: Invalid latitude'
             { NaturalEarthRasterDataSet.ManualShadedRelief_Small, "50m/raster/MSR_50M.zip" },
             { NaturalEarthRasterDataSet.PrismaShadedRelief_Small, "50m/raster/PRISMA_SR_50M.zip" }
         };

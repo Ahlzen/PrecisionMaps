@@ -44,7 +44,7 @@ public enum NaturalEarthVectorDataSet
     Admin0_LandBoundaries_10m,
     Admin0_LandBoundaries_50m,
     Admin0_MapUnitLines_10m,
-    Admin0_MapUnitLines_50m,
+    //Admin0_MapUnitLines_50m, // unavailable? (403 forbidden)
     Admin0_MaritimeIndicators_10m,
     Admin0_MaritimeIndicators_50m,
     Admin0_MaritimeIndicators_ChinaSupplement_10m,
@@ -55,7 +55,7 @@ public enum NaturalEarthVectorDataSet
 
     // Admin level 0 - Breakaway, Disputed areas
     Admin0_BreakawayAndDisputedAreas_10m,
-    Admin0_BreakawayAndDisputedAreas_50m,
+    //Admin0_BreakawayAndDisputedAreas_50m, // unavailable? (403 forbidden)
     Admin0_BreakawayAndDisputedAreas_WithScaleRanks_10m,
     Admin0_BreakawayAndDisputedAreas_BoundaryLines_10m,
     Admin0_BreakawayAndDisputedAreas_BoundaryLines_50m,
@@ -94,12 +94,12 @@ public enum NaturalEarthVectorDataSet
     Railroads_10m,
     Railroads_NorthAmericaSupplement_10m,
     Airports_10m,
-    Airports_50m,
+    //Airports_50m, // unavailable? (403 forbidden)
     Ports_10m,
-    Ports_50m,
+    //Ports_50m, // unavailable? (403 forbidden)
     UrbanAreas_10m,
     UrbanAreas_50m,
-    USNationalParks_10m,
+    //USNationalParks_10m, // TODO: This contains several shapfiles (for different feature types)
     TimeZones_10m,
 
     // Cultural building blocks
@@ -110,7 +110,7 @@ public enum NaturalEarthVectorDataSet
     Admin1_Seams_10m,
     Admin2_LabelPoints_10m,
     Admin2_LabelPointDetails_10m,
-    All_Cultural_Building_Blocks_10m,
+    //All_Cultural_Building_Blocks_10m, // unavailable? (403 forbidden)
 
 
     ///// Physical features
@@ -176,17 +176,17 @@ public enum NaturalEarthVectorDataSet
     GlaciatedAreas_10m,
     GlaciatedAreas_50m,
     GlaciatedAreas_110m,
-    Bathymetry_10m,
+    //Bathymetry_10m, // unavailable? (403 forbidden)
     GeographicLines_10m,
     GeographicLines_50m,
     GeographicLines_110m,
-    Graticules_10m,
-    Graticules_50m,
-    Graticules_110m,
+    //Graticules_10m, // unavailable? (403 forbidden)
+    //Graticules_50m, // unavailable? (403 forbidden)
+    //Graticules_110m, // unavailable? (403 forbidden)
     LandAndOceanLabelPoints_10m,
     MinorIslandsLabelPoints_10m,
     LandAndOceanSeams_10m,
-    Physical_Building_Blocks_10m,
+    //Physical_Building_Blocks_10m, // unavailable? (403 forbidden)
 }
 
 /// <summary>
@@ -200,19 +200,26 @@ public class NaturalEarthVectorDataSource(NaturalEarthVectorDataSet dataSet)
     public override string Name => "Natural Earth Vector Data";
     public override string Srs => Epsg.Wgs84;
 
-    private string Subdirectory => "NaturalEarth";
+    private string Subdirectory => "NaturalEarth_Vector";
 
     public override Bounds? Bounds => Geometry.Bounds.GlobalWgs84;
     public override bool IsBounded => true;
 
-    public NaturalEarthVectorDataSet DataSet { get; } = dataSet;
+    public NaturalEarthVectorDataSet DataSet => dataSet;
+
+    /// <summary>Downloads the data file to cache (if not already there).</summary>
+    /// <returns>Path to the target file.</returns>
+    public async Task<string> Download()
+    {
+        string url = BaseUrl + DataSetUrls[DataSet];
+        string targetFileName = UrlHelper.GetFilenameFromUrl(url).TrimEnd(".zip") + ".shp";
+        return await DownloadAndCache(url, Subdirectory, targetFileName);
+    }
 
     public override async Task<VectorData> GetData()
     {
-        string url = BaseUrl + DataSetUrls[DataSet];
-        string filePath = await DownloadAndCache(url, Subdirectory);
-
-        VectorFileDataSource source = new(filePath);
+        string targetFilePath = await Download();
+        VectorFileDataSource source = new(targetFilePath);
         VectorData data = await source.GetData();
         return data;
     }
@@ -257,7 +264,7 @@ public class NaturalEarthVectorDataSource(NaturalEarthVectorDataSet dataSet)
             { NaturalEarthVectorDataSet.Admin0_LandBoundaries_10m, "10m/cultural/ne_10m_admin_0_boundary_lines_land.zip" },
             { NaturalEarthVectorDataSet.Admin0_LandBoundaries_50m, "50m/cultural/ne_50m_admin_0_boundary_lines_land.zip" },
             { NaturalEarthVectorDataSet.Admin0_MapUnitLines_10m, "10m/cultural/ne_10m_admin_0_boundary_lines_map_units.zip" },
-            { NaturalEarthVectorDataSet.Admin0_MapUnitLines_50m, "50m/cultural/ne_50m_admin_0_boundary_lines_map_units.zip" },
+            //{ NaturalEarthVectorDataSet.Admin0_MapUnitLines_50m, "50m/cultural/ne_50m_admin_0_boundary_lines_map_units.zip" }, // unavailable? (403 forbidden)
             { NaturalEarthVectorDataSet.Admin0_MaritimeIndicators_10m, "10m/cultural/ne_10m_admin_0_boundary_lines_maritime_indicator.zip" },
             { NaturalEarthVectorDataSet.Admin0_MaritimeIndicators_50m, "50m/cultural/ne_50m_admin_0_boundary_lines_maritime_indicator.zip" },
             { NaturalEarthVectorDataSet.Admin0_MaritimeIndicators_ChinaSupplement_10m, "10m/cultural/ne_10m_admin_0_boundary_lines_maritime_indicator_chn.zip" },
@@ -266,7 +273,7 @@ public class NaturalEarthVectorDataSource(NaturalEarthVectorDataSet dataSet)
             { NaturalEarthVectorDataSet.Admin0_PacificGroupingLines_50m, "50m/cultural/ne_50m_admin_0_pacific_groupings.zip" },
             { NaturalEarthVectorDataSet.Admin0_PacificGroupingLines_110m, "110m/cultural/ne_110m_admin_0_pacific_groupings.zip" },
             { NaturalEarthVectorDataSet.Admin0_BreakawayAndDisputedAreas_10m, "10m/cultural/ne_10m_admin_0_disputed_areas.zip" },
-            { NaturalEarthVectorDataSet.Admin0_BreakawayAndDisputedAreas_50m, "50m/cultural/ne_50m_admin_0_disputed_areas.zip" },
+            //{ NaturalEarthVectorDataSet.Admin0_BreakawayAndDisputedAreas_50m, "50m/cultural/ne_50m_admin_0_disputed_areas.zip" },
             { NaturalEarthVectorDataSet.Admin0_BreakawayAndDisputedAreas_WithScaleRanks_10m, "10m/cultural/ne_10m_admin_0_disputed_areas_scale_rank_minor_islands.zip" },
             { NaturalEarthVectorDataSet.Admin0_BreakawayAndDisputedAreas_BoundaryLines_10m, "10m/cultural/ne_10m_admin_0_boundary_lines_disputed_areas.zip" },
             { NaturalEarthVectorDataSet.Admin0_BreakawayAndDisputedAreas_BoundaryLines_50m, "50m/cultural/ne_50m_admin_0_boundary_lines_disputed_areas.zip" },
@@ -305,12 +312,12 @@ public class NaturalEarthVectorDataSource(NaturalEarthVectorDataSet dataSet)
             { NaturalEarthVectorDataSet.Railroads_10m, "10m/cultural/ne_10m_railroads.zip" },
             { NaturalEarthVectorDataSet.Railroads_NorthAmericaSupplement_10m, "10m/cultural/ne_10m_railroads_north_america.zip" },
             { NaturalEarthVectorDataSet.Airports_10m, "10m/cultural/ne_10m_airports.zip" },
-            { NaturalEarthVectorDataSet.Airports_50m, "50m/cultural/ne_50m_airports.zip" },
+            //{ NaturalEarthVectorDataSet.Airports_50m, "50m/cultural/ne_50m_airports.zip" }, // unavailable? (403 forbidden)
             { NaturalEarthVectorDataSet.Ports_10m, "10m/cultural/ne_10m_ports.zip" },
-            { NaturalEarthVectorDataSet.Ports_50m, "50m/cultural/ne_50m_ports.zip" },
+            //{ NaturalEarthVectorDataSet.Ports_50m, "50m/cultural/ne_50m_ports.zip" }, // unavailable? (403 forbidden)
             { NaturalEarthVectorDataSet.UrbanAreas_10m, "10m/cultural/ne_10m_urban_areas.zip" },
             { NaturalEarthVectorDataSet.UrbanAreas_50m, "50m/cultural/ne_50m_urban_areas.zip" },
-            { NaturalEarthVectorDataSet.USNationalParks_10m, "10m/cultural/ne_10m_parks_and_protected_lands.zip" },
+            //{ NaturalEarthVectorDataSet.USNationalParks_10m, "10m/cultural/ne_10m_parks_and_protected_lands.zip" },
             { NaturalEarthVectorDataSet.TimeZones_10m, "10m/cultural/ne_10m_time_zones.zip" },
             
             // Label points etc
@@ -321,7 +328,7 @@ public class NaturalEarthVectorDataSource(NaturalEarthVectorDataSet dataSet)
             { NaturalEarthVectorDataSet.Admin1_Seams_10m, "10m/cultural/ne_10m_admin_1_seams.zip" },
             { NaturalEarthVectorDataSet.Admin2_LabelPoints_10m, "10m/cultural/ne_10m_admin_2_label_points.zip" },
             { NaturalEarthVectorDataSet.Admin2_LabelPointDetails_10m, "10m/cultural/ne_10m_admin_2_label_points_details.zip" },
-            { NaturalEarthVectorDataSet.All_Cultural_Building_Blocks_10m, "10m/cultural/ne_10m_cultural_building_blocks_all.zip" },
+            //{ NaturalEarthVectorDataSet.All_Cultural_Building_Blocks_10m, "10m/cultural/ne_10m_cultural_building_blocks_all.zip" }, // unavailable? (403 forbidden)
 
             // Physical features
             { NaturalEarthVectorDataSet.Coastline_10m, "10m/physical/ne_10m_coastline.zip" },
@@ -376,16 +383,16 @@ public class NaturalEarthVectorDataSource(NaturalEarthVectorDataSet dataSet)
             { NaturalEarthVectorDataSet.GlaciatedAreas_10m, "10m/physical/ne_10m_glaciated_areas.zip" },
             { NaturalEarthVectorDataSet.GlaciatedAreas_50m, "50m/physical/ne_50m_glaciated_areas.zip" },
             { NaturalEarthVectorDataSet.GlaciatedAreas_110m, "110m/physical/ne_110m_glaciated_areas.zip" },
-            { NaturalEarthVectorDataSet.Bathymetry_10m, "10m/physical/ne_10m_bathymetry_all.zip" },
+            //{ NaturalEarthVectorDataSet.Bathymetry_10m, "10m/physical/ne_10m_bathymetry_all.zip" }, // unavailable? (403 forbidden)
             { NaturalEarthVectorDataSet.GeographicLines_10m, "10m/physical/ne_10m_geographic_lines.zip" },
             { NaturalEarthVectorDataSet.GeographicLines_50m, "50m/physical/ne_50m_geographic_lines.zip" },
             { NaturalEarthVectorDataSet.GeographicLines_110m, "110m/physical/ne_110m_geographic_lines.zip" },
-            { NaturalEarthVectorDataSet.Graticules_10m, "10m/physical/ne_10m_graticules_all.zip" },
-            { NaturalEarthVectorDataSet.Graticules_50m, "50m/physical/ne_50m_graticules_all.zip" },
-            { NaturalEarthVectorDataSet.Graticules_110m, "110m/physical/ne_110m_graticules_all.zip" },
+            //{ NaturalEarthVectorDataSet.Graticules_10m, "10m/physical/ne_10m_graticules_all.zip" }, // unavailable? (403 forbidden)
+            //{ NaturalEarthVectorDataSet.Graticules_50m, "50m/physical/ne_50m_graticules_all.zip" }, // unavailable? (403 forbidden)
+            //{ NaturalEarthVectorDataSet.Graticules_110m, "110m/physical/ne_110m_graticules_all.zip" }, // unavailable? (403 forbidden)
             { NaturalEarthVectorDataSet.LandAndOceanLabelPoints_10m, "10m/physical/ne_10m_land_ocean_label_points.zip" },
             { NaturalEarthVectorDataSet.MinorIslandsLabelPoints_10m, "10m/physical/ne_10m_minor_islands_label_points.zip" },
             { NaturalEarthVectorDataSet.LandAndOceanSeams_10m, "10m/physical/ne_10m_land_ocean_seams.zip" },
-            { NaturalEarthVectorDataSet.Physical_Building_Blocks_10m, "10m/physical/ne_10m_physical_building_blocks_all.zip" }
+            //{ NaturalEarthVectorDataSet.Physical_Building_Blocks_10m, "10m/physical/ne_10m_physical_building_blocks_all.zip" } // unavailable? (403 forbidden)
         };
 }

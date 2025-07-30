@@ -18,6 +18,8 @@ namespace MapLib.Tests.DataSources;
 [TestFixture]
 public class NaturalEarthDataSourceFixture : BaseFixture
 {
+    #region Vector data sets
+
     /// <summary>
     /// Downloads and caches all NE vector data sets (~260 MB download, ~1.1 GB on disk).
     /// </summary>
@@ -26,56 +28,44 @@ public class NaturalEarthDataSourceFixture : BaseFixture
     public async Task DownloadAllNaturalEarthVectorData()
     {
         foreach (NaturalEarthVectorDataSet dataSet in Enum.GetValues<NaturalEarthVectorDataSet>())
-        {
-            try
-            {
-                await new NaturalEarthVectorDataSource(dataSet).GetData();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-            }
-        }
+            await new NaturalEarthVectorDataSource(dataSet).Download();
     }
 
     /// <summary>
-    /// Downloads, renders and saves each NE data set to a PNG file.
+    /// Downloads, renders and saves each NE vector data set to a PNG file.
     /// </summary>
     [Test]
     [Explicit]
-    public async Task DownloadAndRenderAllNaturalEarthVectorData()
+    public async Task RenderAllNaturalEarthVectorData()
     {
         foreach (NaturalEarthVectorDataSet dataSet in Enum.GetValues<NaturalEarthVectorDataSet>())
         {
             string dataSetName = dataSet.ToString();
-            try
-            {
-                Console.WriteLine(dataSetName);
-                NaturalEarthVectorDataSource dataSource = new(dataSet);
-                VectorData data = await dataSource.GetData();
+            Console.WriteLine(dataSetName);
+            NaturalEarthVectorDataSource dataSource = new(dataSet);
+            VectorData data = await dataSource.GetData();
 
-                BitmapCanvasStack stack = new BitmapCanvasStack(CanvasUnit.Mm,
-                    297.0, 210.0, Color.White, 1.6);
-                Map map = new(data.Bounds, data.Srs);
-                map.VectorDataSources.Add(dataSetName, dataSource);
-                map.MapLayers.Add(new VectorMapLayer(dataSetName, dataSetName, new VectorStyle
-                {
-                    FillColor = Color.Beige,
-                    LineColor = Color.Black,
-                    LineWidth = 0.1, // mm
-                    Symbol = SymbolType.Circle,
-                    SymbolColor = Color.Red,
-                    SymbolSize = 0.5, // mm
-                }));
-                map.Render(stack, AspectRatioMismatchStrategy.CenterOnCanvas);
-                SaveTempBitmap(stack.GetBitmap(), "NaturalEarth_" + dataSetName, ".png");
-            }
-            catch (Exception ex)
+            BitmapCanvasStack stack = new BitmapCanvasStack(CanvasUnit.Mm,
+                297.0, 210.0, Color.White, 1.6);
+            Map map = new(data.Bounds, data.Srs);
+            map.VectorDataSources.Add(dataSetName, dataSource);
+            map.MapLayers.Add(new VectorMapLayer(dataSetName, dataSetName, new VectorStyle
             {
-                Console.WriteLine($"{dataSetName}: {ex.Message}");
-            }
+                FillColor = Color.Beige,
+                LineColor = Color.Black,
+                LineWidth = 0.1, // mm
+                Symbol = SymbolType.Circle,
+                SymbolColor = Color.Red,
+                SymbolSize = 0.5, // mm
+            }));
+            map.Render(stack, AspectRatioMismatchStrategy.CenterOnCanvas);
+            SaveTempBitmap(stack.GetBitmap(), "NaturalEarth_" + dataSetName, ".png");
         }
     }
+
+    #endregion
+
+    #region Raster data sets
 
     /// <summary>
     /// Downloads and caches all NE raster data sets.
@@ -85,16 +75,37 @@ public class NaturalEarthDataSourceFixture : BaseFixture
     public async Task DownloadAllNaturalEarthRasterData()
     {
         foreach (NaturalEarthRasterDataSet dataSet in Enum.GetValues<NaturalEarthRasterDataSet>())
+            await new NaturalEarthRasterDataSource(dataSet).Download();
+    }
+
+    /// <summary>
+    /// Downloads, renders and saves each NE raster data set to a PNG file.
+    /// </summary>
+    [Test]
+    [Explicit]
+    public async Task RenderAllNaturalEarthRasterData()
+    {
+        //foreach (NaturalEarthRasterDataSet dataSet in Enum.GetValues<NaturalEarthRasterDataSet>())
+        foreach (NaturalEarthRasterDataSet dataSet in
+            new NaturalEarthRasterDataSet[] {
+                NaturalEarthRasterDataSet.ManualShadedRelief_Small,
+                NaturalEarthRasterDataSet.PrismaShadedRelief_Small })
+
         {
-            Console.WriteLine("Downloading " + dataSet);
-            try
-            {
-                await new NaturalEarthRasterDataSource(dataSet).GetData();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-            }
+            string dataSetName = dataSet.ToString();
+            Console.WriteLine(dataSetName);
+            NaturalEarthRasterDataSource dataSource = new(dataSet);
+            RasterData data = await dataSource.GetData();
+
+            BitmapCanvasStack stack = new BitmapCanvasStack(CanvasUnit.Mm,
+                297.0, 210.0, Color.White, 1.6);
+            Map map = new(data.Bounds, data.Srs);
+            map.RasterDataSources.Add(dataSetName, dataSource);
+            map.MapLayers.Add(new RasterMapLayer(dataSetName, dataSetName, new RasterStyle()));
+            map.Render(stack, AspectRatioMismatchStrategy.CenterOnCanvas);
+            SaveTempBitmap(stack.GetBitmap(), "NaturalEarth_" + dataSetName, ".png");
         }
     }
+
+    #endregion
 }
