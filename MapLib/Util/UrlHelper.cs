@@ -22,7 +22,9 @@ public static class UrlHelper
             using HttpClient httpClient = new();
             using var stream = httpClient.GetStreamAsync(url);
             using var fs = new FileStream(destFilename, FileMode.OpenOrCreate);
-            await stream.Result.CopyToAsync(fs);
+            //await stream.Result.CopyToAsync(fs);
+            stream.Result.CopyTo(fs);
+
         }
         catch (Exception ex)
         {

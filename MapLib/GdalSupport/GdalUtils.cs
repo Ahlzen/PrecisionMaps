@@ -1,4 +1,8 @@
-﻿using MapLib.Geometry;
+﻿
+// Uncomment to generate more detailed raster data info
+//#define VERBOSE
+
+using MapLib.Geometry;
 using MapLib.Util;
 using OSGeo.GDAL;
 using OSGeo.OSR;
@@ -6,6 +10,7 @@ using System;
 using System.Data;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Runtime.CompilerServices;
 using System.Text;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
@@ -227,6 +232,8 @@ public static class GdalUtils
 
     #region Info and reporting
 
+    
+
     public static string GetRasterInfo(string filename)
     {
         using Dataset ds = Gdal.Open(filename, Access.GA_ReadOnly);
@@ -235,8 +242,11 @@ public static class GdalUtils
     }
     public static string GetRasterInfo(Dataset ds)
     {
+        #if !VERBOSE
+        return $"Raster Dataset. Count: {ds.RasterCount}, Size: {ds.RasterXSize}x{ds.RasterYSize}";
+        #else
         var sb = new StringBuilder();
-        sb.AppendLine("Raster dataset parameters:");
+        sb.AppendLine($"Raster dataset parameters:");
         sb.AppendLine("  Projection: " + ds.GetProjectionRef());
         sb.AppendLine("  RasterCount: " + ds.RasterCount);
         sb.AppendLine("  RasterSize (" + ds.RasterXSize + "," + ds.RasterYSize + ")");
@@ -308,12 +318,20 @@ public static class GdalUtils
             }
         }
         return sb.ToString();
+        #endif
     }
 
     public static string GetRasterBandSummary(Dataset dataset)
     {
         StringBuilder sb = new();
         sb.AppendLine(string.Join(", ", dataset.GetFileList()));
+#if !VERBOSE
+        for (int i = 1; i <= dataset.RasterCount; i++) // NOTE: these are 1-indexed
+        {
+            Band band = dataset.GetRasterBand(i);
+            sb.AppendLine($" Band {i}: {band.DataType}, {Gdal.GetDataTypeSize(band.DataType)}, {band.GetRasterColorInterpretation()}");
+        }
+#else
         sb.AppendLine($"Size: {dataset.RasterXSize}x{dataset.RasterYSize} px");
         sb.AppendLine("Raster count: " + dataset.RasterCount);
         for (int i = 1; i <= dataset.RasterCount; i++) // NOTE: these are 1-indexed
@@ -329,10 +347,11 @@ public static class GdalUtils
             //if (hasNoDataValue == 1)
             sb.AppendLine(" No-data value: " + noDataValue);
         }
-        return sb.ToString();
+#endif
+            return sb.ToString();
     }
 
-    #endregion
+#endregion
     
     #region Spatial Reference Systems
 

@@ -1,7 +1,9 @@
 ﻿using MapLib.DataSources.Raster;
 using MapLib.DataSources.Vector;
+using MapLib.GdalSupport;
 using MapLib.Output;
 using MapLib.Render;
+using MapLib.Util;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -105,6 +107,70 @@ public class NaturalEarthDataSourceFixture : BaseFixture
             map.Render(stack, AspectRatioMismatchStrategy.CenterOnCanvas);
             SaveTempBitmap(stack.GetBitmap(), "NaturalEarth_" + dataSetName, ".png");
         }
+    }
+
+    #endregion
+
+    #region Real maps with NE data
+
+    // TODO: move to base class?
+    private static Color bgColor = Color.LightGray;
+    public static IEnumerable<CanvasStack> A3CanvasStacks()
+    {
+        yield return new BitmapCanvasStack(CanvasUnit.Mm, 420.0, 297.0, bgColor, 1.0);
+        yield return new BitmapCanvasStack(CanvasUnit.Mm, 420.0, 297.0, bgColor, 4.0);
+        yield return new SvgCanvasStack(CanvasUnit.Mm, 420.0, 297.0, bgColor);
+    }
+
+    [Test]
+    [Explicit]
+    [TestCaseSource(nameof(A3CanvasStacks))]
+    public void RenderNaturalEarthWorldMap(CanvasStack canvasStack)
+    {
+        Map map = new Map(new Bounds(-180.0, 180.0, -75.0, 75.0),
+            //Transformer.WktVanDerGrinten);
+            Epsg.WebMercator);
+
+        // Data sources
+        map.RasterDataSources.Add("neBaseRaster", new NaturalEarthRasterDataSource(
+            NaturalEarthRasterDataSet.CrossBlendedHypsometricTintsWithReliefWaterDrainsAndOceanBottom_Medium));
+        map.VectorDataSources.Add("countries",
+            new NaturalEarthVectorDataSource(NaturalEarthVectorDataSet.Admin0_Countries_50m));
+        map.VectorDataSources.Add("graticule",
+            new GraticuleDataSource { XInterval = 10, YInterval = 10 });
+
+        // Styles
+        map.MapLayers.Add(new RasterMapLayer("neBaseRaster", "neBaseRaster", new RasterStyle()));
+        map.MapLayers.Add(new VectorMapLayer("graticule", "graticule", new VectorStyle {
+            LineColor = Color.Navy,
+            LineWidth = 0.1,
+            MaskedBy = { "labelsMask" }
+        }));
+        map.MapLayers.Add(new VectorMapLayer("borders", "countries", new VectorStyle {
+            LineColor = Color.Silver,
+            LineWidth = 0.1,
+            MaskedBy = { "labelsMask" }
+        }));
+        map.MapLayers.Add(new VectorMapLayer("labels", "countries", new VectorStyle {
+            MaskName = "labelsMask",
+            Symbol = SymbolType.Circle,
+            SymbolSize = 0.5,
+            SymbolMaskWidth = 0.5,
+            TextColor = Color.Black,
+            TextSize = 1.2,
+            TextTag = "NAME",
+            TextMaskWidth = 0.4
+        }));
+
+        // Render and save
+        map.Render(canvasStack,
+            ratioMismatchStrategy: AspectRatioMismatchStrategy.CenterOnCanvas);
+
+        //canvasStack.SaveAllLayersToFile("WorldCountriesWithMasks");
+
+        string filename = FileSystemHelpers.GetTempOutputFileName(
+            canvasStack.DefaultFileExtension, "NaturalEarth_WorldMap");
+        canvasStack.SaveToFile(filename);
     }
 
     #endregion

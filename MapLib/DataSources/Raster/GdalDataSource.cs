@@ -57,7 +57,7 @@ public class GdalDataSource : BaseRasterDataSource
         BitmapHeightPx = (int)Math.Round(dataset.RasterYSize * scaleFactor);
 
         // For debugging
-        Console.WriteLine(GdalUtils.GetRasterBandSummary(dataset));
+        //Console.WriteLine(GdalUtils.GetRasterBandSummary(dataset));
 
         dataset.Dispose();
     }
@@ -74,7 +74,7 @@ public class GdalDataSource : BaseRasterDataSource
         BitmapHeightPx = (int)Math.Round(dataset.RasterYSize * scaleFactor);
 
         // For debugging
-        Console.WriteLine(GdalUtils.GetRasterBandSummary(dataset));
+        //Console.WriteLine(GdalUtils.GetRasterBandSummary(dataset));
     }
 
     private RasterData GetRasterData(Dataset dataset)
@@ -111,7 +111,7 @@ public class GdalDataSource : BaseRasterDataSource
 
         // Determine whether this is an image (e.g. an orthophoto or
         // shaded relief) or raw data (like elevation data or canopy density).
-        // Some data sets could (like 8-bit grayscale) could theoretically
+        // Some data sets (like 8-bit grayscale) could theoretically
         // be either.
         // Then read the raster data and convert to standard format.
 
