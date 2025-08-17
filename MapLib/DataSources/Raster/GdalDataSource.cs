@@ -1,6 +1,7 @@
 ﻿using MapLib.GdalSupport;
 using MapLib.Geometry;
 using OSGeo.GDAL;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 
 namespace MapLib.DataSources.Raster;
@@ -9,28 +10,34 @@ public class GdalDataSource : BaseRasterDataSource
 {
     public override string Name => "Raster File (using GDAL)";
 
-    //public string Filename { get; }
     public List<string> Filenames { get; }
 
-    public override string Srs { get; }
-    public override Bounds? Bounds { get; }
+    private string _srs;
+    public override string Srs => _srs;
+
+    private Bounds? _bounds;
+    public override Bounds? Bounds => _bounds;
+
     public override bool IsBounded => true; // Probably depends on the source
 
     /// <summary>
     /// Width of the raster data in the original data source.
+    /// NOTE: These properties are updated if reprojected.
     /// </summary>
-    public int SourceWidthPx { get; }
-    public int SourceHeightPx { get; }
+    public int SourceWidthPx { get; private set; }
+    public int SourceHeightPx { get; private set; }
 
     /// <summary>
     /// Width of the bitmap data that we read the source into.
+    /// NOTE: These properties are updated if reprojected.
     /// </summary>
     /// <remarks>
     /// Usually the same as the source, but may be smaller than the source, e.g.
     /// if we read a lower resolution version of a large raster data set.
     /// </remarks>
-    public int BitmapWidthPx { get; }
-    public int BitmapHeightPx { get; }
+    public int BitmapWidthPx { get; private set; }
+    public int BitmapHeightPx { get; private set; }
+
 
     public GdalDataSource(string filename, double scaleFactor = 1)
         : this([filename], scaleFactor)
@@ -47,14 +54,7 @@ public class GdalDataSource : BaseRasterDataSource
         Dataset? dataset = Filenames.Count == 1 ?
             GdalUtils.OpenDataset(Filenames[0]) :
             GdalUtils.CreateVrt(filenames); // Multiple files: Create VRT (virtual raster)
-
-        Srs = GdalUtils.GetSrsAsWkt(dataset);
-        Bounds = GdalUtils.GetBounds(dataset);
-
-        SourceWidthPx = dataset.RasterXSize;
-        SourceHeightPx = dataset.RasterYSize;
-        BitmapWidthPx = (int)Math.Round(dataset.RasterXSize * scaleFactor);
-        BitmapHeightPx = (int)Math.Round(dataset.RasterYSize * scaleFactor);
+        InitPropertiesFromDataset(dataset, scaleFactor);
 
         // For debugging
         //Console.WriteLine(GdalUtils.GetRasterBandSummary(dataset));
@@ -64,18 +64,57 @@ public class GdalDataSource : BaseRasterDataSource
 
     public GdalDataSource(Dataset dataset, double scaleFactor = 1)
     {
-        Srs = GdalUtils.GetSrsAsWkt(dataset);
-        Bounds = GdalUtils.GetBounds(dataset);
         Filenames = new List<string>();
+        InitPropertiesFromDataset(dataset, scaleFactor);
+
+        // For debugging
+        //Console.WriteLine(GdalUtils.GetRasterBandSummary(dataset));
+    }
+
+    [MemberNotNull(nameof(_srs))]
+    [MemberNotNull(nameof(_bounds))]
+    private void InitPropertiesFromDataset(Dataset dataset, double scaleFactor = 1)
+    {
+        _srs = GdalUtils.GetSrsAsWkt(dataset);
+        _bounds = GdalUtils.GetBounds(dataset);
 
         SourceWidthPx = dataset.RasterXSize;
         SourceHeightPx = dataset.RasterYSize;
         BitmapWidthPx = (int)Math.Round(dataset.RasterXSize * scaleFactor);
         BitmapHeightPx = (int)Math.Round(dataset.RasterYSize * scaleFactor);
-
-        // For debugging
-        //Console.WriteLine(GdalUtils.GetRasterBandSummary(dataset));
     }
+
+    public override Task<RasterData> GetData(string? destSrs = null)
+    {
+        List<string> filenames = new(Filenames);
+
+        if (destSrs != null && destSrs != Srs)
+        {
+            // Reproject source data file(s), and use that
+            for (int i = 0; i < filenames.Count; i++)
+            {
+                filenames[i] = GdalUtils.Warp(filenames[i], destSrs);
+            }
+        }
+        using Dataset sourceDataset =
+            GdalUtils.OpenDataset(filenames);
+
+        // Update properties again. They may have changed if the
+        // data was reprojected:
+        InitPropertiesFromDataset(sourceDataset);
+
+        Console.WriteLine(GdalUtils.GetRasterInfo(sourceDataset));
+        return Task.FromResult(GetRasterData(sourceDataset));
+    }
+
+    public override Task<RasterData> GetData()
+        => GetData(null);
+
+    public override Task<RasterData> GetData(Bounds boundsWgs84)
+        => GetData(null);
+
+    public override Task<RasterData> GetData(Bounds boundsWgs84, string? destSrs = null)
+        => GetData(destSrs);
 
     private RasterData GetRasterData(Dataset dataset)
     {
@@ -303,32 +342,4 @@ public class GdalDataSource : BaseRasterDataSource
             return new SingleBandRasterData(srs, bounds, BitmapWidthPx, BitmapHeightPx,
                 singleBandData!, noDataValue);
     }
-    
-    public override Task<RasterData> GetData(string? destSrs = null)
-    {
-        //string filename = Filename;
-        List<string> filenames = new(Filenames);
-
-        if (destSrs != null && destSrs != Srs)
-        {
-            // Reproject source data file(s), and use that
-            for (int i = 0; i < filenames.Count; i++)
-            {
-                filenames[i] = GdalUtils.Warp(filenames[i], destSrs);
-            }
-        }
-        using Dataset sourceDataset =
-            GdalUtils.OpenDataset(filenames);
-        Console.WriteLine(GdalUtils.GetRasterInfo(sourceDataset));
-        return Task.FromResult(GetRasterData(sourceDataset));
-    }
-
-    public override Task<RasterData> GetData()
-        => GetData(null);
-
-    public override Task<RasterData> GetData(Bounds boundsWgs84)
-        => GetData(null);
-
-    public override Task<RasterData> GetData(Bounds boundsWgs84, string? destSrs = null)
-        => GetData(destSrs);
 }

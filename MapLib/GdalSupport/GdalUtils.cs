@@ -232,8 +232,6 @@ public static class GdalUtils
 
     #region Info and reporting
 
-    
-
     public static string GetRasterInfo(string filename)
     {
         using Dataset ds = Gdal.Open(filename, Access.GA_ReadOnly);

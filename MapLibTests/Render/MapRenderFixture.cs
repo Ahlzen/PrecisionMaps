@@ -28,7 +28,7 @@ public class MapRenderFixture : BaseFixture
     {
         Map map = new Map(
             new Bounds(-70.944, -70.915, 42.187, 42.207),
-            Epsg.WebMercator);
+            KnownSrs.EpsgWebMercator);
 
         map.VectorDataSources.Add("osmdata",
             new VectorFileDataSource(Path.Join(TestDataPath, "osm-xml/Weymouth Detail.osm")));
@@ -67,7 +67,7 @@ public class MapRenderFixture : BaseFixture
     {
         Map map = new Map(
             new Bounds(-70.944, -70.915, 42.187, 42.207),
-            Epsg.WebMercator);
+            KnownSrs.EpsgWebMercator);
 
         map.VectorDataSources.Add("osmdata",
             new VectorFileDataSource(Path.Join(TestDataPath, "osm-xml/Weymouth Detail.osm")));
@@ -172,7 +172,7 @@ public class MapRenderFixture : BaseFixture
         await GdalContourGenerator.GenerateContours(source, 1,
             100, 0, contourTempPath, MassachusettsBounds);
 
-        Map map = new Map(MassachusettsBounds, Epsg.WebMercator);
+        Map map = new Map(MassachusettsBounds, KnownSrs.EpsgWebMercator);
 
         map.RasterDataSources.Add("hillshadeComposite",
             new ExistingRasterDataSource(compositeSteppedHypso));

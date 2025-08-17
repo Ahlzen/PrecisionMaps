@@ -28,11 +28,11 @@ public class VectorFileDataSource : BaseVectorDataSource
         {
             case ".osm":
                 _reader = new OsmDataReader();
-                Srs = Epsg.Wgs84;
+                Srs = KnownSrs.EpsgWgs84;
                 break;
             case ".geojson":
                 _reader = new GeoJsonDataReader();
-                Srs = Epsg.Wgs84;
+                Srs = KnownSrs.EpsgWgs84;
                 break;
             default: // try OGR
                 {

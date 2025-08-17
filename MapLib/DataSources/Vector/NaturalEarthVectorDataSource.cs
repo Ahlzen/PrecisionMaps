@@ -198,7 +198,7 @@ public class NaturalEarthVectorDataSource(NaturalEarthVectorDataSet dataSet)
     : BaseVectorDataSource
 {
     public override string Name => "Natural Earth Vector Data";
-    public override string Srs => Epsg.Wgs84;
+    public override string Srs => KnownSrs.EpsgWgs84;
 
     private string Subdirectory => "NaturalEarth_Vector";
 

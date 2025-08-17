@@ -18,8 +18,8 @@ namespace MapLib.Tests.Render;
 public class ProjectionAndCanvasFittingFixture : BaseFixture
 {
     private static readonly string[] Projections = [
-        Epsg.Wgs84,
-        Epsg.WebMercator
+        KnownSrs.EpsgWgs84,
+        KnownSrs.EpsgWebMercator
     ];
 
     private static readonly SizeF[] CanvasSizes = [

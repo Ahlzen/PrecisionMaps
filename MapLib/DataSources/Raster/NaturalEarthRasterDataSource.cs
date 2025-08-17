@@ -77,7 +77,7 @@ public class NaturalEarthRasterDataSource(NaturalEarthRasterDataSet dataSet)
     : BaseRasterDataSource
 {
     public override string Name => "Natural Earth Raster Data";
-    public override string Srs => Epsg.Wgs84;
+    public override string Srs => KnownSrs.EpsgWgs84;
 
     private string Subdirectory => "NaturalEarth_Raster";
 

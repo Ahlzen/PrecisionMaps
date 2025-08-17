@@ -128,9 +128,9 @@ public class NaturalEarthDataSourceFixture : BaseFixture
     public void RenderNaturalEarthWorldMap(CanvasStack canvasStack)
     {
         Map map = new Map(new Bounds(-180.0, 180.0, -75.0, 75.0),
-            //Transformer.WktVanDerGrinten);
-            Epsg.WebMercator);
-
+            //KnownSrs.WktVanDerGrinten);
+            //KnownSrs.EpsgRobinson);
+            KnownSrs.EpsgWebMercator);
         // Data sources
         map.RasterDataSources.Add("neBaseRaster", new NaturalEarthRasterDataSource(
             NaturalEarthRasterDataSet.CrossBlendedHypsometricTintsWithReliefWaterDrainsAndOceanBottom_Medium));

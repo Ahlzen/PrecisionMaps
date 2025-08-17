@@ -112,8 +112,8 @@ public class Map : IHasSrs, IBounded
         CanvasStack canvas,
         AspectRatioMismatchStrategy strategy)
     {
-        Transformer wgs84ToMapSrs = new(Epsg.Wgs84, this.Srs);
-        Transformer mapSrsToWgs84 = new(this.Srs, Epsg.Wgs84);
+        Transformer wgs84ToMapSrs = new(KnownSrs.EpsgWgs84, this.Srs);
+        Transformer mapSrsToWgs84 = new(this.Srs, KnownSrs.EpsgWgs84);
 
         Debug.WriteLine("Requested bounds (WGS84): " + RequestedBoundsWgs84);
 
@@ -242,7 +242,7 @@ public class Map : IHasSrs, IBounded
                 $"Vector layer data source not found: \"{vectorLayer.DataSourceName}\"");
 
         using Transformer wgs84ToSourceTransformer = new(
-            Epsg.Wgs84, dataSource.Srs);
+            KnownSrs.EpsgWgs84, dataSource.Srs);
         using Transformer sourceToMapTransformer = new(
             dataSource.Srs, Srs);
         Bounds dataSourceBounds = wgs84ToSourceTransformer.Transform(RequestedBoundsWgs84);
@@ -525,8 +525,8 @@ public class Map : IHasSrs, IBounded
         Console.WriteLine("Map SRS: " + Srs);
         Console.WriteLine("Raster SRS: " + data.Srs);
 
-        Console.WriteLine("Map bounds LL: " + this.BoundsToSrs(Epsg.Wgs84));
-        Console.WriteLine("Raster bounds LL: " + data.BoundsToSrs(Epsg.Wgs84));
+        Console.WriteLine("Map bounds LL: " + this.BoundsToSrs(KnownSrs.EpsgWgs84));
+        Console.WriteLine("Raster bounds LL: " + data.BoundsToSrs(KnownSrs.EpsgWgs84));
 
         Console.WriteLine("Map bounds: " + Bounds);
         Console.WriteLine("Raster bounds: " + data.BoundsToSrs(this.Srs));

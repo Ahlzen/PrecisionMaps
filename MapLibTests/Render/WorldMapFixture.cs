@@ -27,7 +27,7 @@ public class WorldMapFixture : BaseFixture
     {
         // Try something different: Van Der Grinten projection
         // (not uncommon for world maps)
-        string srs = Transformer.WktVanDerGrinten;
+        string srs = KnownSrs.WktVanDerGrinten;
         Map map = new Map(
             new Bounds(-180.0, 180.0, -80.0, 80.0),
             srs);
@@ -84,7 +84,7 @@ public class WorldMapFixture : BaseFixture
     {
         // Try something different: Van Der Grinten projection
         // (not uncommon for world maps)
-        string srs = Transformer.WktVanDerGrinten;
+        string srs = KnownSrs.WktVanDerGrinten;
         Map map = new Map(
             new Bounds(-180.0, 180.0, -80.0, 80.0),
             srs);

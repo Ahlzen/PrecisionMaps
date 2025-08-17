@@ -25,7 +25,7 @@ public class PointInPolygonFixture : BaseFixture
     public async Task VisualizePointsInPolygons()
     {
         const double pointSize = 0.8;
-        const string srs = Epsg.WebMercator;
+        const string srs = KnownSrs.EpsgWebMercator;
         TagList tags = [];
 
         // Get data
