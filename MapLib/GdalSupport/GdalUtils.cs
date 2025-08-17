@@ -1,6 +1,6 @@
 ﻿
 // Uncomment to generate more detailed raster data info
-//#define VERBOSE
+#define VERBOSE
 
 using MapLib.Geometry;
 using MapLib.Util;
@@ -8,6 +8,7 @@ using OSGeo.GDAL;
 using OSGeo.OSR;
 using System;
 using System.Data;
+using System.Diagnostics.Contracts;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Runtime.CompilerServices;
@@ -40,12 +41,6 @@ public static class GdalUtils
     /// Thrown on failure.
     /// </exception>
     public static Dataset OpenDataset(string filename) => OpenDataset([filename]);
-    //{
-    //    Dataset dataset = Gdal.Open(filename, Access.GA_ReadOnly);
-    //    if (dataset == null)
-    //        throw new ApplicationException("Failed to open " + filename);
-    //    return dataset;
-    //}
 
     /// <summary>
     /// Opens and returns the dataset at the specified file name. If
@@ -234,65 +229,80 @@ public static class GdalUtils
 
     public static string GetRasterInfo(string filename)
     {
-        using Dataset ds = Gdal.Open(filename, Access.GA_ReadOnly);
-        if (ds == null) throw new ApplicationException("Failed to open " + filename);
-        return GetRasterInfo(ds);
+        StringBuilderEx sb = new();
+        AppendRasterInfo(filename, sb);
+        return sb.ToString();
     }
-    public static string GetRasterInfo(Dataset ds)
+    public static string GetRasterInfo(Dataset dataset)
+    {
+        StringBuilderEx sb = new();
+        AppendRasterInfo(dataset, sb);
+        return sb.ToString();
+    }
+    public static void AppendRasterInfo(string filename, StringBuilderEx sb)
+    {
+        using Dataset dataset = Gdal.Open(filename, Access.GA_ReadOnly);
+        if (dataset == null) throw new ApplicationException("Failed to open " + filename);
+        AppendRasterInfo(dataset, sb);
+    }
+    public static void AppendRasterInfo(Dataset ds, StringBuilderEx sb)
     {
         #if !VERBOSE
-        return $"Raster Dataset. Count: {ds.RasterCount}, Size: {ds.RasterXSize}x{ds.RasterYSize}";
+        sb.AppendLine($"Raster Dataset. Count: {ds.RasterCount}, Size: {ds.RasterXSize}x{ds.RasterYSize}");
         #else
-        var sb = new StringBuilder();
         sb.AppendLine($"Raster dataset parameters:");
-        sb.AppendLine("  Projection: " + ds.GetProjectionRef());
-        sb.AppendLine("  RasterCount: " + ds.RasterCount);
-        sb.AppendLine("  RasterSize (" + ds.RasterXSize + "," + ds.RasterYSize + ")");
-
+        sb.Indent();
+        sb.AppendLine("Projection: " + ds.GetProjectionRef());
+        sb.AppendLine("RasterCount: " + ds.RasterCount);
+        sb.AppendLine("RasterSize (" + ds.RasterXSize + "," + ds.RasterYSize + ")");
+        
         // Get metadata
         string[] metadata = ds.GetMetadata("");
         if (metadata.Length > 0)
         {
-            sb.AppendLine("  Metadata:");
+            sb.AppendLine("Metadata:");
+            sb.Indent();
             for (int iMeta = 0; iMeta < metadata.Length; iMeta++)
-            {
-                sb.AppendLine("    " + iMeta + ":  " + metadata[iMeta]);
-            }
-            sb.AppendLine("");
+                sb.AppendLine(iMeta + ": " + metadata[iMeta]);
+            sb.Unindent();
+            sb.AppendLine();
         }
 
         // Report "IMAGE_STRUCTURE" metadata.
         metadata = ds.GetMetadata("IMAGE_STRUCTURE");
         if (metadata.Length > 0)
         {
-            sb.AppendLine("  Image Structure Metadata:");
+            sb.AppendLine("Image Structure Metadata:");
+            sb.Indent();
             for (int iMeta = 0; iMeta < metadata.Length; iMeta++)
-            {
-                sb.AppendLine("    " + iMeta + ":  " + metadata[iMeta]);
-            }
-            sb.AppendLine("");
+                sb.AppendLine(iMeta + ":  " + metadata[iMeta]);
+            sb.Unindent();
+            sb.AppendLine();
         }
 
         // Report geolocation.
         metadata = ds.GetMetadata("GEOLOCATION");
         if (metadata.Length > 0)
         {
-            sb.AppendLine("  Geolocation:");
+            sb.AppendLine("Geolocation:");
+            sb.Indent();
             for (int iMeta = 0; iMeta < metadata.Length; iMeta++)
-            {
                 sb.AppendLine("    " + iMeta + ":  " + metadata[iMeta]);
-            }
-            sb.AppendLine("");
+            sb.Unindent();
+            sb.AppendLine();
         }
+        sb.Unindent();
 
         // Report corners
         sb.AppendLine("Corner Coordinates:");
-        sb.AppendLine("  Upper Left (" + PixelToGeo(ds, 0.0, 0.0) + ")");
-        sb.AppendLine("  Lower Left (" + PixelToGeo(ds, 0.0, ds.RasterYSize) + ")");
-        sb.AppendLine("  Upper Right (" + PixelToGeo(ds, ds.RasterXSize, 0.0) + ")");
-        sb.AppendLine("  Lower Right (" + PixelToGeo(ds, ds.RasterXSize, ds.RasterYSize) + ")");
-        sb.AppendLine("  Center (" + PixelToGeo(ds, ds.RasterXSize / 2, ds.RasterYSize / 2) + ")");
-        sb.AppendLine("");
+        sb.Indent();
+        sb.AppendLine("Upper Left (" + PixelToGeo(ds, 0.0, 0.0) + ")");
+        sb.AppendLine("Lower Left (" + PixelToGeo(ds, 0.0, ds.RasterYSize) + ")");
+        sb.AppendLine("Upper Right (" + PixelToGeo(ds, ds.RasterXSize, 0.0) + ")");
+        sb.AppendLine("Lower Right (" + PixelToGeo(ds, ds.RasterXSize, ds.RasterYSize) + ")");
+        sb.AppendLine("Center (" + PixelToGeo(ds, ds.RasterXSize / 2, ds.RasterYSize / 2) + ")");
+        sb.Unindent();
+        sb.AppendLine();
 
         // Report projection.
         string projection = ds.GetProjectionRef();
@@ -315,20 +325,26 @@ public static class GdalUtils
                 sb.AppendLine(projection);
             }
         }
-        return sb.ToString();
         #endif
     }
 
     public static string GetRasterBandSummary(Dataset dataset)
     {
-        StringBuilder sb = new();
+        StringBuilderEx sb = new();
+        AppendRasterBandSummary(dataset, sb);
+        return sb.ToString();
+    }
+    public static void AppendRasterBandSummary(Dataset dataset, StringBuilderEx sb)
+    {
         sb.AppendLine(string.Join(", ", dataset.GetFileList()));
 #if !VERBOSE
+        sb.Indent();
         for (int i = 1; i <= dataset.RasterCount; i++) // NOTE: these are 1-indexed
         {
             Band band = dataset.GetRasterBand(i);
-            sb.AppendLine($" Band {i}: {band.DataType}, {Gdal.GetDataTypeSize(band.DataType)}, {band.GetRasterColorInterpretation()}");
+            sb.AppendLine($"Band {i}: {band.DataType}, {Gdal.GetDataTypeSize(band.DataType)}, {band.GetRasterColorInterpretation()}");
         }
+        sb.Unindent();
 #else
         sb.AppendLine($"Size: {dataset.RasterXSize}x{dataset.RasterYSize} px");
         sb.AppendLine("Raster count: " + dataset.RasterCount);
@@ -336,17 +352,17 @@ public static class GdalUtils
         {
             Band band = dataset.GetRasterBand(i);
             sb.AppendLine("Band " + i);
-            sb.AppendLine(" DataType: " + band.DataType);
-            sb.AppendLine(" Size: " + Gdal.GetDataTypeSize(band.DataType));
-            sb.AppendLine(" Interpretation: " + band.GetRasterColorInterpretation());
+            sb.Indent();
+            sb.AppendLine("DataType: " + band.DataType);
+            sb.AppendLine("Size: " + Gdal.GetDataTypeSize(band.DataType));
+            sb.AppendLine("Interpretation: " + band.GetRasterColorInterpretation());
 
             band.GetNoDataValue(out double noDataValue, out int hasNoDataValue);
-            sb.AppendLine(" Has no-data value: " + hasNoDataValue);
-            //if (hasNoDataValue == 1)
-            sb.AppendLine(" No-data value: " + noDataValue);
+            sb.AppendLine("Has no-data value: " + hasNoDataValue);
+            sb.AppendLine("No-data value: " + noDataValue);
+            sb.Unindent();
         }
 #endif
-            return sb.ToString();
     }
 
 #endregion
