@@ -4,12 +4,8 @@ using MapLib.GdalSupport;
 using MapLib.Output;
 using MapLib.Render;
 using MapLib.Util;
-using System;
-using System.Collections.Generic;
+using System.Collections;
 using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MapLib.Tests.DataSources;
 
@@ -87,12 +83,7 @@ public class NaturalEarthDataSourceFixture : BaseFixture
     [Explicit]
     public async Task RenderAllNaturalEarthRasterData()
     {
-        //foreach (NaturalEarthRasterDataSet dataSet in Enum.GetValues<NaturalEarthRasterDataSet>())
-        foreach (NaturalEarthRasterDataSet dataSet in
-            new NaturalEarthRasterDataSet[] {
-                NaturalEarthRasterDataSet.ManualShadedRelief_Small,
-                NaturalEarthRasterDataSet.PrismaShadedRelief_Small })
-
+        foreach (NaturalEarthRasterDataSet dataSet in Enum.GetValues<NaturalEarthRasterDataSet>())
         {
             string dataSetName = dataSet.ToString();
             Console.WriteLine(dataSetName);
@@ -121,16 +112,28 @@ public class NaturalEarthDataSourceFixture : BaseFixture
         yield return new BitmapCanvasStack(CanvasUnit.Mm, 420.0, 297.0, bgColor, 4.0);
         yield return new SvgCanvasStack(CanvasUnit.Mm, 420.0, 297.0, bgColor);
     }
+    public static IEnumerable<string> WorldMapProjections()
+    {
+        yield return KnownSrs.WktRobinson;
+        yield return KnownSrs.WktVanDerGrinten;
+        yield return KnownSrs.EpsgWebMercator;
+    }
+    public static IEnumerable NaturalEarthWorldMapParams()
+    {
+        foreach (string srs in WorldMapProjections())
+            foreach (CanvasStack stack in A3CanvasStacks())
+                yield return new object[] { stack, srs };
+    }
 
     [Test]
     [Explicit]
-    [TestCaseSource(nameof(A3CanvasStacks))]
-    public void RenderNaturalEarthWorldMap(CanvasStack canvasStack)
+    [TestCaseSource(nameof(NaturalEarthWorldMapParams))]
+    public async Task RenderNaturalEarthWorldMap(
+        CanvasStack canvasStack,
+        string srs)
     {
-        Map map = new Map(new Bounds(-180.0, 180.0, -75.0, 75.0),
-            //KnownSrs.WktVanDerGrinten);
-            //KnownSrs.EpsgRobinson);
-            KnownSrs.EpsgWebMercator);
+        Map map = new Map(new Bounds(-180.0, 180.0, -75.0, 75.0), srs);
+
         // Data sources
         map.RasterDataSources.Add("neBaseRaster", new NaturalEarthRasterDataSource(
             NaturalEarthRasterDataSet.CrossBlendedHypsometricTintsWithReliefWaterDrainsAndOceanBottom_Medium));
@@ -163,11 +166,8 @@ public class NaturalEarthDataSourceFixture : BaseFixture
         }));
 
         // Render and save
-        map.Render(canvasStack,
+        await map.Render(canvasStack,
             ratioMismatchStrategy: AspectRatioMismatchStrategy.CenterOnCanvas);
-
-        //canvasStack.SaveAllLayersToFile("WorldCountriesWithMasks");
-
         string filename = FileSystemHelpers.GetTempOutputFileName(
             canvasStack.DefaultFileExtension, "NaturalEarth_WorldMap");
         canvasStack.SaveToFile(filename);

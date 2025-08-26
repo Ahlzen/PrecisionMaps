@@ -60,7 +60,7 @@ public class Map : IHasSrs, IBounded
         RequestedBoundsWgs84 = boundsWgs84;                       
     }
 
-    public async void Render(CanvasStack stack,
+    public async Task Render(CanvasStack stack,
         AspectRatioMismatchStrategy ratioMismatchStrategy = AspectRatioMismatchStrategy.CenterOnCanvas)
     {
         ComputeActualBounds(stack, ratioMismatchStrategy);

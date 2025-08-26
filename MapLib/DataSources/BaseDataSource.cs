@@ -100,8 +100,8 @@ public abstract class BaseDataSource<TData>
     {
         // Create destination directory
         string destDirectory = subdirectory == null ?
-            FileSystemHelpers.DataCachePath :
-            Path.Combine(FileSystemHelpers.DataCachePath, subdirectory);
+            FileSystemHelpers.SourceCachePath :
+            Path.Combine(FileSystemHelpers.SourceCachePath, subdirectory);
         try 
         {
             Directory.CreateDirectory(destDirectory);

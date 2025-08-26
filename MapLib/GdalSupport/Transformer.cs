@@ -1,5 +1,6 @@
 ﻿using MapLib.Geometry;
 using OSGeo.OSR;
+using System.Diagnostics;
 
 namespace MapLib.GdalSupport;
 
@@ -28,31 +29,15 @@ public class Transformer : IDisposable
         // rather than e.g. lat/lon.
 
         SourceSrs = sourceWkt;
-        SourceSpatialRef = CreateSpatialReference(sourceWkt);
-        SourceSpatialRef.SetAxisMappingStrategy(AxisMappingStrategy.OAMS_TRADITIONAL_GIS_ORDER);
+        SourceSpatialRef = GdalUtils.CreateSpatialReference(sourceWkt);
+        
         DestSrs = destWkt;
-        DestSpatialRef = CreateSpatialReference(destWkt);
+        DestSpatialRef = GdalUtils.CreateSpatialReference(destWkt);
+
+        SourceSpatialRef.SetAxisMappingStrategy(AxisMappingStrategy.OAMS_TRADITIONAL_GIS_ORDER);
         DestSpatialRef.SetAxisMappingStrategy(AxisMappingStrategy.OAMS_TRADITIONAL_GIS_ORDER);
         _transform = new CoordinateTransformation(SourceSpatialRef, DestSpatialRef,
             new CoordinateTransformationOptions());
-    }
-
-    private SpatialReference CreateSpatialReference(string wkt)
-    {
-        // HACK: Apparently SpatialReference's constructor won't
-        // accept the shorthand SRS definitions directly, so
-        // we parse it out... :(
-        if (wkt.StartsWith("EPSG:"))
-        {
-            SpatialReference sr = new(null);
-            int epsgNumber = int.Parse(wkt.Substring(5));
-            sr.ImportFromEPSG(epsgNumber);
-            return sr;
-        }
-        else
-        {
-            return new SpatialReference(wkt);
-        }
     }
 
     public void Dispose()

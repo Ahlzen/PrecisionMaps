@@ -1,19 +1,15 @@
-﻿
-// Uncomment to generate more detailed raster data info
+﻿// Uncomment to generate more detailed raster data info
 #define VERBOSE
 
 using MapLib.Geometry;
 using MapLib.Util;
 using OSGeo.GDAL;
 using OSGeo.OSR;
-using System;
-using System.Data;
-using System.Diagnostics.Contracts;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
-using System.Runtime.CompilerServices;
+using System.IO;
 using System.Text;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace MapLib.GdalSupport;
 
@@ -378,6 +374,27 @@ public static class GdalUtils
         return srs;
     }
 
+    /// <param name="wkt">
+    /// Full Well-Known-Text or EPSG:x representation of the SRS.
+    /// </param>
+    public static SpatialReference CreateSpatialReference(string wkt)
+    {
+        // HACK: Apparently SpatialReference's constructor won't
+        // accept the shorthand SRS definitions directly, so
+        // we parse it out... :(
+        if (wkt.StartsWith("EPSG:"))
+        {
+            SpatialReference sr = new(null);
+            int epsgNumber = int.Parse(wkt.Substring(5));
+            sr.ImportFromEPSG(epsgNumber);
+            return sr;
+        }
+        else
+        {
+            return new SpatialReference(wkt);
+        }
+    }
+
     public static string GetSrsAsWkt(string filename)
     {
         using Dataset dataSet = OpenDataset(filename);
@@ -403,6 +420,19 @@ public static class GdalUtils
         }
     }
 
+    public static Bounds ToBounds(AreaOfUse area) => new Bounds(
+        area.west_lon_degree, area.east_lon_degree,
+        area.south_lat_degree, area.north_lat_degree);
+
+    public static string FormatAreaOfUse(AreaOfUse? area)
+    {
+        if (area == null)
+            return "Area of use: Unknown";
+        return string.Format("Area of use: x {0} to {1}, y {2} to {3}",
+            area.west_lon_degree, area.east_lon_degree,
+            area.south_lat_degree, area.north_lat_degree);
+    }
+
     #endregion
 
     #region Reprojection / Warping
@@ -413,27 +443,73 @@ public static class GdalUtils
     /// </summary>
     public static string Warp(string sourceFilename, string destSrs)
     {
+        // First, check if there's an existing matching warped file
+        string destFilePath = GetWarpDestFilePath(sourceFilename, destSrs);
+        if (File.Exists(destFilePath))
+            return destFilePath;
+        Directory.CreateDirectory(FileSystemHelpers.WarpCachePath);
+
         // Get source SRS
-        using Dataset sourceDataset = GdalUtils.OpenDataset(sourceFilename);
-        string sourceSrs = GdalUtils.GetSrsAsWkt(sourceDataset);
+        using Dataset sourceDataset = OpenDataset(sourceFilename);
+        string sourceSrs = GetSrsAsWkt(sourceDataset);
 
         // Warp
-        GDALWarpAppOptions appOptions = new GDALWarpAppOptions(new string[] {
-                "-s_srs", sourceSrs,
-                "-t_srs", destSrs,
-                "-r", "lanczos",
-                "-of", "gtiff",
-                "-srcnodata", "-9999",
-                "-dstnodata", "-9999",
-            });
-        string destFilename = FileSystemHelpers.GetTempOutputFileName(".tif", "warped");
-        using Dataset result = Gdal.Warp(destFilename,
+        string[] warpParams = [
+            "-s_srs", sourceSrs,
+            "-t_srs", destSrs,
+            "-r", "lanczos",
+            "-of", "gtiff",
+            "-srcnodata", "-9999",
+            "-dstnodata", "-9999",
+            "-multi",
+        ];
+        GDALWarpAppOptions appOptions = new(warpParams);
+        Debug.WriteLine("Warp params: " + string.Join(Environment.NewLine, warpParams));
+
+        using SpatialReference sourceSpatial = GetSpatialReference(sourceDataset);
+        AreaOfUse sourceArea = sourceSpatial.GetAreaOfUse();
+        Debug.WriteLine($"Source area: " + FormatAreaOfUse(sourceArea));
+
+        //string destFilename = FileSystemHelpers.GetTempOutputFileName(".tif", "warped");
+        using Dataset result = Gdal.Warp(destFilePath,
             new Dataset[] { sourceDataset },
             appOptions,
             callback: null,
             callback_data: null);
 
-        return destFilename;
+        using SpatialReference destSpatial = GetSpatialReference(result);
+        AreaOfUse destArea = destSpatial.GetAreaOfUse();
+        Debug.WriteLine($"Dest area: " + FormatAreaOfUse(destArea));
+
+        return destFilePath;
+    }
+
+    private static string GetWarpDestFilePath(string sourceFilename, string destSrs)
+    {
+        // NOTE: We calculate checksums, not based on file contents, but
+        // based on file metadata (path, last modified, and destination SRS).
+        // Those checksums will determine whether we need to re-warp the file.
+        string baseFilename = Path.GetFileNameWithoutExtension(sourceFilename);
+        string sourcePathHash = GetShortChecksum(Path.GetFullPath(sourceFilename));
+        string srsHash = GetShortChecksum(destSrs);
+        string timestamp = File.GetLastWriteTime(sourceFilename).ToString("s").Replace(':', '_');
+        string destFilePath = Path.Combine(
+            FileSystemHelpers.WarpCachePath,
+            $"{baseFilename}_{sourcePathHash}_{srsHash}_{timestamp}.tif");
+        return destFilePath;
+    }
+
+    private static string GetShortChecksum(string input)
+    {
+        // Based on: https://stackoverflow.com/questions/9837732/calculate-a-checksum-for-a-string
+        string hash;
+        using (System.Security.Cryptography.MD5 md5 = System.Security.Cryptography.MD5.Create())
+        {
+            hash = BitConverter.ToString(
+              md5.ComputeHash(Encoding.UTF8.GetBytes(input))
+            ).Replace("-", "");
+        }
+        return hash.Substring(0, 8);
     }
 
     /// <summary>

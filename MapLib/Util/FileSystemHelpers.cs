@@ -11,13 +11,17 @@ public static class FileSystemHelpers
     public static string OutputTempPath =>
         Path.Combine(RootTempPath, OutputFolder);
 
-    public static string DataCacheFolder => "Cache";
-    public static string DataCachePath =>
-        Path.Combine(RootTempPath, DataCacheFolder);
+    public static string SourceCacheFolder => "Source_Cache";
+    public static string SourceCachePath =>
+        Path.Combine(RootTempPath, SourceCacheFolder);
 
     public static string TestDataFolder => "TestData";
     public static string TestDataPath =>
         Path.Combine(RootTempPath, TestDataFolder);
+
+    public static string WarpCacheFolder => "Warp_Cache";
+    public static string WarpCachePath =>
+        Path.Combine(RootTempPath, WarpCacheFolder);
 
 
     public static string GetTempOutputFileName(
