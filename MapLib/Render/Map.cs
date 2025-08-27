@@ -505,32 +505,8 @@ public class Map : IHasSrs, IBounded
         return data;
     }
 
-    //[Obsolete]
-    //private async Task RenderRasterLayer(CanvasStack canvas, RasterMapLayer rasterLayer)
-    //{
-    //    BaseRasterDataSource? dataSource =
-    //        RasterDataSources.GetValueOrDefault(rasterLayer.DataSourceName);
-    //    if (dataSource == null)
-    //        throw new InvalidOperationException(
-    //            $"Raster layer data source not found: \"{rasterLayer.DataSourceName}\"");
-
-    //    RasterData data = await dataSource.GetData(Srs);
-    //    DrawRaster(canvas, rasterLayer, data);
-    //}
-
     private void DrawRaster(Canvas canvas, RasterStyle style, RasterData data)
     {
-        //Canvas layer = canvas.AddNewLayer(mapLayer.Name);
-
-        Console.WriteLine("Map SRS: " + Srs);
-        Console.WriteLine("Raster SRS: " + data.Srs);
-
-        Console.WriteLine("Map bounds LL: " + this.BoundsToSrs(KnownSrs.EpsgWgs84));
-        Console.WriteLine("Raster bounds LL: " + data.BoundsToSrs(KnownSrs.EpsgWgs84));
-
-        Console.WriteLine("Map bounds: " + Bounds);
-        Console.WriteLine("Raster bounds: " + data.BoundsToSrs(this.Srs));
-
         if (data is SingleBandRasterData)
         {
             throw new InvalidOperationException(

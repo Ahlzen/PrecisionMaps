@@ -146,11 +146,11 @@ public class NaturalEarthDataSourceFixture : BaseFixture
         map.MapLayers.Add(new RasterMapLayer("neBaseRaster", "neBaseRaster", new RasterStyle()));
         map.MapLayers.Add(new VectorMapLayer("graticule", "graticule", new VectorStyle {
             LineColor = Color.Navy,
-            LineWidth = 0.1,
+            LineWidth = 0.06,
             MaskedBy = { "labelsMask" }
         }));
         map.MapLayers.Add(new VectorMapLayer("borders", "countries", new VectorStyle {
-            LineColor = Color.Silver,
+            LineColor = Color.FromArgb(60, Color.Black),
             LineWidth = 0.1,
             MaskedBy = { "labelsMask" }
         }));
