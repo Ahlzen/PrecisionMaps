@@ -41,7 +41,7 @@ public class Map : IHasSrs, IBounded
     /// If data sources are in a different projection, they
     /// are reprojected on-the-fly.
     /// </remarks>
-    public string Srs { get; set; }
+    public Srs Srs { get; set; }
 
     public OrderedDictionary<string, BaseVectorDataSource> VectorDataSources { get; } = new();
     public OrderedDictionary<string, BaseRasterDataSource> RasterDataSources { get; } = new();
@@ -54,7 +54,7 @@ public class Map : IHasSrs, IBounded
     private double _offsetX, _offsetY;
 
 
-    public Map(Bounds boundsWgs84, string mapSrs)
+    public Map(Bounds boundsWgs84, Srs mapSrs)
     {
         Srs = mapSrs;
         RequestedBoundsWgs84 = boundsWgs84;                       
@@ -112,8 +112,8 @@ public class Map : IHasSrs, IBounded
         CanvasStack canvas,
         AspectRatioMismatchStrategy strategy)
     {
-        Transformer wgs84ToMapSrs = new(KnownSrs.EpsgWgs84, this.Srs);
-        Transformer mapSrsToWgs84 = new(this.Srs, KnownSrs.EpsgWgs84);
+        Transformer wgs84ToMapSrs = new(Srs.Wgs84, this.Srs);
+        Transformer mapSrsToWgs84 = new(this.Srs, Srs.Wgs84);
 
         Debug.WriteLine("Requested bounds (WGS84): " + RequestedBoundsWgs84);
 
@@ -242,7 +242,7 @@ public class Map : IHasSrs, IBounded
                 $"Vector layer data source not found: \"{vectorLayer.DataSourceName}\"");
 
         using Transformer wgs84ToSourceTransformer = new(
-            KnownSrs.EpsgWgs84, dataSource.Srs);
+            Srs.Wgs84, dataSource.Srs);
         using Transformer sourceToMapTransformer = new(
             dataSource.Srs, Srs);
         Bounds dataSourceBounds = wgs84ToSourceTransformer.Transform(RequestedBoundsWgs84);

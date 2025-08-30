@@ -56,7 +56,7 @@ public class NaturalEarthDataSourceFixture : BaseFixture
                 SymbolColor = Color.Red,
                 SymbolSize = 0.5, // mm
             }));
-            map.Render(stack, AspectRatioMismatchStrategy.CenterOnCanvas);
+            await map.Render(stack, AspectRatioMismatchStrategy.CenterOnCanvas);
             SaveTempBitmap(stack.GetBitmap(), "NaturalEarth_" + dataSetName, ".png");
         }
     }
@@ -95,7 +95,7 @@ public class NaturalEarthDataSourceFixture : BaseFixture
             Map map = new(data.Bounds, data.Srs);
             map.RasterDataSources.Add(dataSetName, dataSource);
             map.MapLayers.Add(new RasterMapLayer(dataSetName, dataSetName, new RasterStyle()));
-            map.Render(stack, AspectRatioMismatchStrategy.CenterOnCanvas);
+            await map.Render(stack, AspectRatioMismatchStrategy.CenterOnCanvas);
             SaveTempBitmap(stack.GetBitmap(), "NaturalEarth_" + dataSetName, ".png");
         }
     }
@@ -112,15 +112,15 @@ public class NaturalEarthDataSourceFixture : BaseFixture
         yield return new BitmapCanvasStack(CanvasUnit.Mm, 420.0, 297.0, bgColor, 4.0);
         yield return new SvgCanvasStack(CanvasUnit.Mm, 420.0, 297.0, bgColor);
     }
-    public static IEnumerable<string> WorldMapProjections()
+    public static IEnumerable<Srs> WorldMapProjections()
     {
-        yield return KnownSrs.WktRobinson;
-        yield return KnownSrs.WktVanDerGrinten;
-        yield return KnownSrs.EpsgWebMercator;
+        yield return Srs.Robinson;
+        yield return Srs.VanDerGrinten;
+        yield return Srs.WebMercator;
     }
     public static IEnumerable NaturalEarthWorldMapParams()
     {
-        foreach (string srs in WorldMapProjections())
+        foreach (Srs srs in WorldMapProjections())
             foreach (CanvasStack stack in A3CanvasStacks())
                 yield return new object[] { stack, srs };
     }
@@ -130,7 +130,7 @@ public class NaturalEarthDataSourceFixture : BaseFixture
     [TestCaseSource(nameof(NaturalEarthWorldMapParams))]
     public async Task RenderNaturalEarthWorldMap(
         CanvasStack canvasStack,
-        string srs)
+        Srs srs)
     {
         Map map = new Map(new Bounds(-180.0, 180.0, -75.0, 75.0), srs);
 

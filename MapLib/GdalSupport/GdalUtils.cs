@@ -19,15 +19,26 @@ namespace MapLib.GdalSupport;
 /// </remarks>
 public static class GdalUtils
 {
+    private static bool _isInitialized = false;
+    private static object _initializationLock = new();
+
     static GdalUtils()
     {
-        Initialize();
+        EnsureInitialized();
     }
 
-    public static void Initialize()
+    public static void EnsureInitialized()
     {
-        GdalConfiguration.ConfigureGdal();
-        GdalConfiguration.ConfigureOgr();
+        if (_isInitialized)
+            return;
+        lock (_initializationLock)
+        {
+            if (_isInitialized)
+                return;
+            GdalConfiguration.ConfigureGdal();
+            GdalConfiguration.ConfigureOgr();
+            _isInitialized = true;
+        }
     }
 
     /// <summary>
@@ -71,7 +82,7 @@ public static class GdalUtils
     public static Dataset CreateInMemoryDataset(
         float[] data, int width, int height,
         double[] geoTransform,
-        string srsWkt,
+        Srs srs,
         float? noDataValue)
     {
         // Get the MEM driver
@@ -85,7 +96,7 @@ public static class GdalUtils
         if (dataset == null)
             throw new Exception("Failed to create in-memory dataset.");
         dataset.SetGeoTransform(geoTransform);
-        dataset.SetProjection(srsWkt);
+        dataset.SetProjection(srs.GetWkt());
 
         // Create raster band
         Band band = dataset.GetRasterBand(1);
@@ -108,7 +119,7 @@ public static class GdalUtils
         byte[] r, byte[] g, byte[] b, byte[]? a,
         int width, int height,
         double[] geoTransform,
-        string srsWkt)
+        Srs srs)
     {
         // Get the MEM driver
         Driver memDriver = Gdal.GetDriverByName("MEM");
@@ -122,7 +133,7 @@ public static class GdalUtils
         if (dataset == null)
             throw new Exception("Failed to create in-memory dataset.");
         dataset.SetGeoTransform(geoTransform);
-        dataset.SetProjection(srsWkt);
+        dataset.SetProjection(srs.GetWkt());
 
         // Create and fill raster bands
         Band rBand = dataset.GetRasterBand(1);
@@ -363,85 +374,13 @@ public static class GdalUtils
 
 #endregion
     
-    #region Spatial Reference Systems
-
-    public static SpatialReference GetSpatialReference(Dataset rasterDataSet)
-    {
-        // TODO: add error handling
-        string wkt = rasterDataSet.GetProjectionRef();
-        SpatialReference srs = new SpatialReference(null);
-        srs.ImportFromWkt(ref wkt);
-        return srs;
-    }
-
-    /// <param name="wkt">
-    /// Full Well-Known-Text or EPSG:x representation of the SRS.
-    /// </param>
-    public static SpatialReference CreateSpatialReference(string wkt)
-    {
-        // HACK: Apparently SpatialReference's constructor won't
-        // accept the shorthand SRS definitions directly, so
-        // we parse it out... :(
-        if (wkt.StartsWith("EPSG:"))
-        {
-            SpatialReference sr = new(null);
-            int epsgNumber = int.Parse(wkt.Substring(5));
-            sr.ImportFromEPSG(epsgNumber);
-            return sr;
-        }
-        else
-        {
-            return new SpatialReference(wkt);
-        }
-    }
-
-    public static string GetSrsAsWkt(string filename)
-    {
-        using Dataset dataSet = OpenDataset(filename);
-        return GetSrsAsWkt(dataSet);
-    }
-    public static string GetSrsAsWkt(Dataset rasterDataset)
-    {
-        string projection = rasterDataset.GetProjectionRef();
-        if (projection == null)
-            throw new ApplicationException(
-                "Could not determine projection from GDAL Dataset.");
-
-        SpatialReference srs = new SpatialReference(null);
-        if (srs.ImportFromWkt(ref projection) == 0)
-        {
-            string wkt;
-            srs.ExportToPrettyWkt(out wkt, 0);
-            return wkt;
-        }
-        else
-        {
-            return projection;
-        }
-    }
-
-    public static Bounds ToBounds(AreaOfUse area) => new Bounds(
-        area.west_lon_degree, area.east_lon_degree,
-        area.south_lat_degree, area.north_lat_degree);
-
-    public static string FormatAreaOfUse(AreaOfUse? area)
-    {
-        if (area == null)
-            return "Area of use: Unknown";
-        return string.Format("Area of use: x {0} to {1}, y {2} to {3}",
-            area.west_lon_degree, area.east_lon_degree,
-            area.south_lat_degree, area.north_lat_degree);
-    }
-
-    #endregion
-
     #region Reprojection / Warping
 
     /// <summary>
     /// Reprojects (warps) the source file, saves and returns
     /// the resulting file path.
     /// </summary>
-    public static string Warp(string sourceFilename, string destSrs)
+    public static string Warp(string sourceFilename, Srs destSrs)
     {
         // First, check if there's an existing matching warped file
         string destFilePath = GetWarpDestFilePath(sourceFilename, destSrs);
@@ -451,12 +390,12 @@ public static class GdalUtils
 
         // Get source SRS
         using Dataset sourceDataset = OpenDataset(sourceFilename);
-        string sourceSrs = GetSrsAsWkt(sourceDataset);
+        using Srs sourceSrs = Srs.FromDataset(sourceDataset);
 
         // Warp
         string[] warpParams = [
-            "-s_srs", sourceSrs,
-            "-t_srs", destSrs,
+            "-s_srs", sourceSrs.GetWkt(),
+            "-t_srs", destSrs.GetWkt(),
             "-r", "lanczos",
             "-of", "gtiff",
             "-srcnodata", "-9999",
@@ -465,33 +404,28 @@ public static class GdalUtils
         ];
         GDALWarpAppOptions appOptions = new(warpParams);
         Debug.WriteLine("Warp params: " + string.Join(Environment.NewLine, warpParams));
+        Debug.WriteLine($"Source area: " + sourceSrs.BoundsLatLon);
 
-        using SpatialReference sourceSpatial = GetSpatialReference(sourceDataset);
-        AreaOfUse sourceArea = sourceSpatial.GetAreaOfUse();
-        Debug.WriteLine($"Source area: " + FormatAreaOfUse(sourceArea));
-
-        //string destFilename = FileSystemHelpers.GetTempOutputFileName(".tif", "warped");
         using Dataset result = Gdal.Warp(destFilePath,
-            new Dataset[] { sourceDataset },
+            [sourceDataset],
             appOptions,
             callback: null,
             callback_data: null);
 
-        using SpatialReference destSpatial = GetSpatialReference(result);
-        AreaOfUse destArea = destSpatial.GetAreaOfUse();
-        Debug.WriteLine($"Dest area: " + FormatAreaOfUse(destArea));
+        using Srs resultSrs = Srs.FromDataset(result);
+        Debug.WriteLine($"Result area: " + resultSrs.BoundsLatLon);
 
         return destFilePath;
     }
 
-    private static string GetWarpDestFilePath(string sourceFilename, string destSrs)
+    private static string GetWarpDestFilePath(string sourceFilename, Srs destSrs)
     {
         // NOTE: We calculate checksums, not based on file contents, but
         // based on file metadata (path, last modified, and destination SRS).
         // Those checksums will determine whether we need to re-warp the file.
         string baseFilename = Path.GetFileNameWithoutExtension(sourceFilename);
-        string sourcePathHash = GetShortChecksum(Path.GetFullPath(sourceFilename));
-        string srsHash = GetShortChecksum(destSrs);
+        string sourcePathHash = GetShortHash(Path.GetFullPath(sourceFilename));
+        string srsHash = GetSrsSummary(destSrs);
         string timestamp = File.GetLastWriteTime(sourceFilename).ToString("s").Replace(':', '_');
         string destFilePath = Path.Combine(
             FileSystemHelpers.WarpCachePath,
@@ -499,7 +433,17 @@ public static class GdalUtils
         return destFilePath;
     }
 
-    private static string GetShortChecksum(string input)
+    private static string GetSrsSummary(Srs srs)
+    {
+        // If we know the EPSG code, use that
+        if (srs.Epsg != null)
+            return "EPSG" + srs.Epsg.Value;
+
+        // otherwise use a hash of the WKT
+        return GetShortHash(srs.GetWkt());
+    }
+
+    private static string GetShortHash(string input)
     {
         // Based on: https://stackoverflow.com/questions/9837732/calculate-a-checksum-for-a-string
         string hash;
@@ -519,11 +463,12 @@ public static class GdalUtils
     /// Does not support NODATA (transparency) in result. Use other overloads
     /// for that.
     /// </remarks>
-    public static Dataset Warp(Dataset sourceDataset, string destSrs)
+    public static Dataset Warp(Dataset sourceDataset, Srs destSrs)
     {
-        string sourceSrs = GdalUtils.GetSrsAsWkt(sourceDataset);
+        string sourceWkt = Srs.FromDataset(sourceDataset).GetWkt();
+        string destWkt = destSrs.GetWkt();
         using Dataset destDataset = Gdal.AutoCreateWarpedVRT(sourceDataset,
-            sourceSrs, destSrs, ResampleAlg.GRA_Lanczos,
+            sourceWkt, destWkt, ResampleAlg.GRA_Lanczos,
             maxerror: 0 // use exact calculations
             );
         return destDataset;

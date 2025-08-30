@@ -1,4 +1,5 @@
-﻿using MapLib.Geometry;
+﻿using MapLib.GdalSupport;
+using MapLib.Geometry;
 using System.IO;
 using System.Text.Json;
 
@@ -34,7 +35,7 @@ public class GeoJsonDataReader : IVectorFormatReader
         }
 
         // With a few rare exceptions, GeoJSON is plain lon/lat WGS84:
-        return builder.ToVectorData("EPSG:4326");
+        return builder.ToVectorData(Srs.Wgs84);
     }
 
     private void ParseFeatureCollection(JsonElement parent, VectorDataBuilder builder)

@@ -1,4 +1,5 @@
 ﻿using System.Threading.Tasks;
+using MapLib.GdalSupport;
 using MapLib.Geometry;
 
 namespace MapLib.DataSources.Vector;
@@ -6,7 +7,7 @@ namespace MapLib.DataSources.Vector;
 public class GraticuleDataSource : BaseVectorDataSource
 {
     public override string Name => "Graticule";
-    public override string Srs => "EPSG:4326"; // WGS84 lon/lat
+    public override Srs Srs => Srs.Wgs84; // plain lon/lat
 
     public override bool IsBounded => false;
 

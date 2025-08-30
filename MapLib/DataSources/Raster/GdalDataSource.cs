@@ -12,8 +12,8 @@ public class GdalDataSource : BaseRasterDataSource
 
     public List<string> Filenames { get; }
 
-    private string _srs;
-    public override string Srs => _srs;
+    private Srs _srs;
+    public override Srs Srs => _srs;
 
     private Bounds? _bounds;
     public override Bounds? Bounds => _bounds;
@@ -75,7 +75,7 @@ public class GdalDataSource : BaseRasterDataSource
     [MemberNotNull(nameof(_bounds))]
     private void InitPropertiesFromDataset(Dataset dataset, double scaleFactor = 1)
     {
-        _srs = GdalUtils.GetSrsAsWkt(dataset);
+        _srs = Srs.FromDataset(dataset);
         _bounds = GdalUtils.GetBounds(dataset);
 
         SourceWidthPx = dataset.RasterXSize;
@@ -84,7 +84,7 @@ public class GdalDataSource : BaseRasterDataSource
         BitmapHeightPx = (int)Math.Round(dataset.RasterYSize * scaleFactor);
     }
 
-    public override Task<RasterData> GetData(string? destSrs = null)
+    public override Task<RasterData> GetData(Srs? destSrs = null)
     {
         List<string> filenames = new(Filenames);
 
@@ -113,7 +113,7 @@ public class GdalDataSource : BaseRasterDataSource
     public override Task<RasterData> GetData(Bounds boundsWgs84)
         => GetData(null);
 
-    public override Task<RasterData> GetData(Bounds boundsWgs84, string? destSrs = null)
+    public override Task<RasterData> GetData(Bounds boundsWgs84, Srs? destSrs = null)
         => GetData(destSrs);
 
     private RasterData GetRasterData(Dataset dataset)
@@ -133,7 +133,7 @@ public class GdalDataSource : BaseRasterDataSource
                 new Coord(0, 0))),
             new Coord(GdalUtils.PixelToGeo(affineGeoTransform,
                 new Coord(SourceWidthPx - 1, SourceHeightPx - 1)))]);
-        string srs = GdalUtils.GetSrsAsWkt(dataset);
+        Srs srs = Srs.FromDataset(dataset);
 
         // Get raster band configuration
         int rasterCount = dataset.RasterCount;

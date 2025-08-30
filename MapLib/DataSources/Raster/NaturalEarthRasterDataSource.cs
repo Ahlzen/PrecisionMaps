@@ -77,7 +77,7 @@ public class NaturalEarthRasterDataSource(NaturalEarthRasterDataSet dataSet)
     : BaseRasterDataSource
 {
     public override string Name => "Natural Earth Raster Data";
-    public override string Srs => KnownSrs.EpsgWgs84;
+    public override Srs Srs => Srs.Wgs84;
 
     private string Subdirectory => "NaturalEarth_Raster";
 
@@ -92,7 +92,7 @@ public class NaturalEarthRasterDataSource(NaturalEarthRasterDataSet dataSet)
         return await source.GetData();
     }
 
-    public override async Task<RasterData> GetData(string destSrs)
+    public override async Task<RasterData> GetData(Srs destSrs)
     {
         GdalDataSource source = await GetDataSource();
         return await source.GetData(destSrs);
@@ -104,7 +104,7 @@ public class NaturalEarthRasterDataSource(NaturalEarthRasterDataSet dataSet)
         return await source.GetData(boundsWgs84);
     }
 
-    public override async Task<RasterData> GetData(Bounds boundsWgs84, string destSrs)
+    public override async Task<RasterData> GetData(Bounds boundsWgs84, Srs destSrs)
     {
         GdalDataSource source = await GetDataSource();
         return await source.GetData(boundsWgs84, destSrs);

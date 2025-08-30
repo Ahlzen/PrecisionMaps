@@ -14,7 +14,7 @@ public abstract class RasterData : GeoData
     public int WidthPx { get; }
     public int HeightPx { get; }
 
-    public RasterData(string srs, Bounds bounds, int widthPx, int heightPx) : base(srs)
+    public RasterData(Srs srs, Bounds bounds, int widthPx, int heightPx) : base(srs)
     {
         Bounds = bounds;
         WidthPx = widthPx;
@@ -42,7 +42,7 @@ public class SingleBandRasterData : RasterData
     /// </summary>
     public float? NoDataValue { get; }
 
-    public SingleBandRasterData(string srs, Bounds bounds, int widthPx, int heightPx,
+    public SingleBandRasterData(Srs srs, Bounds bounds, int widthPx, int heightPx,
         float[] singleBandData, float? noDataValue)
     : base(srs, bounds, widthPx, heightPx)
     {
@@ -87,7 +87,7 @@ public class ImageRasterData : RasterData
     /// </summary>
     public byte[] ImageData { get; }
 
-    public ImageRasterData(string srs, Bounds bounds, int widthPx, int heightPx, byte[] imageData)
+    public ImageRasterData(Srs srs, Bounds bounds, int widthPx, int heightPx, byte[] imageData)
         : base(srs, bounds, widthPx, heightPx)
     {
         ImageData = imageData;

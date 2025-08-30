@@ -25,7 +25,7 @@ public class PointInPolygonFixture : BaseFixture
     public async Task VisualizePointsInPolygons()
     {
         const double pointSize = 0.8;
-        const string srs = KnownSrs.EpsgWebMercator;
+        Srs srs = Srs.WebMercator;
         TagList tags = [];
 
         // Get data
@@ -65,7 +65,7 @@ public class PointInPolygonFixture : BaseFixture
                 Symbol = SymbolType.Circle,
                 SymbolColor = Color.Green
             }));
-        map.Render(canvas,
+        await map.Render(canvas,
             ratioMismatchStrategy: AspectRatioMismatchStrategy.CenterOnCanvas);
         string filename = FileSystemHelpers.GetTempOutputFileName(
             canvas.DefaultFileExtension, "PointsInPolygons");

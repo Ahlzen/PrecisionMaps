@@ -12,7 +12,7 @@ namespace MapLib.DataSources.Vector;
 public class VectorFileDataSource : BaseVectorDataSource
 {
     public override string Name => "Vector file";
-    public override string Srs { get; }
+    public override Srs Srs { get; }
     public override Bounds? Bounds { get; }
     public string Filename { get; }
 
@@ -28,16 +28,16 @@ public class VectorFileDataSource : BaseVectorDataSource
         {
             case ".osm":
                 _reader = new OsmDataReader();
-                Srs = KnownSrs.EpsgWgs84;
+                Srs = Srs.Wgs84;
                 break;
             case ".geojson":
                 _reader = new GeoJsonDataReader();
-                Srs = KnownSrs.EpsgWgs84;
+                Srs = Srs.Wgs84;
                 break;
             default: // try OGR
                 {
                     using Dataset dataset = OgrUtils.GetVectorDataset(filename);
-                    Srs = OgrUtils.GetSrsAsWkt(dataset);
+                    Srs = Srs.FromDataset(dataset);
                     // TODO:
                     //Bounds = OgrUtils.GetDatasetBounds(dataset);
                     _reader = new OgrDataReader();

@@ -24,11 +24,11 @@ public class MapRenderFixture : BaseFixture
     [Test]
     [Explicit]
     [TestCaseSource(nameof(LetterSizeCanvases))]
-    public void RenderSimpleOsmData(CanvasStack canvas)
+    public async Task RenderSimpleOsmData(CanvasStack canvas)
     {
         Map map = new Map(
             new Bounds(-70.944, -70.915, 42.187, 42.207),
-            KnownSrs.EpsgWebMercator);
+            Srs.WebMercator);
 
         map.VectorDataSources.Add("osmdata",
             new VectorFileDataSource(Path.Join(TestDataPath, "osm-xml/Weymouth Detail.osm")));
@@ -52,7 +52,7 @@ public class MapRenderFixture : BaseFixture
                     FillColor = Color.Tan },
                 filter: new TagFilter("building")));
 
-        map.Render(canvas);
+        await map.Render(canvas);
         string filename = FileSystemHelpers.GetTempOutputFileName(
             canvas.DefaultFileExtension, "RenderSimpleOsmData_");
         canvas.SaveToFile(filename);
@@ -63,11 +63,11 @@ public class MapRenderFixture : BaseFixture
     [Test]
     [Explicit]
     [TestCaseSource("LetterSizeCanvases")]
-    public void RenderSimpleOsmDataAndRaster(CanvasStack canvas)
+    public async Task RenderSimpleOsmDataAndRaster(CanvasStack canvas)
     {
         Map map = new Map(
             new Bounds(-70.944, -70.915, 42.187, 42.207),
-            KnownSrs.EpsgWebMercator);
+            Srs.WebMercator);
 
         map.VectorDataSources.Add("osmdata",
             new VectorFileDataSource(Path.Join(TestDataPath, "osm-xml/Weymouth Detail.osm")));
@@ -123,7 +123,7 @@ public class MapRenderFixture : BaseFixture
                 style: new VectorStyle { FillColor = Color.Tan },
                 filter: new TagFilter("building"))); 
 
-        map.Render(canvas);
+        await map.Render(canvas);
         string filename = FileSystemHelpers.GetTempOutputFileName(
             canvas.DefaultFileExtension, "RenderSimpleOsmDataAndRaster_");
         canvas.SaveToFile(filename);
@@ -172,7 +172,7 @@ public class MapRenderFixture : BaseFixture
         await GdalContourGenerator.GenerateContours(source, 1,
             100, 0, contourTempPath, MassachusettsBounds);
 
-        Map map = new Map(MassachusettsBounds, KnownSrs.EpsgWebMercator);
+        Map map = new Map(MassachusettsBounds, Srs.WebMercator);
 
         map.RasterDataSources.Add("hillshadeComposite",
             new ExistingRasterDataSource(compositeSteppedHypso));
@@ -185,7 +185,7 @@ public class MapRenderFixture : BaseFixture
                 LineColor = Color.FromArgb(120, 0, 0, 0),
                 LineWidth = 0.003f}));
 
-        map.Render(canvas);
+        await map.Render(canvas);
         string filename = FileSystemHelpers.GetTempOutputFileName(
             canvas.DefaultFileExtension, "MassachusettsTopo");
         canvas.SaveToFile(filename);

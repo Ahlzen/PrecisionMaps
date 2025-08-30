@@ -1,13 +1,14 @@
-﻿using MapLib.Geometry;
+﻿using MapLib.GdalSupport;
+using MapLib.Geometry;
 
 namespace MapLib;
 
 public interface IHasSrs
 {
     /// <summary>
-    /// Spatial Reference System of this data set, in WKT format.
+    /// Spatial Reference System of this data set.
     /// </summary>
-    public string Srs { get; }
+    public Srs Srs { get; }
 }
 
 public interface IBounded : IHasSrs
@@ -29,12 +30,10 @@ public abstract class GeoData : IHasSrs, IBounded
 
     /// <summary>
     /// Spatial Reference System / Coordinate Reference System
-    /// (can be shorthand accepted by PROJ/GDAL/OGR like "WGS84" or "EPSG:4326",
-    /// or a full OGS WKT definition)
     /// </summary>
-    public string Srs { get; }
+    public Srs Srs { get; }
 
-    protected GeoData(string srs)
+    protected GeoData(Srs srs)
     {
         Srs = srs;
     }

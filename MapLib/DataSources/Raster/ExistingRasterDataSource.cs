@@ -10,7 +10,7 @@ internal class ExistingRasterDataSource : BaseRasterDataSource
 {
     public override string Name => "Existing Raster Data";
 
-    public override string Srs => RasterData.Srs;
+    public override Srs Srs => RasterData.Srs;
     public override Bounds? Bounds => RasterData.Bounds;
     public override bool IsBounded => true;
     public int WidthPx => RasterData.WidthPx;
@@ -26,7 +26,7 @@ internal class ExistingRasterDataSource : BaseRasterDataSource
     public override Task<RasterData> GetData()
         => Task.FromResult(RasterData);
 
-    public override Task<RasterData> GetData(string destSrs)
+    public override Task<RasterData> GetData(Srs destSrs)
     {
         if (Srs == destSrs)
         {
@@ -55,6 +55,6 @@ internal class ExistingRasterDataSource : BaseRasterDataSource
     public override Task<RasterData> GetData(Bounds boundsWgs84)
         => GetData(); // for now, no reprojection or cropping
 
-    public override Task<RasterData> GetData(Bounds boundsWgs84, string destSrs)
+    public override Task<RasterData> GetData(Bounds boundsWgs84, Srs destSrs)
         => GetData(destSrs); // for now, no reprojection or cropping
 }

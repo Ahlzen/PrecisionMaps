@@ -1,4 +1,5 @@
 ﻿using MapLib.FileFormats.Vector;
+using MapLib.GdalSupport;
 using MapLib.Geometry;
 using MapLib.Util;
 using System.Threading.Tasks;
@@ -9,7 +10,7 @@ public class OsmDataSource : BaseVectorDataSource
 {
     public override string Name => "OpenStreetMap";
 
-    public override string Srs => "EPSG:4326"; // WGS84 lon/lat
+    public override Srs Srs => Srs.Wgs84; // WGS84 lon/lat
 
     public override bool IsBounded => false;
 

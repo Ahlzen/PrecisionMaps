@@ -23,14 +23,13 @@ public class WorldMapFixture : BaseFixture
     [Test]
     [Explicit]
     [TestCaseSource(nameof(A3CanvasStacks))]
-    public void RenderWorldCountriesMap(CanvasStack canvasStack)
+    public async Task RenderWorldCountriesMap(CanvasStack canvasStack)
     {
-        // Try something different: Van Der Grinten projection
-        // (not uncommon for world maps)
-        string srs = KnownSrs.WktVanDerGrinten;
         Map map = new Map(
             new Bounds(-180.0, 180.0, -80.0, 80.0),
-            srs);
+            // Try something different: Van Der Grinten projection
+            // (not uncommon for world maps)
+            Srs.VanDerGrinten);
 
         // Add data
         map.VectorDataSources.Add("land",
@@ -70,7 +69,7 @@ public class WorldMapFixture : BaseFixture
             }));;
 
         // Render and save
-        map.Render(canvasStack,
+        await map.Render(canvasStack,
             ratioMismatchStrategy: AspectRatioMismatchStrategy.CenterOnCanvas);
         string filename = FileSystemHelpers.GetTempOutputFileName(
             canvasStack.DefaultFileExtension, "WorldCountries");
@@ -80,14 +79,13 @@ public class WorldMapFixture : BaseFixture
     [Test]
     [Explicit]
     [TestCaseSource(nameof(A3CanvasStacks))]
-    public void RenderWorldCountriesMap_WithMasks(CanvasStack canvasStack)
+    public async Task RenderWorldCountriesMap_WithMasks(CanvasStack canvasStack)
     {
-        // Try something different: Van Der Grinten projection
-        // (not uncommon for world maps)
-        string srs = KnownSrs.WktVanDerGrinten;
         Map map = new Map(
             new Bounds(-180.0, 180.0, -80.0, 80.0),
-            srs);
+            // Try something different: Van Der Grinten projection
+            // (not uncommon for world maps)
+            Srs.VanDerGrinten);
 
         // Add data
         map.VectorDataSources.Add("land",
@@ -137,7 +135,7 @@ public class WorldMapFixture : BaseFixture
             }));
 
         // Render and save
-        map.Render(canvasStack,
+        await map.Render(canvasStack,
             ratioMismatchStrategy: AspectRatioMismatchStrategy.CenterOnCanvas);
 
         canvasStack.SaveAllLayersToFile("WorldCountriesWithMasks");

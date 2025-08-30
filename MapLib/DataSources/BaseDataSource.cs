@@ -7,11 +7,11 @@ using System.Threading.Tasks;
 
 namespace MapLib.DataSources;
 
-public abstract class BaseDataSource<TData>
+public abstract class BaseDataSource<TData> : IHasSrs
 {
     public abstract string Name { get; }
-
-    public abstract string Srs { get; }
+    
+    public abstract Srs Srs { get; }
 
     /// <summary>
     /// Bounds of full data set. In source (dataset) SRS. If known/applicable.
@@ -51,7 +51,7 @@ public abstract class BaseDataSource<TData>
     /// See GetData(). Returns data in the specified SRS,
     /// reprojecting/warping if needed.
     /// </summary>
-    public abstract Task<TData> GetData(string destSrs);
+    public abstract Task<TData> GetData(Srs destSrs);
 
     /// <summary>
     /// Return data for (at least) the specified bounds from
@@ -68,8 +68,7 @@ public abstract class BaseDataSource<TData>
     /// See GetData(). Returns data in the specified SRS,
     /// reprojecting/warping if needed.
     /// </summary>
-    public abstract Task<TData> GetData(Bounds boundsWgs84, string destSrs);
-
+    public abstract Task<TData> GetData(Bounds boundsWgs84, Srs destSrs);
 
     #region Data file caching
 
@@ -163,13 +162,13 @@ public abstract class BaseDataSource<TData>
 
 public abstract class BaseVectorDataSource : BaseDataSource<VectorData>
 {
-    public override async Task<VectorData> GetData(string destSrs)
+    public override async Task<VectorData> GetData(Srs destSrs)
         => Reproject(GetData().Result, destSrs);
 
-    public override async Task<VectorData> GetData(Bounds boundsWgs84, string destSrs)
+    public override async Task<VectorData> GetData(Bounds boundsWgs84, Srs destSrs)
         => Reproject(GetData(boundsWgs84).Result, destSrs);
 
-    public VectorData Reproject(VectorData data, string destSrs)
+    public VectorData Reproject(VectorData data, Srs destSrs)
     {
         Transformer transformer = new(this.Srs, destSrs);
         return data.Transform(transformer);

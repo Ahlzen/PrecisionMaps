@@ -17,9 +17,9 @@ namespace MapLib.Tests.Render;
 [TestFixture]
 public class ProjectionAndCanvasFittingFixture : BaseFixture
 {
-    private static readonly string[] Projections = [
-        KnownSrs.EpsgWgs84,
-        KnownSrs.EpsgWebMercator
+    private static readonly Srs[] Projections = [
+        Srs.Wgs84,
+        Srs.WebMercator
     ];
 
     private static readonly SizeF[] CanvasSizes = [
@@ -36,8 +36,8 @@ public class ProjectionAndCanvasFittingFixture : BaseFixture
     ];
 
     [Test]
-    public void TestRenderMap(
-        [ValueSource("Projections")] string projection,
+    public async Task TestRenderMap(
+        [ValueSource("Projections")] Srs projection,
         [ValueSource("CanvasSizes")] SizeF canvasSize,
         [ValueSource("Strategies")] AspectRatioMismatchStrategy strategy)
     {
@@ -73,7 +73,7 @@ public class ProjectionAndCanvasFittingFixture : BaseFixture
                 filter: new TagFilter("building")));
         sw3.Dispose();
 
-        string projectionSummary = projection.Replace(":", "");
+        string projectionSummary = (projection.Epsg?.ToString() ?? "unknown");
         string prefix = $"{projectionSummary}_{canvasSize.Width}x{canvasSize.Height}_{strategy}_";
 
         var sw4 = new QuickStopwatch("Creating canvas");
@@ -85,7 +85,7 @@ public class ProjectionAndCanvasFittingFixture : BaseFixture
         string filename = FileSystemHelpers.GetTempOutputFileName(canvas.DefaultFileExtension, prefix);
 
         var sw5 = new QuickStopwatch("Render");
-        map.Render(canvas, strategy);
+        await map.Render(canvas, strategy);
         sw5.Dispose();
 
         var sw6 = new QuickStopwatch("Save to file");

@@ -13,30 +13,28 @@ namespace MapLib.Tests.GdalSupport;
 [TestFixture]
 public class GdalUtilsFixture : BaseFixture
 {
-    public static IEnumerable<string> ExampleWkts
+    public static IEnumerable<Srs> ExampleSrs
     {
         get
         {
-            yield return KnownSrs.EpsgWgs84;
-            yield return KnownSrs.EpsgWebMercator;
-            yield return KnownSrs.EpsgNad83;
-            yield return KnownSrs.WktVanDerGrinten;
-            yield return KnownSrs.WktRobinson;
+            yield return Srs.Wgs84;
+            yield return Srs.WebMercator;
+            yield return Srs.Nad83;
+            yield return Srs.VanDerGrinten;
+            yield return Srs.Robinson;
         }
     }
 
-
     [Test]
-    [TestCaseSource(nameof(ExampleWkts))]
-    public void TestInitializeSrs(string wkt)
+    [TestCaseSource(nameof(ExampleSrs))]
+    public void TestInitializeSrs(Srs srs)
     {
-        SpatialReference spatialReference = GdalUtils.CreateSpatialReference(wkt);
-        Assert.That(spatialReference, Is.Not.Null);
-        Assert.That(spatialReference.GetAreaOfUse(), Is.Not.Null);
+        Assert.That(srs, Is.Not.Null);
+        Assert.That(srs.BoundsLatLon, Is.Not.Null);
 
-        Trace.WriteLine(spatialReference.GetName());
+        Trace.WriteLine(srs.Name);
         Trace.Indent();
-        Trace.WriteLine(GdalUtils.FormatAreaOfUse(spatialReference.GetAreaOfUse()));
+        Trace.WriteLine(srs.BoundsLatLon);
         Trace.Unindent();
     }
 }

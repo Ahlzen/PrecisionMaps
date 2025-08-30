@@ -12,7 +12,7 @@ public class Usgs3depDataSource : BaseRasterDataSource
 {
     public override string Name => "USGS 3D Elevation Program (3DEP)";
 
-    public override string Srs => KnownSrs.EpsgNad83;
+    public override Srs Srs => Srs.Nad83;
 
     private string Subdirectory => "USGS_3DEP";
 
@@ -35,7 +35,7 @@ public class Usgs3depDataSource : BaseRasterDataSource
         throw new NotImplementedException();
     }
 
-    public override Task<RasterData> GetData(string destSrs)
+    public override Task<RasterData> GetData(Srs destSrs)
     {
         throw new NotImplementedException();
     }
@@ -66,7 +66,7 @@ public class Usgs3depDataSource : BaseRasterDataSource
         return data;
     }
 
-    public override Task<RasterData> GetData(Bounds boundsWgs84, string destSrs)
+    public override Task<RasterData> GetData(Bounds boundsWgs84, Srs destSrs)
     {
         throw new NotImplementedException();
     }

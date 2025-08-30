@@ -9,43 +9,25 @@ namespace MapLib.GdalSupport;
 /// </summary>
 public class Transformer : IDisposable
 {
-    public string SourceSrs { get; }
-    public string DestSrs { get; }
-
-    protected SpatialReference SourceSpatialRef { get; }
-    protected SpatialReference DestSpatialRef { get; }
+    public Srs SourceSrs { get; private set; }
+    public Srs DestSrs { get; private set; }
 
     private CoordinateTransformation _transform;
 
-    public Transformer(int sourceEpsg, int destEpsg)
-        : this("EPSG:" + sourceEpsg, "EPSG:" + destEpsg)
+    public Transformer(Srs sourceSrs, Srs destSrs)
     {
-    }
-
-    public Transformer(string sourceWkt, string destWkt)
-    {
-        // NOTE: AxisMappingStrategy.OAMS_TRADITIONAL_GIS_ORDER
-        // ensures that coordinate systems stick to [x,y,z] order
-        // rather than e.g. lat/lon.
-
-        SourceSrs = sourceWkt;
-        SourceSpatialRef = GdalUtils.CreateSpatialReference(sourceWkt);
-        
-        DestSrs = destWkt;
-        DestSpatialRef = GdalUtils.CreateSpatialReference(destWkt);
-
-        SourceSpatialRef.SetAxisMappingStrategy(AxisMappingStrategy.OAMS_TRADITIONAL_GIS_ORDER);
-        DestSpatialRef.SetAxisMappingStrategy(AxisMappingStrategy.OAMS_TRADITIONAL_GIS_ORDER);
-        _transform = new CoordinateTransformation(SourceSpatialRef, DestSpatialRef,
+        SourceSrs = sourceSrs;
+        DestSrs = destSrs;
+        _transform = new CoordinateTransformation(
+            SourceSrs.SpatialReference, DestSrs.SpatialReference,
             new CoordinateTransformationOptions());
     }
 
     public void Dispose()
     {
-        SourceSpatialRef.Dispose();
-        DestSpatialRef.Dispose();
+        _transform.Dispose();
     }
-    
+
     public Coord Transform(Coord coord)
     {
         double[] result = [coord.X, coord.Y, 0];

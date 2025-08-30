@@ -7,7 +7,7 @@ public class BaseBenchmark
 {
     public BaseBenchmark()
     {
-        GdalUtils.Initialize();
+        GdalUtils.EnsureInitialized();
     }
 }
 

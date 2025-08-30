@@ -33,7 +33,7 @@ public abstract class BaseFixture
     [OneTimeSetUp]
     public void OneTimeSetUp()
     {
-        GdalUtils.Initialize();
+        GdalUtils.EnsureInitialized();
 
         // Make sure we have all data required for the tests
         TestDataManager.EnsureTestDataReady(Console.Out);

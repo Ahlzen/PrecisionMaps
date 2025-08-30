@@ -11,7 +11,7 @@ public static class CoordinateTransformationExtensions
     /// <summary>
     /// Transforms the bounds to the specified SRS.
     /// </summary>
-    public static Bounds BoundsToSrs(this IBounded feature, string destSrs)
+    public static Bounds BoundsToSrs(this IBounded feature, Srs destSrs)
     {
         Transformer transformer = new(feature.Srs, destSrs);
         return transformer.Transform(feature.Bounds);
@@ -20,26 +20,28 @@ public static class CoordinateTransformationExtensions
     /// <summary>
     /// Transforms the coord of a feature/geometry to the specified SRS.
     /// </summary>
-    public static Coord CoordToSrs(this IHasSrs feature, Coord coord, string destSrs)
+    public static Coord CoordToSrs(this IHasSrs feature, Coord coord, Srs destSrs)
     {
         Transformer transformer = new(feature.Srs, destSrs);
         return transformer.Transform(coord);
     }
 
 
-    public static Coord Transform(this Coord coord, string srcSrs, string destSrs)
+    public static Coord Transform(this Coord coord, Srs srcSrs, Srs destSrs)
     {
         Transformer transformer = new(srcSrs, destSrs);
         return transformer.Transform(coord);
     }
-    public static Coord ToWgs84(this Coord coord, string srcSrs)
-        => coord.Transform(srcSrs, KnownSrs.EpsgWgs84);
 
-    public static Bounds Transform(this Bounds bounds, string srcSrs, string destSrs)
+    public static Coord ToWgs84(this Coord coord, Srs srcSrs)
+        => coord.Transform(srcSrs, Srs.Wgs84);
+
+    public static Bounds Transform(this Bounds bounds, Srs srcSrs, Srs destSrs)
     {
         Transformer transformer = new(srcSrs, destSrs);
         return transformer.Transform(bounds);
     }
-    public static Bounds ToWgs84(this Bounds bounds, string srcSrs)
-        => bounds.Transform(srcSrs, KnownSrs.EpsgWgs84);
+
+    public static Bounds ToWgs84(this Bounds bounds, Srs srcSrs)
+        => bounds.Transform(srcSrs, Srs.Wgs84);
 }

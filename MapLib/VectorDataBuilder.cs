@@ -1,4 +1,5 @@
-﻿using MapLib.Geometry;
+﻿using MapLib.GdalSupport;
+using MapLib.Geometry;
 using Point = MapLib.Geometry.Point;
 
 namespace MapLib;
@@ -17,7 +18,7 @@ public class VectorDataBuilder
     public List<Polygon> Polygons { get; set; } = new();
     public List<MultiPolygon> MultiPolygons { get; set; } = new();
 
-    public VectorData ToVectorData(string srs)
+    public VectorData ToVectorData(Srs srs)
     {
         return new VectorData(srs,
             Points.ToArray(),

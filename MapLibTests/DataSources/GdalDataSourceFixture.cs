@@ -30,10 +30,10 @@ public class GdalDataSourceFixture : BaseFixture
     [Test]
     [TestCase("MassGIS Aerial/19TCG390725.jp2")] // RGB imagery
     [TestCase("USGS Topo Quad 25k/q249882.tif")] // indexed
-    public async void TestWarpAndSaveAsPng(string filename)
+    public async Task TestWarpAndSaveAsPng(string filename)
     {
         filename = Path.Join(TestDataPath, filename);
-        string warpedFilename = GdalUtils.Warp(filename, KnownSrs.EpsgWebMercator);
+        string warpedFilename = GdalUtils.Warp(filename, Srs.WebMercator);
         GdalDataSource ds = new(warpedFilename);
         RasterData data = await ds.GetData();
         Assert.That(data, Is.TypeOf<ImageRasterData>());
@@ -48,7 +48,7 @@ public class GdalDataSourceFixture : BaseFixture
     [Test]
     [TestCase("MassGIS LiDAR/be_19TCG339672.tif")] // Float32 DEM
     [TestCase("USGS NED/USGS_OPR_MA_CentralEastern_2021_B21_be_19TCG339672.tif")]
-    public async void TestGenerateHillshade(string filename)
+    public async Task TestGenerateHillshade(string filename)
     {
         filename = Path.Join(TestDataPath, filename);
         
@@ -97,7 +97,7 @@ public class GdalDataSourceFixture : BaseFixture
         _ = ds.GetData();
         
         // Warp (reproject) it and show summary again
-        string warpedFilename = GdalUtils.Warp(filename, MapLib.GdalSupport.KnownSrs.EpsgWebMercator);
+        string warpedFilename = GdalUtils.Warp(filename, Srs.WebMercator);
         Console.Write("Warped: " + warpedFilename);
         using (Dataset warpedDataset = GdalUtils.OpenDataset(warpedFilename))
         {

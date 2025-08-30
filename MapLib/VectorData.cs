@@ -16,7 +16,7 @@ public class VectorData : GeoData
     /// At least one of the geometry parameters must be non-empty.
     /// </remarks>
     public VectorData(
-        string srs,
+        Srs srs,
         Point[]? points, MultiPoint[]? multiPoints,
         Line[]? lines, MultiLine[]? multiLines,
         Polygon[]? polygons, MultiPolygon[]? multiPolygons)
@@ -88,8 +88,6 @@ public class VectorData : GeoData
             MultiLines.Select(feature => feature.Transform(scaleX, scaleY, offsetX, offsetY)).ToArray(),
             Polygons.Select(feature => feature.Transform(scaleX, scaleY, offsetX, offsetY)).ToArray(),
             MultiPolygons.Select(feature => feature.Transform(scaleX, scaleY, offsetX, offsetY)).ToArray());
-
-
 
     public VectorData Transform(Transformer transformer)
         => new VectorData(transformer.DestSrs,

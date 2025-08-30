@@ -16,7 +16,7 @@ public class OgrDataReader : IVectorFormatReader
 
         // Get SRS
         Dataset vectorDataSet = OgrUtils.GetVectorDataset(filename);
-        string srs = OgrUtils.GetSrsAsWkt(vectorDataSet);
+        Srs srs = Srs.FromDataset(vectorDataSet);
         vectorDataSet.Dispose();
 
         // Open data source
