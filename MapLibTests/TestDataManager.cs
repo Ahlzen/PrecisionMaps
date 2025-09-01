@@ -73,7 +73,6 @@ internal class TestDataManager
     };
 
     [Test]
-    [Explicit]
     public void DownloadData() => EnsureTestDataReady(Console.Out);
 
     /// <summary>

@@ -7,7 +7,6 @@ namespace MapLib.Tests.DataSources;
 public class Usgs3depDataSourceFixture : BaseFixture
 {
     [Test]
-    [Explicit]
     public async Task TestDownloadMassachusetts()
     {
         // Download and save at quarter resolution (full res is too large)

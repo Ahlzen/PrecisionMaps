@@ -21,7 +21,6 @@ public class PointInPolygonFixture : BaseFixture
     ///  * TODO: Centroid (center of gravity) (blue)
     /// </summary>
     [Test]
-    [Explicit]
     public async Task VisualizePointsInPolygons()
     {
         const double pointSize = 0.8;

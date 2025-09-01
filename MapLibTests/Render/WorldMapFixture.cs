@@ -21,7 +21,6 @@ public class WorldMapFixture : BaseFixture
     }
 
     [Test]
-    [Explicit]
     [TestCaseSource(nameof(A3CanvasStacks))]
     public async Task RenderWorldCountriesMap(CanvasStack canvasStack)
     {
@@ -77,7 +76,6 @@ public class WorldMapFixture : BaseFixture
     }
 
     [Test]
-    [Explicit]
     [TestCaseSource(nameof(A3CanvasStacks))]
     public async Task RenderWorldCountriesMap_WithMasks(CanvasStack canvasStack)
     {

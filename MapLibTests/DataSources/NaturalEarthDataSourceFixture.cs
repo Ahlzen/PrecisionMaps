@@ -22,7 +22,6 @@ public class NaturalEarthDataSourceFixture : BaseFixture
     /// Downloads and caches all NE vector data sets (~260 MB download, ~1.1 GB on disk).
     /// </summary>
     [Test]
-    [Explicit]
     public async Task DownloadAllNaturalEarthVectorData()
     {
         foreach (NaturalEarthVectorDataSet dataSet in Enum.GetValues<NaturalEarthVectorDataSet>())
@@ -33,7 +32,6 @@ public class NaturalEarthDataSourceFixture : BaseFixture
     /// Downloads, renders and saves each NE vector data set to a PNG file.
     /// </summary>
     [Test]
-    [Explicit]
     public async Task RenderAllNaturalEarthVectorData()
     {
         foreach (NaturalEarthVectorDataSet dataSet in Enum.GetValues<NaturalEarthVectorDataSet>())
@@ -66,10 +64,9 @@ public class NaturalEarthDataSourceFixture : BaseFixture
     #region Raster data sets
 
     /// <summary>
-    /// Downloads and caches all NE raster data sets.
+    /// Downloads and caches all NE raster data sets. (~5.8 GB download, ~22 GB on disk)
     /// </summary>
     [Test]
-    [Explicit]
     public async Task DownloadAllNaturalEarthRasterData()
     {
         foreach (NaturalEarthRasterDataSet dataSet in Enum.GetValues<NaturalEarthRasterDataSet>())
@@ -80,7 +77,6 @@ public class NaturalEarthDataSourceFixture : BaseFixture
     /// Downloads, renders and saves each NE raster data set to a PNG file.
     /// </summary>
     [Test]
-    [Explicit]
     public async Task RenderAllNaturalEarthRasterData()
     {
         foreach (NaturalEarthRasterDataSet dataSet in Enum.GetValues<NaturalEarthRasterDataSet>())
@@ -126,7 +122,6 @@ public class NaturalEarthDataSourceFixture : BaseFixture
     }
 
     [Test]
-    [Explicit]
     [TestCaseSource(nameof(NaturalEarthWorldMapParams))]
     public async Task RenderNaturalEarthWorldMap(
         CanvasStack canvasStack,

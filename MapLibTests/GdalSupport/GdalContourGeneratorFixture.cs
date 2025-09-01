@@ -14,7 +14,6 @@ public class GdalContourGeneratorFixture : BaseFixture
         Path.Join(TestDataPath, "MassGIS LiDAR/be_19TCG340674.tif");
 
     [Test]
-    [Explicit]
     public void TestGenerateContours_FromGdalDataset()
     {
         string outputPath = FileSystemHelpers.GetTempOutputFileName(
@@ -29,7 +28,6 @@ public class GdalContourGeneratorFixture : BaseFixture
     }
 
     [Test]
-    [Explicit]
     public async Task TestGenerateContours_FromRasterDataSource()
     {
         string outputPath = FileSystemHelpers.GetTempOutputFileName(

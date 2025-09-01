@@ -22,7 +22,6 @@ public class MapRenderFixture : BaseFixture
     }
 
     [Test]
-    [Explicit]
     [TestCaseSource(nameof(LetterSizeCanvases))]
     public async Task RenderSimpleOsmData(CanvasStack canvas)
     {
@@ -61,7 +60,6 @@ public class MapRenderFixture : BaseFixture
     }
 
     [Test]
-    [Explicit]
     [TestCaseSource("LetterSizeCanvases")]
     public async Task RenderSimpleOsmDataAndRaster(CanvasStack canvas)
     {
@@ -132,7 +130,6 @@ public class MapRenderFixture : BaseFixture
     }
 
     [Test]
-    [Explicit]
     [TestCaseSource("LetterSizeCanvases")]
     public async Task TestRenderMassachusettsTopoMap(CanvasStack canvas)
     {

@@ -8,7 +8,6 @@ namespace MapLib.Tests.RasterOps;
 public class SimpleRasterDataOpsFixture : BaseFixture
 {
     [Test]
-    [Explicit]
     public async Task TestHillshade()
     {
         // Get 3DEP DEM data
@@ -28,7 +27,6 @@ public class SimpleRasterDataOpsFixture : BaseFixture
     }
 
     [Test]
-    [Explicit]
     public async Task TestGradientMap()
     {
         // Get 3DEP DEM data
@@ -59,7 +57,6 @@ public class SimpleRasterDataOpsFixture : BaseFixture
     }
 
     [Test]
-    [Explicit]
     public async Task TestShadedGradientMap()
     {
         // Get 3DEP DEM data
