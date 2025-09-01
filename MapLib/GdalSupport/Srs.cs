@@ -136,11 +136,27 @@ public class Srs : IDisposable, IEquatable<Srs>
 
     public static Srs FromDataset(Dataset dataset)
     {
-        string wkt = dataset.GetProjectionRef();
-        SpatialReference sr = new(null);
-        sr.ImportFromWkt(ref wkt);
-        sr.SetAxisMappingStrategy(AxisMappingStrategy.OAMS_TRADITIONAL_GIS_ORDER);
-        return new Srs(sr);
+        if (dataset.RasterCount > 0)
+        {
+            // Assume this is a raster data set
+            string wkt = dataset.GetProjectionRef();
+            if (string.IsNullOrEmpty(wkt))
+                throw new ApplicationException("Failed to get WKT for projection.");
+            SpatialReference sr = new(null);
+            sr.ImportFromWkt(ref wkt);
+            sr.SetAxisMappingStrategy(AxisMappingStrategy.OAMS_TRADITIONAL_GIS_ORDER);
+            return new Srs(sr);
+        }
+        else if (dataset.GetLayerCount() > 0)
+        {
+            // Assume this is a vector data set
+            SpatialReference sr = dataset.GetLayer(0).GetSpatialRef();
+            sr.SetAxisMappingStrategy(AxisMappingStrategy.OAMS_TRADITIONAL_GIS_ORDER);
+            return new Srs(sr);
+        }
+        else
+            throw new ApplicationException(
+                "Can't get SRS: No rasters or vector layers in dataset.");
     }
 
     public static Srs FromFile(string filename)

@@ -34,26 +34,4 @@ public static class OgrUtils
         // TODO
         throw new NotImplementedException();
     }
-
-    //public static string? GetSrsAsWkt(DataSource dataSource)
-    //{
-
-    //    // TODO: https://gis.stackexchange.com/questions/239112/how-to-get-coordinate-system-info-from-shapefile-using-gdal-ogr
-
-    //    string projection = dataSource.get .GetProjectionRef();
-    //    if (projection == null)
-    //        throw new ApplicationException("Could not determine projection from GDAL Dataset.");
-
-    //    SpatialReference srs = new SpatialReference(null);
-    //    if (srs.ImportFromWkt(ref projection) == 0)
-    //    {
-    //        srs.ExportToPrettyWkt(out wkt, 0);
-    //        string wkt;
-    //        return wkt;
-    //    }
-    //    else
-    //    {
-    //    }
-    //        return projection;
-    //}
 }
