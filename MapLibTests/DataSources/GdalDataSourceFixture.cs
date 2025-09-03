@@ -14,7 +14,7 @@ public class GdalDataSourceFixture : BaseFixture
     [Test]
     [TestCase("MassGIS Aerial/19TCG390725.jp2")] // RGB imagery
     [TestCase("USGS Topo Quad 25k/q249882.tif")] // indexed
-    public async void TestSaveAsPng(string filename)
+    public async Task TestSaveAsPng(string filename)
     {
         filename = Path.Join(TestDataPath, filename);
         GdalDataSource ds = new(filename);
