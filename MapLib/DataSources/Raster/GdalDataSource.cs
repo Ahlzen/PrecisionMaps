@@ -39,12 +39,20 @@ public class GdalDataSource : BaseRasterDataSource
     public int BitmapHeightPx { get; private set; }
 
 
-    public GdalDataSource(string filename, double scaleFactor = 1)
+
+    /// <param name="filename">Name/path of input file</param>
+    /// <param name="scaleFactor">
+    /// Scale at which the data is read.
+    /// 1 = full resolution,
+    /// <1 = downsampled (e.g. 0.25 = quarter resolution),
+    /// null = auto (full resolution, unless too large to read as a single dataset)
+    /// </param>
+    public GdalDataSource(string filename, double? scaleFactor = null)
         : this([filename], scaleFactor)
     {
     }
 
-    public GdalDataSource(IEnumerable<string> filenames, double scaleFactor = 1)
+    public GdalDataSource(IEnumerable<string> filenames, double? scaleFactor = null)
     {
         Filenames = filenames.ToList();
 
@@ -73,15 +81,28 @@ public class GdalDataSource : BaseRasterDataSource
 
     [MemberNotNull(nameof(_srs))]
     [MemberNotNull(nameof(_bounds))]
-    private void InitPropertiesFromDataset(Dataset dataset, double scaleFactor = 1)
+    private void InitPropertiesFromDataset(Dataset dataset, double? scaleFactor)
     {
         _srs = Srs.FromDataset(dataset);
         _bounds = GdalUtils.GetBounds(dataset);
 
         SourceWidthPx = dataset.RasterXSize;
         SourceHeightPx = dataset.RasterYSize;
-        BitmapWidthPx = (int)Math.Round(dataset.RasterXSize * scaleFactor);
-        BitmapHeightPx = (int)Math.Round(dataset.RasterYSize * scaleFactor);
+
+        BitmapWidthPx = (int)Math.Round(dataset.RasterXSize * (scaleFactor ?? 1));
+        BitmapHeightPx = (int)Math.Round(dataset.RasterYSize * (scaleFactor ?? 1));
+
+        if (scaleFactor == null)
+        {
+            // If scaleFactor is null (auto), make it progressively smaller until it fits
+            scaleFactor = 1;
+            while (BitmapDataIsTooLarge(BitmapWidthPx, BitmapHeightPx))
+            {
+                scaleFactor *= 0.5;
+                BitmapWidthPx = (int)Math.Round(dataset.RasterXSize * (scaleFactor ?? 1));
+                BitmapHeightPx = (int)Math.Round(dataset.RasterYSize * (scaleFactor ?? 1));
+            }
+        }
     }
 
     public override Task<RasterData> GetData(Srs? destSrs = null)
@@ -101,7 +122,7 @@ public class GdalDataSource : BaseRasterDataSource
 
         // Update properties again. They may have changed if the
         // data was reprojected:
-        InitPropertiesFromDataset(sourceDataset);
+        InitPropertiesFromDataset(sourceDataset, null);
 
         Console.WriteLine(GdalUtils.GetRasterInfo(sourceDataset));
         return Task.FromResult(GetRasterData(sourceDataset));
@@ -116,13 +137,19 @@ public class GdalDataSource : BaseRasterDataSource
     public override Task<RasterData> GetData(Bounds boundsWgs84, Srs? destSrs = null)
         => GetData(destSrs);
 
+    private bool BitmapDataIsTooLarge(long pixelsX, long pixelsY)
+    {
+        long pixelCount = pixelsX * pixelsY;
+        return pixelCount * 4 > Array.MaxLength;
+    }
+
     private RasterData GetRasterData(Dataset dataset)
     {
         // Get size, projection and bounds
         long pixelCount = BitmapWidthPx * BitmapHeightPx;
 
         // check if the source is too big
-        if (pixelCount * 4 > Array.MaxLength)
+        if (BitmapDataIsTooLarge(BitmapWidthPx, BitmapHeightPx))
             throw new ApplicationException(
                 "GDAL Raster is too large. Try using a smaller scale factor.");
 
