@@ -178,11 +178,13 @@ public class Srs : IDisposable, IEquatable<Srs>
 
     public string GetWkt(bool pretty = false)
     {
-        if (pretty) {
+        if (pretty)
+        {
             SpatialReference.ExportToPrettyWkt(out string wkt, 0);
             return wkt;
         }
-        else {
+        else
+        {
             SpatialReference.ExportToWkt(out string wkt, null);
             return wkt;
         }
@@ -196,7 +198,8 @@ public class Srs : IDisposable, IEquatable<Srs>
             if (authority != "EPSG")
                 return null;
             string? epsgString = SpatialReference.GetAuthorityCode(null);
-            if (int.TryParse(epsgString, out int epsgNumber)) {
+            if (int.TryParse(epsgString, out int epsgNumber))
+            {
                 return epsgNumber;
             }
             return null;
@@ -240,22 +243,22 @@ public class Srs : IDisposable, IEquatable<Srs>
             return false;
         string? thisWkt = GetWkt();
         string? otherWkt = other.GetWkt();
-        return 
+        return
             thisWkt != null &&
             thisWkt == otherWkt;
     }
 
-    public static bool operator == (Srs? a, Srs? b)
+    public static bool operator ==(Srs? a, Srs? b)
     {
-        if (a == null && b == null)
+        if (a is null && b is null)
             return true;
-        if (a == null || b == null)
+        if (a is null || b is null)
             return false;
         return a.Equals(b);
     }
 
-    public static bool operator != (Srs? a, Srs? b)
-        => ! (a == b);
+    public static bool operator !=(Srs? a, Srs? b)
+        => !(a == b);
 
     #region Known common projections
 
