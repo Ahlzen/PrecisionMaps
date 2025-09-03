@@ -22,8 +22,7 @@ public abstract class BaseFixture
         new Line([(1, 1), (5, 3), (6, 2), (7, 5), (8, -2)], null);
 
 
-    public static string TestDataPath =>
-        FileSystemHelpers.TestDataPath;
+    public static string TestDataPath => FileSystemHelpers.TestDataPath;
 
 
     protected static readonly Bounds MassachusettsBounds =

@@ -1,4 +1,6 @@
-﻿using MapLib.FileFormats.Vector;
+﻿using MapLib.DataSources.Vector;
+using MapLib.FileFormats.Vector;
+using MapLib.Util;
 using System.IO;
 
 namespace MapLib.Tests.FileFormats;
@@ -7,12 +9,14 @@ namespace MapLib.Tests.FileFormats;
 public class OgrDataReaderFixture : BaseFixture
 {
     [Test]
-    public void TestReadShapefile_Polygons()
+    public async Task TestReadShapefile_Polygons()
     {
-        // Read Natural Earth 10m Lakes
+        // Read 10m Lakes shapefile (from Natural Earth)
+        await new NaturalEarthVectorDataSource(NaturalEarthVectorDataSet.LandPolygons_10m).Download();
+        string sourcePath = Path.Join(FileSystemHelpers.SourceCachePath,
+            "NaturalEarth_Vector/ne_10m_lakes.shp");
         OgrDataReader reader = new OgrDataReader();
-        MapLib.VectorData data = reader.ReadFile(
-            Path.Join(TestDataPath, "Natural Earth/ne_10m_land.shp"));
+        MapLib.VectorData data = reader.ReadFile(sourcePath);
         Console.WriteLine(Visualizer.FormatVectorDataSummary(data));
     }
 
