@@ -59,7 +59,7 @@ public class PointInPolygonFixture : BaseFixture
                 SymbolColor = Color.Red
             }));
         map.MapLayers.Add(new VectorMapLayer(
-            "bboxCenterPoints", "polyLabelPoints", new VectorStyle {
+            "polyLabelPoints", "polyLabelPoints", new VectorStyle {
                 SymbolSize = pointSize,
                 Symbol = SymbolType.Circle,
                 SymbolColor = Color.Green

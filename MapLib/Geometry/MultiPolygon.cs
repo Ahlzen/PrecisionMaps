@@ -90,17 +90,18 @@ public class MultiPolygon : Shape, IEnumerable<Coord[]>
     IEnumerator IEnumerable.GetEnumerator()
         => GetEnumerator();
 
-    public MultiPolygon Offset(double d) {
+    public MultiPolygon? Offset(double d) {
         PathsD result, paths = this.ToPathsD();
         // Should call SimplifyPaths before InflatePaths,
         // see http://www.angusj.com/clipper2/Docs/Units/Clipper/Functions/SimplifyPaths.htm
         paths = Clipper.SimplifyPaths(paths,
             Clipper2Utils.GetSimplifyEpsilon(GetBounds()), true);
         result = Clipper.InflatePaths(paths, d, JoinType.Round, EndType.Polygon);
+        if (result.Count == 0) return null;
         return result.ToMultiPolygon(Tags);
     }
 
-    public override MultiPolygon Buffer(double radius)
+    public override MultiPolygon? Buffer(double radius)
         => Offset(radius);
 
     public MultiPolygon Smooth_Chaikin(int iterations)

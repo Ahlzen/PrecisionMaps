@@ -22,5 +22,13 @@ public abstract class Shape
     public abstract Bounds GetBounds();
 
     // TODO: Add options
-    public abstract MultiPolygon Buffer(double radius);
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="radius"></param>
+    /// <returns>
+    /// The buffered shape, or null if no resulting geometry (e.g.
+    /// if offsetting inward, and there is no resulting area).
+    /// </returns>
+    public abstract MultiPolygon? Buffer(double radius);
 }
