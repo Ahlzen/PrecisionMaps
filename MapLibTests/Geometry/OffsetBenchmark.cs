@@ -21,13 +21,15 @@ public class OffsetBenchmark_Polygons : BaseGeometryBenchmark
     private double GeometrySize => Data.GetBounds().Size;
 
     [Benchmark]
-    public MultiPolygon OffsetPolygon_Clipper()
+    public MultiPolygon? OffsetPolygon_Clipper()
     {
-        MultiPolygon result = Data;
+        MultiPolygon? result = Data;
         double offsetAmount = GeometrySize / 50 * (Inward ? -1 : 1);
         for (int i = 0; i < Iterations; i++)
         {
-            result = result.Offset(offsetAmount);
+            result = result?.Offset(offsetAmount);
+            if (result == null)
+                break;
         }
         return result;
     }

@@ -58,7 +58,7 @@ public class Polygon : Line
     public override Polygon Reverse()
         => new Polygon(Coords.Reverse(), Tags);
 
-    public new MultiPolygon Offset(double d)
+    public new MultiPolygon? Offset(double d)
         => AsMultiPolygon().Offset(d);
 
     public new Polygon Smooth_Chaikin(int iterations)

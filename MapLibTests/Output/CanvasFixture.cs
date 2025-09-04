@@ -59,18 +59,18 @@ public class CanvasFixture : BaseFixture
 
         // Line thicknesses
         layer.DrawLines(reservoirPolygon.Transform(1.0, 610, 10).Coords, 2, Color.Navy);
-        layer.DrawLines(reservoirPolygon.Transform(1.0, 610, 10).Offset(-8) .Coords, 1, Color.Navy);
-        layer.DrawLines(reservoirPolygon.Transform(1.0, 610, 10).Offset(-16).Coords, 0.5, Color.Navy);
-        layer.DrawLines(reservoirPolygon.Transform(1.0, 610, 10).Offset(-24).Coords, 0.25, Color.Navy);
+        layer.DrawLines(reservoirPolygon.Transform(1.0, 610, 10).Offset(-8)! .Coords, 1, Color.Navy);
+        layer.DrawLines(reservoirPolygon.Transform(1.0, 610, 10).Offset(-16)!.Coords, 0.5, Color.Navy);
+        layer.DrawLines(reservoirPolygon.Transform(1.0, 610, 10).Offset(-24)!.Coords, 0.25, Color.Navy);
 
         // Line dasharrays and joins/caps
         layer.DrawLines(reservoirPolygon.Transform(1.0, 810, 10).Coords, 3, Color.DarkOliveGreen,
             LineCap.Round, LineJoin.Round);
-        layer.DrawLines(reservoirPolygon.Transform(1.0, 810, 10).Offset(-6).Coords, 3, Color.DarkOliveGreen,
+        layer.DrawLines(reservoirPolygon.Transform(1.0, 810, 10).Offset(-6)!.Coords, 3, Color.DarkOliveGreen,
             LineCap.Square, LineJoin.Miter);
-        layer.DrawLines(reservoirPolygon.Transform(1.0, 810, 10).Offset(-12).Coords, 1, Color.DarkOliveGreen,
+        layer.DrawLines(reservoirPolygon.Transform(1.0, 810, 10).Offset(-12)!.Coords, 1, Color.DarkOliveGreen,
             LineCap.Butt, LineJoin.Miter, [6, 2, 2, 2]);
-        layer.DrawLines(reservoirPolygon.Transform(1.0, 810, 10).Offset(-18).Coords, 1, Color.DarkOliveGreen,
+        layer.DrawLines(reservoirPolygon.Transform(1.0, 810, 10).Offset(-18)!.Coords, 1, Color.DarkOliveGreen,
             LineCap.Butt, LineJoin.Miter, [10, 10]);
 
         ///// Filled circles
@@ -252,22 +252,23 @@ public class CanvasFixture : BaseFixture
 
         double opacity = 1;
         double lineWidth = secondLineWidth;
+        MultiPolygon? offsetPolygon = polygon;
         for (int i = 0; i < waveCount; i++)
         {
-            Debug.WriteLine($"Drawing polygon with {polygon.Sum(p => p.Length)} points");
+            Debug.WriteLine($"Drawing polygon with {offsetPolygon.Sum(p => p.Length)} points");
 
             Color color = Color.FromArgb((int)(255 * opacity), baseColor);
-            layer.DrawLines(polygon.Coords, lineWidth, color,
+            layer.DrawLines(offsetPolygon.Coords, lineWidth, color,
                 LineCap.Round, LineJoin.Round);
-
-            // If the polygon is small enough, offsetting it inward may result in
-            // nothing. In that case we're done.
-            if (polygon.Count == 0)
-                break;
 
             opacity *= opacityMultiplier;
             lineWidth *= lineWidthMultiplier;
-            polygon = polygon.Offset(waveDistance);
+            offsetPolygon = offsetPolygon.Offset(waveDistance);
+
+            // If the polygon is small enough, offsetting it inward may result in
+            // nothing. In that case we're done.
+            if (offsetPolygon == null || offsetPolygon.Count == 0)
+                break;
         }
     }
 }
