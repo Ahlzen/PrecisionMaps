@@ -75,6 +75,35 @@ public class SingleBandRasterData : RasterData
             GdalUtils.GetGeoTransform(Bounds, WidthPx, HeightPx),
             Srs, NoDataValue);
     }
+
+    /// <summary>
+    /// Converts this data to a monochrome RGB image. By default, values are
+    /// denormalized so that the range [0.0, 1.0] maps to [0, 255].
+    /// </summary>
+    public ImageRasterData ToImageRasterData(float scale = 255)
+    {
+        long pixelCount = WidthPx * HeightPx;
+        if ((pixelCount * 4) > Array.MaxLength)
+            throw new InvalidOperationException("Data is too large to convert to image.");
+
+        byte[] imageData = new byte[pixelCount * 4];
+        for (long i = 0; i < pixelCount; i++)
+        {
+            float v = SingleBandData[i];
+            byte byteValue = 0;
+            byte opacity = 255;
+            if (NoDataValue != null && v == NoDataValue.Value)
+                opacity = 0; // No data -> transparent
+            else
+                byteValue = (byte) Math.Clamp(Math.Round(v * scale), 0, 255);
+            long offset = i * 4;
+            imageData[offset + 0] = byteValue; // B
+            imageData[offset + 1] = byteValue; // G
+            imageData[offset + 2] = byteValue; // R
+            imageData[offset + 3] = opacity;   // A
+        }
+        return new ImageRasterData(Srs, Bounds, WidthPx, HeightPx, imageData);
+    }
 }
 
 public class ImageRasterData : RasterData
@@ -132,6 +161,56 @@ public class ImageRasterData : RasterData
         return GdalUtils.CreateInMemoryDataset(
             channels.r, channels.g, channels.b, channels.a,
             WidthPx, HeightPx, transform, Srs);
+    }
+
+    /// <summary>
+    /// Converts this image to a raster of values.
+    /// </summary>
+    /// <remarks>
+    /// The default weights are the standard luminance weights
+    /// for converting RGB to grayscale. To extract a single band, use
+    /// 1.0 for the desired channel and 0.0 for the others.
+    /// </remarks>
+    /// <param name="rWeight">Red channel weight.</param>
+    /// <param name="gWeight">Green channel weight.</param>
+    /// <param name="bWeight">Blue channel weight.</param>
+    /// <param name="scale">The result is scaled by this value. By default,
+    /// the image's range [0, 255] maps to [0.0, 1.0] (i.e. scaled by 1/255)
+    /// </param>
+    /// <param name="nodataForFullyTransparent">
+    /// If set, any pixel that is fully transparent (alpha = 0)
+    /// is assigned this no-data value. (the default -9999 is
+    /// commonly used in rasters).
+    /// </param>
+    public SingleBandRasterData ToSingleBandRasterData(
+        float rWeight = 0.2126f,
+        float gWeight = 0.7152f,
+        float bWeight = 0.0722f,
+        float scale = 1f / 255f,
+        float? noDataValue = -9999f)
+    {
+        long pixelCount = WidthPx * HeightPx;
+        if (pixelCount > Array.MaxLength)
+            throw new InvalidOperationException("Data is too large to convert to image.");
+
+        float[] singleBandData = new float[pixelCount];
+        for (long i = 0; i < pixelCount; i++)
+        {
+            long offset = i * 4;
+            byte r = ImageData[offset + 2];
+            byte g = ImageData[offset + 1];
+            byte b = ImageData[offset + 0];
+            byte a = ImageData[offset + 3];
+            float value = scale * (
+                r * rWeight +
+                g * gWeight +
+                b * bWeight);
+            if (a == 0 && noDataValue != null)
+                value = noDataValue.Value;
+            singleBandData[i] = value;
+        }
+        return new SingleBandRasterData(Srs, Bounds, WidthPx, HeightPx,
+            singleBandData, noDataValue);
     }
 
     #region Helpers for splitting and merging channels
