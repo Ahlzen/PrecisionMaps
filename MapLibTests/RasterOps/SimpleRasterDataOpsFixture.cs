@@ -34,7 +34,7 @@ public class SimpleRasterDataOpsFixture : BaseFixture
         RasterData data = await source.GetData(MassachusettsBounds);
         SingleBandRasterData? demData = data as SingleBandRasterData;
         Assert.That(demData, Is.Not.Null);
-        SimpleRasterDataOps.PrintMinMax(demData!.SingleBandData, null, null);
+        RasterDataOpsHelpers.PrintDebugInfo(demData!.SingleBandData, null, null);
 
         // Build hypsometric tint gradient
         Gradient gradient = new();

@@ -50,7 +50,7 @@ public static class SimpleRasterDataOps
                     normalizedData[i] = n;
             }
         }
-        PrintMinMax(normalizedData, source.NoDataValue, "Normalized: ");
+        RasterDataOpsHelpers.PrintDebugInfo(normalizedData, source.NoDataValue, "Normalized: ");
         return source.CloneWithNewData(normalizedData);
     }
 
@@ -83,7 +83,7 @@ public static class SimpleRasterDataOps
                     clampedData[i] = n;
             }
         }
-        PrintMinMax(clampedData, source.NoDataValue, "Clamped: ");
+        RasterDataOpsHelpers.PrintDebugInfo(clampedData, source.NoDataValue, "Clamped: ");
         return source.CloneWithNewData(clampedData);
     }
 
@@ -108,35 +108,6 @@ public static class SimpleRasterDataOps
         return Clamp(source, destMin, destMax);
     }
 
-    /// <summary>
-    /// Very rudimentary hillshade algorithm.
-    /// </summary>
-    public static SingleBandRasterData Hillshade_Basic(
-        this SingleBandRasterData source)
-    {
-        // TODO: Handle no-data pixels better
-
-        long pixelCount = source.HeightPx * source.WidthPx;
-        float[] hillshadeData = new float[pixelCount];
-
-        for (int y = 1; y < source.HeightPx; y++)
-        {
-            for (int x = 1; x < source.WidthPx; x++)
-            {
-                float from = source.SingleBandData[(y - 1) * source.WidthPx + (x - 1)];
-                float to = source.SingleBandData[y * source.WidthPx + x];
-                hillshadeData[y * source.WidthPx + x] = to - from;
-            }
-            // fill in left column
-            hillshadeData[y * source.WidthPx] = hillshadeData[y * source.WidthPx + 1]; 
-        }
-        // fill in top row
-        for (int x = 0; x < source.WidthPx; x++)
-            hillshadeData[x] = hillshadeData[x + source.WidthPx];
-
-        PrintMinMax(hillshadeData, source.NoDataValue, "Hillshade: ");
-        return source.CloneWithNewData(hillshadeData);
-    }
 
     /// <summary>
     /// Offsets (adds or subtracts a fixed amount to each value)
@@ -164,7 +135,7 @@ public static class SimpleRasterDataOps
                     offsetData[i] = n;
             }
         }
-        PrintMinMax(offsetData, source.NoDataValue, "Offset: ");
+        RasterDataOpsHelpers.PrintDebugInfo(offsetData, source.NoDataValue, "Offset: ");
         return source.CloneWithNewData(offsetData);
     }
 
@@ -194,7 +165,7 @@ public static class SimpleRasterDataOps
                     scaledData[i] = n;
             }
         }
-        PrintMinMax(scaledData, source.NoDataValue, "Scaled: ");
+        RasterDataOpsHelpers.PrintDebugInfo(scaledData, source.NoDataValue, "Scaled: ");
         return source.CloneWithNewData(scaledData);
     }
 
@@ -233,7 +204,7 @@ public static class SimpleRasterDataOps
                 steppedData[i] = value;
             }
         }
-        PrintMinMax(steppedData, source.NoDataValue, "Stepped: ");
+        RasterDataOpsHelpers.PrintDebugInfo(steppedData, source.NoDataValue, "Stepped: ");
         return source.CloneWithNewData(steppedData);
     }
 
@@ -311,18 +282,6 @@ public static class SimpleRasterDataOps
         return new ImageRasterData(source.Srs,
             source.Bounds, source.WidthPx, source.HeightPx,
             imageData);
-    }
-
-    #endregion
-
-    #region Helpers
-
-    /// <remarks>For development only</remarks>
-    [Conditional("DEBUG")]
-    internal static void PrintMinMax(float[] data, float? noDataValue, string? prefix)
-    {
-        RasterStatsExtensions.GetMinMax(data, out float min, out float max, noDataValue);
-        Console.WriteLine($"{prefix}Min: {min}, Max: {max}");
     }
 
     #endregion
