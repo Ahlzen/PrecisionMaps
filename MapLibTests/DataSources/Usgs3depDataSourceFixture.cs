@@ -16,7 +16,9 @@ public class Usgs3depDataSourceFixture : BaseFixture
         SingleBandRasterData? demData = data as SingleBandRasterData;
         Assert.That(demData, Is.Not.Null);
 
-        ImageRasterData imageData = demData!.ToImageRasterData(normalize: true);
+        ImageRasterData imageData = demData!
+            .Normalize()
+            .ToImageRasterData();
         Assert.That(imageData, Is.Not.Null);
 
         SaveTempBitmap(imageData.Bitmap, "Usgs3depDataSourceFixture_3DEP", ".jpg");

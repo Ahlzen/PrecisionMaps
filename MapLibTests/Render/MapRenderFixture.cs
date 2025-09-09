@@ -159,7 +159,8 @@ public class MapRenderFixture : BaseFixture
 
         // Create hillshade/hypsometric tint composite
         ImageRasterData compositeSteppedHypso = lightHillshadeData
-            .ToImageRasterData(normalize: false)
+            .Normalize()
+            .ToImageRasterData()
             .BlendWith(steppedHypso, BlendMode.Normal, 0.3f);
         SaveTempBitmap(compositeSteppedHypso.Bitmap, "compositeSteppedHypso", ".jpg");
 

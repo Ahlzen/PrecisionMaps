@@ -61,7 +61,8 @@ public class GdalDataSourceFixture : BaseFixture
         string demFilename = FileSystemHelpers.GetTempOutputFileName(
             ".png", Path.GetFileNameWithoutExtension(filename) + "_dem_");
         dem!
-            .ToImageRasterData(normalize: true)
+            .Normalize()
+            .ToImageRasterData()
             .Bitmap.Save(demFilename);
 
         string hillshadeFilename = FileSystemHelpers.GetTempOutputFileName(
@@ -71,7 +72,8 @@ public class GdalDataSourceFixture : BaseFixture
             .Clamp(-1.5f, 1.5f) // cut top and bottom to increase contrast a bit
             .Offset(1.5f)
             .Scale(255/3f)
-            .ToImageRasterData(normalize: false)
+            .Normalize()
+            .ToImageRasterData()
             .Bitmap.Save(hillshadeFilename);
     }
 

@@ -1,7 +1,10 @@
-﻿using MapLib.GdalSupport;
+﻿using MapLib.DataSources.Raster;
+using MapLib.GdalSupport;
 using MapLib.Output;
 using MapLib.Util;
+using Microsoft.Diagnostics.Tracing.Parsers.JScript;
 using System.Drawing;
+using System.IO;
 
 namespace MapLib.Tests;
 
@@ -21,9 +24,7 @@ public abstract class BaseFixture
     protected static readonly Line TestLine3 =
         new Line([(1, 1), (5, 3), (6, 2), (7, 5), (8, -2)], null);
 
-
     public static string TestDataPath => FileSystemHelpers.TestDataPath;
-
 
     protected static readonly Bounds MassachusettsBounds =
         new(-73.30, -69.56, 41.14, 42.53);
@@ -44,4 +45,24 @@ public abstract class BaseFixture
             extension, prefix);
         bitmap.Save(filename);
     }
+
+    protected async Task<SingleBandRasterData> GetTestDemData()
+    {
+        // Get 3DEP DEM data
+        Usgs3depDataSource source = new(scaleFactor: 0.25);
+        RasterData data = await source.GetData(MassachusettsBounds);
+        SingleBandRasterData? demData = data as SingleBandRasterData;
+        Assert.That(demData, Is.Not.Null);
+        return demData!;
+    }
+
+    protected ImageRasterData GetTestImage()
+    {
+        string bitmapPath = Path.Join(TestDataPath, "Misc", "me.jpg");
+        using Bitmap bitmap = (Bitmap)Bitmap.FromFile(bitmapPath);
+        return new ImageRasterData(Srs.Wgs84, Bounds.GlobalWgs84, bitmap);
+    }
+
+    protected SingleBandRasterData GetSingleBandTestImage()
+        => GetTestImage().ToSingleBandRasterData();
 }

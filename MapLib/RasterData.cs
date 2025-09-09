@@ -77,9 +77,12 @@ public class SingleBandRasterData : RasterData
     }
 
     /// <summary>
-    /// Converts this data to a monochrome RGB image. By default, values are
-    /// denormalized so that the range [0.0, 1.0] maps to [0, 255].
+    /// Converts this data to a monochrome RGB image.
     /// </summary>
+    /// <param name="scale">
+    /// Multipler to scale input values by. By default, values are
+    /// scaled so that the range [0.0, 1.0] maps to [0, 255].
+    /// </param>
     public ImageRasterData ToImageRasterData(float scale = 255)
     {
         long pixelCount = WidthPx * HeightPx;
@@ -120,6 +123,36 @@ public class ImageRasterData : RasterData
         : base(srs, bounds, widthPx, heightPx)
     {
         ImageData = imageData;
+        _bitmapBuilder = new Lazy<Bitmap>(BuildBitmap);
+    }
+
+    public ImageRasterData(Srs srs, Bounds bounds, Bitmap bitmap)
+        : base(srs, bounds, bitmap.Width, bitmap.Height)
+    {
+        int byteCount = WidthPx * HeightPx * 4;
+        ImageData = new byte[byteCount];
+
+        Bitmap argbBitmap = bitmap;
+
+        // Convert to ARGB (if needed)
+        if (bitmap.PixelFormat != PixelFormat.Format32bppArgb)
+        {
+            argbBitmap = new Bitmap(WidthPx, HeightPx, PixelFormat.Format32bppArgb);
+            using (Graphics g = Graphics.FromImage(argbBitmap))
+                g.DrawImage(bitmap, 0, 0, WidthPx, HeightPx);
+        }
+
+        // Copy raw data
+        BitmapData bmpData = argbBitmap.LockBits(
+            new Rectangle(0, 0, WidthPx, HeightPx),
+            ImageLockMode.ReadOnly,
+            PixelFormat.Format32bppArgb);
+        try {
+            Marshal.Copy(bmpData.Scan0, ImageData, 0, byteCount);
+        }
+        finally {
+            argbBitmap.UnlockBits(bmpData);
+        }
         _bitmapBuilder = new Lazy<Bitmap>(BuildBitmap);
     }
 

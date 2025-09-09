@@ -3,6 +3,7 @@ using MapLib.ColorSpace;
 using System.Diagnostics;
 using System.Numerics;
 using System.Reflection.Metadata.Ecma335;
+using System.Runtime.Versioning;
 
 namespace MapLib.RasterOps;
 
@@ -233,56 +234,4 @@ public static class SimpleRasterDataOps
         }
         return new ImageRasterData(source.Srs, source.Bounds, source.WidthPx, source.HeightPx, imageData);
     }
-
-    #region Conversion
-
-    /// <summary>
-    /// Returns a grayscale image representing the source
-    /// data, optionally normalizing it.
-    /// </summary>
-    /// <exception cref="InvalidOperationException">
-    /// The raster has no pixels with valid data (only no-data values),
-    /// and the data has to be normalized.
-    /// </exception>
-    public static ImageRasterData ToImageRasterData(
-        this SingleBandRasterData source, bool normalize = true)
-    {
-        source = normalize ?
-            source.Normalize(0, 255) :
-            source.Clamp(0, 255);
-
-        long pixelCount = source.HeightPx * source.WidthPx;
-        byte[] imageData = new byte[pixelCount * 4];
-        long offset = 0;
-        if (source.NoDataValue == null)
-        {
-            for (long i = 0; i < pixelCount; i++)
-            {
-                byte v = (byte)(source.SingleBandData[i] + .5f); // add .5 since casting truncates (rounds down)
-                imageData[offset++] = v; // B
-                imageData[offset++] = v; // G
-                imageData[offset++] = v; // R
-                imageData[offset++] = 255; // A
-            }
-        }
-        else
-        {
-            float n = source.NoDataValue.Value;
-            for (long i = 0; i < pixelCount; i++)
-            {
-                float f = source.SingleBandData[i];
-                byte b = (byte)(f + .5f); // add .5 since casting truncates (rounds down)
-                imageData[offset++] = b; // B
-                imageData[offset++] = b; // G
-                imageData[offset++] = b; // R
-                imageData[offset++] = f != n ? (byte)255 : (byte)0; // A
-            }
-        }
-
-        return new ImageRasterData(source.Srs,
-            source.Bounds, source.WidthPx, source.HeightPx,
-            imageData);
-    }
-
-    #endregion
 }
