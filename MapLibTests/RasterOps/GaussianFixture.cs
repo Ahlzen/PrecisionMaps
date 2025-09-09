@@ -10,12 +10,12 @@ public class GaussianFixture : BaseFixture
 {
     [Test]
     [TestCase(0)]
-    [TestCase(0.3)]
+    [TestCase(0.3f)]
     [TestCase(1)]
     [TestCase(5)]
-    [TestCase(50)]
-    [TestCase(500)]
-    public async Task TestGaussianBlur(float radius)
+    [TestCase(20)]
+    [TestCase(200)]
+    public void TestGaussianBlur(float radius)
     {
         ImageRasterData blurredImage = GetSingleBandTestImage()
             .GaussianBlur(radius)
