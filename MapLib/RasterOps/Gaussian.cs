@@ -14,12 +14,8 @@ public static class Gaussian
     {
         if (radius == 0) return source;
 
-        int kernelSize = (int)Math.Ceiling(radius*2+1);
-        if (kernelSize % 2 == 0) kernelSize += 1; // make odd
-        int kernelRadiusPixels = (kernelSize - 1) / 2; // excluding center pixel
-        float sigma = radius / 3f; // 3 stddev each side (almost 0 at that point)
-        float[] kernel = CalculateGaussianKernel1D(kernelSize, sigma);
-
+        float[] kernel = CalculateGaussianKernel1D(radius);
+        int kernelRadiusPixels = (kernel.Length - 1) / 2; // excluding center pixel
         Debug.WriteLine($"Kernel {radius}: [{string.Join(",",kernel)}]");
 
         // Pad (need additional pixels around edges to handle kernel)
@@ -44,26 +40,22 @@ public static class Gaussian
         return source.CloneWithNewData(cropped);
     }
 
-    private static float[] CalculateGaussianKernel1D(int kernelSize, float? sigma = null)
+    private static float[] CalculateGaussianKernel1D(float radius)
     {
-        if (kernelSize % 2 == 0)
-            throw new ArgumentException("Kernel size must be odd.", nameof(kernelSize));
-        if (sigma <= 0)
-            throw new ArgumentException("Sigma must be positive.", nameof(sigma));
+        if (radius <= 0)
+            throw new ArgumentException("Radius must be positive.", nameof(radius));
 
-        // default to three sigma per side (six total)
-        sigma ??= (kernelSize - 1) / 6f;
+        int kernelSize = (int)Math.Ceiling(radius * 2 + 1);
+        if (kernelSize % 2 == 0) kernelSize += 1; // make odd
+        int kernelRadiusPixels = (kernelSize - 1) / 2; // excluding center pixel
+        float sigma = radius / 2.5f; // 2.5 stddev each side; pretty close to 0 at that point
 
         float[] kernel = new float[kernelSize];
-        int radius = kernelSize / 2;
-        float sum = 0f;
-        float twoSigmaSq = 2f * sigma.Value * sigma.Value;
-
+        float twoSigmaSq = 2f * sigma * sigma;
         for (int i = 0; i < kernelSize; i++)
         {
-            int x = i - radius;
+            int x = i - (kernelSize/2);
             kernel[i] = (float)Math.Exp(-(x * x) / twoSigmaSq);
-            sum += kernel[i];
         }
         NormalizeKernel1D(kernel);
         return kernel;

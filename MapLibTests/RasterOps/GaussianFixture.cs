@@ -10,8 +10,9 @@ public class GaussianFixture : BaseFixture
 {
     [Test]
     [TestCase(0)]
-    [TestCase(0.3f)]
+    [TestCase(0.5f)]
     [TestCase(1)]
+    [TestCase(2)]
     [TestCase(5)]
     [TestCase(20)]
     [TestCase(200)]
