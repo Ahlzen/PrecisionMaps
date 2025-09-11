@@ -40,7 +40,11 @@ public static class Gaussian
         return source.CloneWithNewData(cropped);
     }
 
-    private static float[] CalculateGaussianKernel1D(float radius)
+
+
+    #region Helpers
+
+    internal static float[] CalculateGaussianKernel1D(float radius)
     {
         if (radius <= 0)
             throw new ArgumentException("Radius must be positive.", nameof(radius));
@@ -61,7 +65,7 @@ public static class Gaussian
         return kernel;
     }
 
-    private static float[] NormalizeKernel1D(float[] kernel)
+    internal static float[] NormalizeKernel1D(float[] kernel)
     {
         float sum = kernel.Sum();
         if (sum == 0) return kernel; // avoid division by zero
@@ -70,4 +74,5 @@ public static class Gaussian
         return kernel;
     }
 
+    #endregion
 }

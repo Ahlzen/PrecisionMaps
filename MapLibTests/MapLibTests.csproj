@@ -4,7 +4,7 @@
 		<TargetFramework>net9.0-windows</TargetFramework>
 		<ImplicitUsings>disable</ImplicitUsings>
 		<Nullable>enable</Nullable>
-		<AssemblyName>MapLib.Tests</AssemblyName>
+		<AssemblyName>MapLibTests</AssemblyName>
 		<RootNamespace>MapLib.Tests</RootNamespace>
 		<StartupObject>MapLibBenchmarks</StartupObject>
 	</PropertyGroup>

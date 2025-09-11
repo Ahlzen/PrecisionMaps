@@ -56,13 +56,13 @@ public abstract class BaseFixture
         return demData!;
     }
 
-    protected ImageRasterData GetTestImage()
+    internal static ImageRasterData GetTestImage()
     {
         string bitmapPath = Path.Join(TestDataPath, "Misc", "me.jpg");
         using Bitmap bitmap = (Bitmap)Bitmap.FromFile(bitmapPath);
         return new ImageRasterData(Srs.Wgs84, Bounds.GlobalWgs84, bitmap);
     }
 
-    protected SingleBandRasterData GetSingleBandTestImage()
+    internal static SingleBandRasterData GetSingleBandTestImage()
         => GetTestImage().ToSingleBandRasterData();
 }
