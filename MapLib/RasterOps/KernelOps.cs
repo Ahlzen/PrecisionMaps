@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace MapLib.RasterOps;
 
-internal class KernelOp
+internal class KernelOps
 {
     public static float[] Apply1DKernelVertical(
         float[] srcData, int imageWidth, int imageHeight, float[] kernel)

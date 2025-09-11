@@ -26,9 +26,9 @@ public static class Gaussian
 
         // Note: since this is a separable kernel, we do two separate 1D passes
         float[] blurred;
-        blurred = KernelOp.Apply1DKernelHorizontal(
+        blurred = KernelOps.Apply1DKernelHorizontal(
             paddedSource, paddedWidth, paddedHeight, kernel);
-        blurred = KernelOp.Apply1DKernelVertical(
+        blurred = KernelOps.Apply1DKernelVertical(
             blurred, paddedWidth, paddedHeight, kernel);
 
         // Crop (remove padding)
