@@ -63,9 +63,23 @@ public class GaussianBenchmark : BaseBenchmark
     }
 
     [Benchmark]
+    public float[] Apply1DKernelVertical_v2()
+    {
+        return KernelOps.Apply1DKernelVertical_v2(PaddedImageData,
+            PaddedWidth, PaddedHeight, Kernel);
+    }
+
+    [Benchmark]
     public float[] Apply1DKernelHorizontal()
     {
         return KernelOps.Apply1DKernelHorizontal(PaddedImageData,
+            PaddedWidth, PaddedHeight, Kernel);
+    }
+
+    [Benchmark]
+    public float[] Apply1DKernelHorizontal_v2()
+    {
+        return KernelOps.Apply1DKernelHorizontal_v2(PaddedImageData,
             PaddedWidth, PaddedHeight, Kernel);
     }
 
@@ -86,28 +100,36 @@ public class GaussianBenchmark : BaseBenchmark
     
     Benchmark results (on my fairly slow laptop):
 
-| Method                  | Radius | Mean         | Error        | StdDev       | Median       |
-|------------------------ |------- |-------------:|-------------:|-------------:|-------------:|
-| GaussianBlur            | 1      |   6,173.3 us |    142.65 us |    420.59 us |   6,179.6 us |
-| Apply1DKernelVertical   | 1      |   2,015.4 us |    169.03 us |    498.40 us |   1,682.7 us |
-| Apply1DKernelHorizontal | 1      |   1,604.5 us |     29.98 us |     23.41 us |   1,599.0 us |
-| PadExtendingEdges       | 1      |     277.2 us |      5.49 us |      4.86 us |     278.6 us |
-| Crop                    | 1      |     231.2 us |      4.58 us |      4.71 us |     231.3 us |
-| GaussianBlur            | 5      |   8,983.8 us |     83.89 us |     74.36 us |   8,997.9 us |
-| Apply1DKernelVertical   | 5      |   4,142.2 us |     79.07 us |     81.20 us |   4,132.6 us |
-| Apply1DKernelHorizontal | 5      |   4,253.4 us |     72.12 us |     98.71 us |   4,215.2 us |
-| PadExtendingEdges       | 5      |     286.1 us |      4.02 us |      3.35 us |     286.5 us |
-| Crop                    | 5      |     230.2 us |      3.93 us |      3.48 us |     230.3 us |
-| GaussianBlur            | 20     |  31,262.8 us |    551.15 us |    430.30 us |  31,186.6 us |
-| Apply1DKernelVertical   | 20     |  14,959.5 us |     81.40 us |     76.14 us |  14,943.4 us |
-| Apply1DKernelHorizontal | 20     |  15,299.1 us |    224.68 us |    199.17 us |  15,238.6 us |
-| PadExtendingEdges       | 20     |     374.4 us |      4.98 us |      4.41 us |     374.6 us |
-| Crop                    | 20     |     234.3 us |      4.58 us |      5.95 us |     235.3 us |
-| GaussianBlur            | 200    | 567,962.6 us | 10,948.62 us | 11,714.90 us | 570,256.6 us |
-| Apply1DKernelVertical   | 200    | 313,777.9 us |  4,203.05 us |  3,509.74 us | 313,362.8 us |
-| Apply1DKernelHorizontal | 200    | 249,445.2 us |  4,885.98 us |  9,056.48 us | 250,874.3 us |
-| PadExtendingEdges       | 200    |   1,472.8 us |     28.29 us |     34.75 us |   1,474.1 us |
-| Crop                    | 200    |     246.5 us |      4.39 us |      3.89 us |     245.8 us |
-    
+| Method                     | Radius | Mean         | Error        | StdDev       | Median       |
+|--------------------------- |------- |-------------:|-------------:|-------------:|-------------:|
+| GaussianBlur               | 1      |   5,285.7 us |    131.12 us |    386.62 us |   5,317.7 us |
+| Apply1DKernelVertical      | 1      |   1,706.4 us |    127.30 us |    375.34 us |   1,649.1 us |
+| Apply1DKernelVertical_v2   | 1      |     969.4 us |     11.25 us |      9.97 us |     968.5 us |
+| Apply1DKernelHorizontal    | 1      |   1,341.9 us |      9.58 us |      8.00 us |   1,342.4 us |
+| Apply1DKernelHorizontal_v2 | 1      |   1,300.8 us |     11.14 us |      9.30 us |   1,303.6 us |
+| PadExtendingEdges          | 1      |     245.8 us |      3.06 us |      2.71 us |     246.2 us |
+| Crop                       | 1      |     201.6 us |      3.61 us |      3.02 us |     200.7 us |
+| GaussianBlur               | 5      |   8,215.5 us |     97.08 us |     81.06 us |   8,209.5 us |
+| Apply1DKernelVertical      | 5      |   3,675.6 us |     71.93 us |     63.77 us |   3,643.5 us |
+| Apply1DKernelVertical_v2   | 5      |   3,052.5 us |     18.34 us |     17.15 us |   3,047.3 us |
+| Apply1DKernelHorizontal    | 5      |   3,778.2 us |     69.09 us |     64.63 us |   3,753.3 us |
+| Apply1DKernelHorizontal_v2 | 5      |   4,474.9 us |     85.26 us |     75.58 us |   4,481.7 us |
+| PadExtendingEdges          | 5      |     265.9 us |      3.35 us |      2.97 us |     265.8 us |
+| Crop                       | 5      |     207.3 us |      3.03 us |      2.68 us |     207.7 us |
+| GaussianBlur               | 20     |  28,288.4 us |    288.19 us |    283.05 us |  28,222.1 us |
+| Apply1DKernelVertical      | 20     |  13,870.3 us |    131.33 us |    122.85 us |  13,846.8 us |
+| Apply1DKernelVertical_v2   | 20     |  12,503.8 us |    360.01 us |    948.42 us |  12,182.6 us |
+| Apply1DKernelHorizontal    | 20     |  14,214.1 us |    281.87 us |    313.29 us |  14,199.9 us |
+| Apply1DKernelHorizontal_v2 | 20     |  17,768.9 us |    163.86 us |    153.27 us |  17,726.3 us |
+| PadExtendingEdges          | 20     |     365.4 us |      4.48 us |      3.97 us |     365.9 us |
+| Crop                       | 20     |     209.8 us |      3.80 us |      3.73 us |     210.0 us |
+| GaussianBlur               | 200    | 502,778.7 us | 10,020.19 us | 24,007.73 us | 495,254.0 us |
+| Apply1DKernelVertical      | 200    | 254,521.7 us |  4,948.44 us |  5,698.63 us | 253,880.1 us |
+| Apply1DKernelVertical_v2   | 200    | 300,646.2 us |  5,715.02 us |  6,115.01 us | 300,217.7 us |
+| Apply1DKernelHorizontal    | 200    | 234,339.3 us |  4,672.22 us |  7,544.76 us | 236,847.8 us |
+| Apply1DKernelHorizontal_v2 | 200    | 389,412.5 us |  6,840.32 us |  6,718.10 us | 390,918.2 us |
+| PadExtendingEdges          | 200    |   1,367.3 us |     17.22 us |     15.27 us |   1,366.4 us |
+| Crop                       | 200    |     234.5 us |      2.94 us |      2.60 us |     233.6 us |
+ 
      */
 }

@@ -40,8 +40,6 @@ public static class Gaussian
         return source.CloneWithNewData(cropped);
     }
 
-
-
     #region Helpers
 
     internal static float[] CalculateGaussianKernel1D(float radius)
