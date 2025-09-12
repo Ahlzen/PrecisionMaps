@@ -3,6 +3,7 @@ using MapLib.ColorSpace;
 using MapLib.DataSources.Raster;
 using MapLib.RasterOps;
 using OSGeo.GDAL;
+using System.Diagnostics.Contracts;
 using System.Drawing;
 
 namespace MapLib.Tests.RasterOps;
@@ -24,6 +25,31 @@ public class GaussianFixture : BaseFixture
             .GaussianBlur(radius)
             .ToImageRasterData();
         SaveTempBitmap(blurredImage.Bitmap, "TestGaussianBlur_" + radius, ".jpg");
+    }
+
+    [TestCase(0)]
+    [TestCase(1)]
+    [TestCase(2)]
+    [TestCase(5)]
+    [TestCase(10)]
+    [TestCase(50)]
+    public void TestGaussianSharpen(float radius)
+    {
+        ImageRasterData sharpenedImage = GetSingleBandTestImage()
+            .GaussianSharpen(radius, 0.5f)
+            .ToImageRasterData();
+        SaveTempBitmap(sharpenedImage.Bitmap, "TestGaussianSharpen_" + radius, ".jpg");
+    }
+
+    [Test]
+    public void TestMultiSharpen()
+    {
+        SingleBandRasterData sharpenedImage = GetSingleBandTestImage();
+
+        sharpenedImage = sharpenedImage.GaussianSharpen(2, 0.4f);
+        sharpenedImage = sharpenedImage.GaussianSharpen(5, 0.15f);
+        sharpenedImage = sharpenedImage.GaussianSharpen(15, 0.05f);
+        SaveTempBitmap(sharpenedImage.ToImageRasterData().Bitmap, "TestMultiSharpen.jpg");
     }
 }
 

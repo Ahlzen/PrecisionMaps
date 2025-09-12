@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -38,6 +39,19 @@ public static class Gaussian
             source.WidthPx, source.HeightPx);
 
         return source.CloneWithNewData(cropped);
+    }
+
+    public static SingleBandRasterData GaussianSharpen(
+        this SingleBandRasterData source, float radius, float amount)
+    {
+        // This is basically a simple "unsharp mask":
+        // We're subtracting low frequencies from the original image,
+        // thus increasing the relative high frequency content (sharp details)
+        SingleBandRasterData blurred = GaussianBlur(source, radius);
+        float[] unsharpMask = ArrayArithmetics.Multiply(blurred.SingleBandData, amount);
+        float[] result = ArrayArithmetics.Subtract(source.SingleBandData, unsharpMask);
+        result = ArrayArithmetics.Multiply(result, 1 / (1-amount)); // Adjust gain
+        return source.CloneWithNewData(result);
     }
 
     #region Helpers
