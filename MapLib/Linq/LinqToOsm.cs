@@ -1,5 +1,6 @@
 ﻿using MapLib.Geometry;
 using MapLib.Tests.Util;
+using MapLib.Util;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -151,25 +152,65 @@ internal class OsmExpressionVisitor : ExpressionVisitor
             else unsupportedExpression = true;
             Visit(node.Arguments[0]);
         }
-        // Handle: Tags.Contains(new KeyValuePair<string, string>("key", "value"))
+        // Handle: .Contains()
         else if (node.Method.Name == "Contains")
         {
-            MemberExpression? memberExpression = node.Arguments[0] as MemberExpression; // actually PropertyExpression
+            MemberExpression? sourceExpression = node.Arguments[0] as MemberExpression; // actually PropertyExpression
+            
 
-            // TODO: evaluate instead, may be existing variable instead of new
-            NewExpression? newExpression = node.Arguments[1] as NewExpression;
-
-            if (memberExpression != null &&
-                memberExpression.Member.Name == "Tags" &&
-                newExpression != null &&
-                newExpression.Type == typeof(KeyValuePair<string,string>))
+            // Handle: Tags.Contains(new KeyValuePair<string, string>("key", "value"))
+            if (sourceExpression != null &&
+                sourceExpression.Member.Name == "Tags")
             {
-                string key = ((newExpression.Arguments[0] as ConstantExpression)?.Value as string) ?? "";
-                string value = ((newExpression.Arguments[1] as ConstantExpression)?.Value as string) ?? "";
-                var item = (key, value);
-                if (!TagFilters.Contains(item))
-                    TagFilters.Add(item);
+                NewExpression? valueNewExpression = node.Arguments[1] as NewExpression;
+                MemberExpression? valueMemberExpression = node.Arguments[1] as MemberExpression;
+
+                // Handle: Tags.Contains(new KeyValuePair<string, string>("key", "value"))
+                if (valueNewExpression != null &&
+                    valueNewExpression.Type == typeof(KeyValuePair<string, string>))
+                {
+                    string key = ((valueNewExpression.Arguments[0] as ConstantExpression)?.Value as string) ?? "";
+                    string value = ((valueNewExpression.Arguments[1] as ConstantExpression)?.Value as string) ?? "";
+                    var item = (key, value);
+                    if (!TagFilters.Contains(item))
+                        TagFilters.Add(item);
+                }
+                // Handle: Tags.Contains(existingKeyValuePair)
+                else if (valueMemberExpression != null &&
+                    valueMemberExpression.Type == typeof(KeyValuePair<string, string>) &&
+                    valueMemberExpression.Expression is ConstantExpression ce)
+                {
+                    // extract the member value from the supplied anonymous object
+                    object? source = ce.Value;
+                    if (source != null)
+                    {
+                        string fieldName = ReflectionHelper.GetFieldNames(source).First();
+                        var kvpObj = ReflectionHelper.GetFieldValue(source, fieldName)
+                            as KeyValuePair<string, string>?;
+                        if (kvpObj != null)
+                        {
+                            var kvp = kvpObj.Value;
+                            var item = (kvp.Key, kvp.Value);
+                            if (!TagFilters.Contains(item))
+                                TagFilters.Add(item);
+                        }
+                        else unsupportedExpression = true;
+                    }
+                    else unsupportedExpression = true;
+                }
+                else unsupportedExpression = true;
             }
+            //// Handle: Tags.Contains(existingKeyValuePair)
+            //else if (sourceExpression != null &&
+            //    sourceExpression.Member.Name == "Tags" &&
+            //    node.Arguments[1] is  ce &&
+            //    ce.Value is KeyValuePair<string, string> kvp)
+            //{
+            //    var item = (kvp.Key, kvp.Value);
+            //    if (!TagFilters.Contains(item))
+            //        TagFilters.Add(item);
+            //}
+
             else unsupportedExpression = true;
         }
         // Handle: OfType<T>

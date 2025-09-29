@@ -12,21 +12,21 @@ namespace MapLib.Tests.Linq;
 [TestFixture]
 public class LinqToOsmEvalFixture : BaseFixture
 {
-    private OsmQueryProvider _provider = null!;
+    private OsmQueryProvider _provider = null!; // inialized in SetUp
 
     [SetUp] public void SetUp() {
         _provider = new OsmQueryProvider();
         _provider.EvaluateOnly = true;
     }
 
-    [Test] public void TestEval_FilterByTypeAndTags_New() =>
+    [Test] public void TestEval_FilterNodesByTags_New() =>
         new Osm<Point>(_provider)
             .OfType<Point>()
             .Where(p => p.Tags.Contains(new KeyValuePair<string, string>("highway", "bus_stop")))
             .ToList();
 
     // TODO: implement support for this case
-    [Test] public void TestEval_FilterByTypeAndTags_Object() {
+    [Test] public void TestEval_FilterNodesByTags_Object() {
         KeyValuePair<string, string> tag1b = new("highway", "bus_stop");
         List<Point> nodes1b = new Osm<Point>(_provider)
             .OfType<Point>()
@@ -34,7 +34,7 @@ public class LinqToOsmEvalFixture : BaseFixture
             .ToList();
     }
 
-    [Test] public void TestEval_FilterByTypeAndLonLat_Constant() =>
+    [Test] public void TestEval_FilterNodesByLonLat_Constant() =>
         new Osm<Point>(_provider)
             .OfType<Point>()
             .Where(p =>
@@ -45,7 +45,7 @@ public class LinqToOsmEvalFixture : BaseFixture
             .ToList();
 
     // TODO: implement support for this case
-    [Test] public void TestEval_FilterByTypeAndLonLat_Expression() {
+    [Test] public void TestEval_FilterNodesByLonLat_Expression() {
         Bounds bounds = new(10.7, 10.8, 59.9, 60.0);
         List<Point> nodes2b = new Osm<Point>(_provider)
             .OfType<Point>()
@@ -58,7 +58,7 @@ public class LinqToOsmEvalFixture : BaseFixture
     }
 
     // TODO: implement support for this case
-    [Test] public void TestEval_FilterByTypeAndLonLat_WithinBounds() {
+    [Test] public void TestEval_FilterNodesByLonLat_WithinBounds() {
         Bounds bounds = new(10.7, 10.8, 59.9, 60.0);
         List<Point> nodes2b = new Osm<Point>(_provider)
             .OfType<Point>()
@@ -70,7 +70,7 @@ public class LinqToOsmEvalFixture : BaseFixture
             .ToList();
     }
 
-    [Test] public void TestEval_FilterByTypeLonLatAndTags() =>
+    [Test] public void TestEval_FilterNodesByLonLatAndTags() =>
         new Osm<Point>(_provider)
             .OfType<Point>()
             .Where(p =>
