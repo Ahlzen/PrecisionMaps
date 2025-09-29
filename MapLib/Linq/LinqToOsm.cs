@@ -9,6 +9,7 @@ using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+
 namespace MapLib.Linq;
 
 public class Osm<T> : IQueryable<T>, IQueryable
@@ -155,18 +156,12 @@ internal class OsmExpressionVisitor : ExpressionVisitor
         // Handle: .Contains()
         else if (node.Method.Name == "Contains")
         {
-            MemberExpression? sourceExpression = node.Arguments[0] as MemberExpression; // actually PropertyExpression
-            
-
-            // Handle: Tags.Contains(new KeyValuePair<string, string>("key", "value"))
-            if (sourceExpression != null &&
+            // Handle: Tags.Contains()
+            if (node.Arguments[0] is MemberExpression sourceExpression &&
                 sourceExpression.Member.Name == "Tags")
             {
-                NewExpression? valueNewExpression = node.Arguments[1] as NewExpression;
-                MemberExpression? valueMemberExpression = node.Arguments[1] as MemberExpression;
-
                 // Handle: Tags.Contains(new KeyValuePair<string, string>("key", "value"))
-                if (valueNewExpression != null &&
+                if (node.Arguments[1] is NewExpression valueNewExpression &&
                     valueNewExpression.Type == typeof(KeyValuePair<string, string>))
                 {
                     string key = ((valueNewExpression.Arguments[0] as ConstantExpression)?.Value as string) ?? "";
@@ -176,19 +171,17 @@ internal class OsmExpressionVisitor : ExpressionVisitor
                         TagFilters.Add(item);
                 }
                 // Handle: Tags.Contains(existingKeyValuePair)
-                else if (valueMemberExpression != null &&
+                else if (node.Arguments[1] is MemberExpression valueMemberExpression &&
                     valueMemberExpression.Type == typeof(KeyValuePair<string, string>) &&
                     valueMemberExpression.Expression is ConstantExpression ce)
                 {
-                    // extract the member value from the supplied anonymous object
-                    object? source = ce.Value;
+                    object? source = ce.Value; // value is anonymous object; need to extract the only member field
                     if (source != null)
                     {
                         string fieldName = ReflectionHelper.GetFieldNames(source).First();
                         var kvpObj = ReflectionHelper.GetFieldValue(source, fieldName)
                             as KeyValuePair<string, string>?;
-                        if (kvpObj != null)
-                        {
+                        if (kvpObj != null) {
                             var kvp = kvpObj.Value;
                             var item = (kvp.Key, kvp.Value);
                             if (!TagFilters.Contains(item))
@@ -200,17 +193,6 @@ internal class OsmExpressionVisitor : ExpressionVisitor
                 }
                 else unsupportedExpression = true;
             }
-            //// Handle: Tags.Contains(existingKeyValuePair)
-            //else if (sourceExpression != null &&
-            //    sourceExpression.Member.Name == "Tags" &&
-            //    node.Arguments[1] is  ce &&
-            //    ce.Value is KeyValuePair<string, string> kvp)
-            //{
-            //    var item = (kvp.Key, kvp.Value);
-            //    if (!TagFilters.Contains(item))
-            //        TagFilters.Add(item);
-            //}
-
             else unsupportedExpression = true;
         }
         // Handle: OfType<T>
