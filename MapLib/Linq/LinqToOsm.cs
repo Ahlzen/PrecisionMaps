@@ -1,5 +1,7 @@
 ﻿using MapLib.Geometry;
+using MapLib.Tests.Util;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Net.Http;
@@ -42,6 +44,13 @@ public class OsmQueryProvider : IQueryProvider
 {
     private readonly string _overpassApiUrl;
 
+    /// <summary>
+    /// If true, the expression is evaluated and the Overpass query is printed
+    /// but no call is made the API. An empty result is returned.
+    /// This is useful for debugging.
+    /// </summary>
+    public bool EvaluateOnly { get; set; } = false;
+
     public OsmQueryProvider(string overpassApiUrl = "https://overpass-api.de/api/interpreter")
     {
         _overpassApiUrl = overpassApiUrl;
@@ -62,34 +71,34 @@ public class OsmQueryProvider : IQueryProvider
         
     private async Task<IEnumerable<T>> ExecuteAsync<T>(Expression expression)
     {
-        Debug.WriteLine("Expression: " + Environment.NewLine + expression.ToString());
+        TextWriter logger = Console.Out;
 
-        // Parse the expression tree to extract OSM query parameters
         var visitor = new OsmExpressionVisitor();
         visitor.Visit(expression);
-
-        // Build Overpass QL query
         string overpassQuery = visitor.BuildOverpassQuery(typeof(T));
 
-        Debug.WriteLine("Overpass QL:\n" + overpassQuery);
+        if (EvaluateOnly)
+        {
+            logger.WriteLine("---");
+            logger.WriteLine("Expression:" + Environment.NewLine + expression.ToString());
+            logger.WriteLine("Overpass QL:" + Environment.NewLine + overpassQuery);
+            return [];
+        }
 
-        return []; // Temporary stub to allow compilation
+        throw new NotImplementedException();
 
+        // Send HTTP request
+        using var client = new HttpClient();
+        var content = new StringContent(overpassQuery, Encoding.UTF8, "application/x-www-form-urlencoded");
+        var response = await client.PostAsync(_overpassApiUrl, content);
+        response.EnsureSuccessStatusCode();
+        var json = await response.Content.ReadAsStringAsync();
 
-        //// Send HTTP request
-        //using var client = new HttpClient();
-        //var content = new StringContent(overpassQuery, Encoding.UTF8, "application/x-www-form-urlencoded");
-        //var response = await client.PostAsync(_overpassApiUrl, content);
-        //response.EnsureSuccessStatusCode();
-        //var json = await response.Content.ReadAsStringAsync();
+        // Parse OSM JSON (TODO: improve)
+        JsonDocument doc = JsonDocument.Parse(json);
+        JsonElement elements = doc.RootElement.GetProperty("elements");
 
-        //// Parse OSM JSON (simplified, for demo)
-        //JsonDocument doc = JsonDocument.Parse(json);
-        //JsonElement elements = doc.RootElement.GetProperty("elements");
-
-        //Debug.WriteLine("Elements: " + Environment.NewLine + elements);
-
-        //throw new NotImplementedException();
+        logger.WriteLine("Elements: " + Environment.NewLine + elements);
 
         //var results = new List<T>();
         //foreach (var el in elements.EnumerateArray())
@@ -129,6 +138,8 @@ internal class OsmExpressionVisitor : ExpressionVisitor
 
     protected override Expression VisitMethodCall(MethodCallExpression node)
     {
+        bool unsupportedExpression = false;
+
         // Handle: Where(lambda)
         if (node.Method.Name == "Where")
         {
@@ -137,9 +148,9 @@ internal class OsmExpressionVisitor : ExpressionVisitor
             {
                 Visit(lambda.Body);
             }
+            else unsupportedExpression = true;
             Visit(node.Arguments[0]);
         }
-        
         // Handle: Tags.Contains(new KeyValuePair<string, string>("key", "value"))
         else if (node.Method.Name == "Contains")
         {
@@ -159,8 +170,8 @@ internal class OsmExpressionVisitor : ExpressionVisitor
                 if (!TagFilters.Contains(item))
                     TagFilters.Add(item);
             }
+            else unsupportedExpression = true;
         }
-
         // Handle: OfType<T>
         else if (node.Method.Name == "OfType" && node.Method.IsGenericMethod)
         {
@@ -173,38 +184,17 @@ internal class OsmExpressionVisitor : ExpressionVisitor
                 OverpassObjectType = "way";
             Visit(node.Arguments[0]);
         }
+        else unsupportedExpression = true;
 
+        if (unsupportedExpression)
+            throw new NotSupportedException(
+                $"Method is not supported by LINQ-to-OSM: {node.Method.Name} ({node})");
         return base.VisitMethodCall(node);
     }
 
     protected override Expression VisitBinary(BinaryExpression node)
     {
-        //// Support: x => x.Tags["highway"] == "residential"
-        //if (node.NodeType == ExpressionType.Equal)
-        //{
-        //    if (node.Left is MethodCallExpression cx &&
-        //        cx.Method.Name == "get_Item" &&
-        //        cx.Object is MemberExpression e &&
-        //        e.Member.Name == "Tags")
-        //    {
-        //        Debug.WriteLine($"{cx.Method} {cx.Type} {cx.Object} {cx.Arguments}");
-
-        //        if (cx.Arguments[0] is ConstantExpression keyExpr &&
-        //            node.Right is ConstantExpression valExpr)
-        //        {
-        //            string key = keyExpr.Value?.ToString() ?? "";
-        //            string value = valExpr.Value?.ToString() ?? "";
-        //            var item = (key, value);
-        //            if (!TagFilters.Contains(item))
-        //                TagFilters.Add(item);
-        //        }
-        //    }
-        //    // Support: x => x.Type == "node"
-        //    if (node.Left is MemberExpression member && member.Member.Name == "Type" && node.Right is ConstantExpression typeExpr)
-        //    {
-        //        OverpassObjectType = typeExpr.Value?.ToString();
-        //    }
-        //}
+        bool unsupportedExpression = false;
 
         // Support: bounding box, e.g. x => x.Lat >= min && x.Lat <= max
         if (node.NodeType == ExpressionType.AndAlso)
@@ -234,7 +224,7 @@ internal class OsmExpressionVisitor : ExpressionVisitor
                         node.NodeType == ExpressionType.GreaterThanOrEqual)
                         XMin = Convert.ToDouble(constantExpression.Value);
                     else
-                        XMax = Convert.ToDouble(constantExpression.Value);  
+                        XMax = Convert.ToDouble(constantExpression.Value);
                 }
                 if (memberExpression.Member.Name == "Y")
                 {
@@ -245,8 +235,13 @@ internal class OsmExpressionVisitor : ExpressionVisitor
                         YMax = Convert.ToDouble(constantExpression.Value);
                 }
             }
+            else unsupportedExpression = true;
         }
+        else unsupportedExpression = true;
 
+        if (unsupportedExpression)
+            throw new NotSupportedException(
+                $"Binary expression is not supported by LINQ-to-OSM: {node.NodeType} (left: {node.Left}, right: {node.Right})");
         return base.VisitBinary(node);
     }
 

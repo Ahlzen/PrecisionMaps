@@ -105,6 +105,16 @@ public struct Coord : IEquatable<Coord>
     public static Coord None =
         new Coord(double.MinValue, double.MinValue);
 
+    /// <summary>
+    /// Returns true iff this coordinate is within (or on the edge of)
+    /// the specified bounding box.
+    /// </summary>
+    public bool IsWithin(Bounds bounds)
+    {
+        return X >= bounds.XMin && X <= bounds.XMax
+            && Y >= bounds.YMin && Y <= bounds.YMax;
+    }
+
     #region Static primitive factory methods
 
     public static Coord[] CreateCircle(Coord center, double radius,
