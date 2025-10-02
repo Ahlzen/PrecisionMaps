@@ -2,6 +2,7 @@
 using MapLib.Tests.Util;
 using MapLib.Util;
 using System.Diagnostics;
+using System.Drawing.Interop;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
@@ -195,6 +196,41 @@ internal class OsmExpressionVisitor : ExpressionVisitor
             }
             else unsupportedExpression = true;
         }
+        // Handle: .IsWithin(bounds)
+        else if (node.Method.Name == "IsWithin")
+        {
+            // Handle: .IsWithin(existingBounds)
+            if (node.Arguments.Count == 1 &&
+                node.Arguments[0] is MemberExpression me &&
+                me.Type == typeof(Bounds))
+            {
+                if (me.Expression is ConstantExpression ce && ce.Value != null)
+                {
+                    string fieldName = ReflectionHelper.GetFieldNames(ce.Value).First();
+                    var bounds = ReflectionHelper.GetFieldValue(ce.Value, fieldName) as Bounds?;
+                    if (bounds != null)
+                    {
+                        XMin = bounds.Value.XMin;
+                        XMax = bounds.Value.XMax;
+                        YMin = bounds.Value.YMin;
+                        YMax = bounds.Value.YMax;
+                    }
+                    else unsupportedExpression = true;
+                }
+                else unsupportedExpression = true;
+            }
+            else if (node.Arguments.Count == 1 &&
+                node.Arguments[0] is NewExpression ne &&
+                ne.Type == typeof(Bounds) &&
+                ne.Arguments.Count == 4)
+            {
+                XMin = (double)((ConstantExpression)ne.Arguments[0]).Value!;
+                XMax = (double)((ConstantExpression)ne.Arguments[1]).Value!;
+                YMin = (double)((ConstantExpression)ne.Arguments[2]).Value!;
+                XMax = (double)((ConstantExpression)ne.Arguments[3]).Value!;
+            }
+            else unsupportedExpression = true;
+        }
         // Handle: OfType<T>
         else if (node.Method.Name == "OfType" && node.Method.IsGenericMethod)
         {
@@ -219,7 +255,7 @@ internal class OsmExpressionVisitor : ExpressionVisitor
     {
         bool unsupportedExpression = false;
 
-        // Support: bounding box, e.g. x => x.Lat >= min && x.Lat <= max
+        // Support: conditionA && conditionB
         if (node.NodeType == ExpressionType.AndAlso)
         {
             Visit(node.Left);
@@ -233,30 +269,70 @@ internal class OsmExpressionVisitor : ExpressionVisitor
             node.NodeType == ExpressionType.GreaterThan ||
             node.NodeType == ExpressionType.LessThan)
         {
-            MemberExpression? memberExpression = node.Left as MemberExpression; // actually PropertyExpression
-            ConstantExpression? constantExpression = node.Right as ConstantExpression; // TODO: evaluate instead, may be existing variable instead of new
-
-            if (memberExpression != null && memberExpression.Expression != null &&
-                memberExpression.Expression.Type == typeof(Coord) &&
-                (memberExpression.Member.Name == "Y" || memberExpression.Member.Name == "X") &&
-                constantExpression != null)
+            // Support p.Coord.X <= ...
+            if (node.Left is MemberExpression memberExpression && // actually PropertyExpression
+                (memberExpression.Member.Name == "Y" || memberExpression.Member.Name == "X"))
             {
-                if (memberExpression.Member.Name == "X")
+                // Support p.Coord.X <= 12.3
+                if (node.Right is ConstantExpression constantExpression)
                 {
-                    if (node.NodeType == ExpressionType.GreaterThan ||
-                        node.NodeType == ExpressionType.GreaterThanOrEqual)
-                        XMin = Convert.ToDouble(constantExpression.Value);
-                    else
-                        XMax = Convert.ToDouble(constantExpression.Value);
+                    if (memberExpression.Member.Name == "X")
+                    {
+                        if (node.NodeType == ExpressionType.GreaterThan ||
+                            node.NodeType == ExpressionType.GreaterThanOrEqual)
+                            XMin = Convert.ToDouble(constantExpression.Value);
+                        else
+                            XMax = Convert.ToDouble(constantExpression.Value);
+                    }
+                    else if (memberExpression.Member.Name == "Y")
+                    {
+                        if (node.NodeType == ExpressionType.GreaterThan ||
+                            node.NodeType == ExpressionType.GreaterThanOrEqual)
+                            YMin = Convert.ToDouble(constantExpression.Value);
+                        else
+                            YMax = Convert.ToDouble(constantExpression.Value);
+                    }
+                    else unsupportedExpression = true;
                 }
-                if (memberExpression.Member.Name == "Y")
+                // Support: p.Coord.X <= bounds.XMax
+                else if (node.Right is MemberExpression rightMemberExpression &&
+                    rightMemberExpression.Type == typeof(double) &&
+                    rightMemberExpression.Expression is MemberExpression fieldExpression &&
+                    fieldExpression.Expression is ConstantExpression constantExpression2 &&
+                    constantExpression2.NodeType == ExpressionType.Constant)
                 {
-                    if (node.NodeType == ExpressionType.GreaterThan ||
-                        node.NodeType == ExpressionType.GreaterThanOrEqual)
-                        YMin = Convert.ToDouble(constantExpression.Value);
-                    else
-                        YMax = Convert.ToDouble(constantExpression.Value);
+                    object source = constantExpression2.Value!;
+                    string fieldName = fieldExpression.Member.Name;
+                    object? obj = ReflectionHelper.GetFieldValue(source, fieldName);
+                    if (obj is Bounds bounds)
+                    {
+                        string subMemberName = rightMemberExpression.Member.Name;
+                        object? value = ReflectionHelper.GetPropertyValue(obj, subMemberName);
+                        if (value is double)
+                        {
+
+                            if (memberExpression.Member.Name == "X")
+                            {
+                                if (node.NodeType == ExpressionType.GreaterThan ||
+                                    node.NodeType == ExpressionType.GreaterThanOrEqual)
+                                    XMin = (double)value;
+                                else
+                                    XMax = (double)value;
+                            }
+                            else if (memberExpression.Member.Name == "Y")
+                            {
+                                if (node.NodeType == ExpressionType.GreaterThan ||
+                                    node.NodeType == ExpressionType.GreaterThanOrEqual)
+                                    YMin = (double)value;
+                                else
+                                    YMax = (double)value;
+                            }
+                        }
+                        else unsupportedExpression = true;
+                    }
+                    else unsupportedExpression = true;
                 }
+                else unsupportedExpression = true;
             }
             else unsupportedExpression = true;
         }

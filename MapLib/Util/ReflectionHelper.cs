@@ -29,4 +29,18 @@ public static class ReflectionHelper
             throw new ArgumentException($"Field '{fieldName}' not found in type '{type.FullName}'");
         return field.GetValue(source);
     }
+
+
+
+    public static object? GetPropertyValue(object source, string propertyName)
+    {
+        var type = source.GetType();
+        var field = type.GetProperty(propertyName,
+            System.Reflection.BindingFlags.Instance |
+            System.Reflection.BindingFlags.Public |
+            System.Reflection.BindingFlags.NonPublic);
+        if (field == null)
+            throw new ArgumentException($"Property '{propertyName}' not found in type '{type.FullName}'");
+        return field.GetValue(source);
+    }
 }
