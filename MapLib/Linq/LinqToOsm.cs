@@ -76,10 +76,14 @@ public class OsmQueryProvider : IQueryProvider
     {
         TextWriter logger = Console.Out;
 
+        //
+        //new InOrderExpressionConsoleWriter().Visit(expression);
+        //new HierarchicalExpressionConsoleWriter().Parse(expression);
+        //return [];
+
         var visitor = new OsmExpressionVisitor();
         visitor.Visit(expression);
         string overpassQuery = visitor.BuildOverpassQuery(typeof(T));
-
         if (EvaluateOnly)
         {
             logger.WriteLine("---");
@@ -87,21 +91,20 @@ public class OsmQueryProvider : IQueryProvider
             logger.WriteLine("Overpass QL:" + Environment.NewLine + overpassQuery);
             return [];
         }
-
         throw new NotImplementedException();
 
-        // Send HTTP request
-        using var client = new HttpClient();
-        var content = new StringContent(overpassQuery, Encoding.UTF8, "application/x-www-form-urlencoded");
-        var response = await client.PostAsync(_overpassApiUrl, content);
-        response.EnsureSuccessStatusCode();
-        var json = await response.Content.ReadAsStringAsync();
 
-        // Parse OSM JSON (TODO: improve)
-        JsonDocument doc = JsonDocument.Parse(json);
-        JsonElement elements = doc.RootElement.GetProperty("elements");
+        //// Send HTTP request
+        //using var client = new HttpClient();
+        //var content = new StringContent(overpassQuery, Encoding.UTF8, "application/x-www-form-urlencoded");
+        //var response = await client.PostAsync(_overpassApiUrl, content);
+        //response.EnsureSuccessStatusCode();
+        //var json = await response.Content.ReadAsStringAsync();
+        //// Parse OSM JSON (TODO: improve)
+        //JsonDocument doc = JsonDocument.Parse(json);
+        //JsonElement elements = doc.RootElement.GetProperty("elements");
+        //logger.WriteLine("Elements: " + Environment.NewLine + elements);
 
-        logger.WriteLine("Elements: " + Environment.NewLine + elements);
 
         //var results = new List<T>();
         //foreach (var el in elements.EnumerateArray())
@@ -139,8 +142,39 @@ internal class OsmExpressionVisitor : ExpressionVisitor
     public List<(string key, string value)> TagFilters = new();
     public string? OverpassObjectType; // "node", "way", "relation", or null for all
 
+    private bool TryEvaluateValue<T>(Expression ex, out T? value)
+    {
+        if (ex is ConstantExpression ce)
+        {
+            if (ce.Value is T tValue)
+            {
+                value = tValue;
+                return true;
+            }
+        }
+        else
+        {
+            try
+            {
+                var lambda = Expression.Lambda(ex);
+                var compiled = lambda.Compile();
+                var rawValue = compiled.DynamicInvoke();
+                if (rawValue is T tValue)
+                {
+                    value = tValue;
+                    return true;
+                }
+            }
+            catch { } // fall through and return false
+        }
+        value = default;
+        return false;
+    }
+
     protected override Expression VisitMethodCall(MethodCallExpression node)
     {
+        Debug.WriteLine("VisitMethodCall: " + node);
+
         bool unsupportedExpression = false;
 
         // Handle: Where(lambda)
@@ -161,36 +195,12 @@ internal class OsmExpressionVisitor : ExpressionVisitor
             if (node.Arguments[0] is MemberExpression sourceExpression &&
                 sourceExpression.Member.Name == "Tags")
             {
-                // Handle: Tags.Contains(new KeyValuePair<string, string>("key", "value"))
-                if (node.Arguments[1] is NewExpression valueNewExpression &&
-                    valueNewExpression.Type == typeof(KeyValuePair<string, string>))
+                // Right hand side must be something we can evaluate to a constant value
+                if (TryEvaluateValue<KeyValuePair<string,string>>(node.Arguments[1], out var kvp))
                 {
-                    string key = ((valueNewExpression.Arguments[0] as ConstantExpression)?.Value as string) ?? "";
-                    string value = ((valueNewExpression.Arguments[1] as ConstantExpression)?.Value as string) ?? "";
-                    var item = (key, value);
+                    var item = (kvp.Key, kvp.Value);
                     if (!TagFilters.Contains(item))
                         TagFilters.Add(item);
-                }
-                // Handle: Tags.Contains(existingKeyValuePair)
-                else if (node.Arguments[1] is MemberExpression valueMemberExpression &&
-                    valueMemberExpression.Type == typeof(KeyValuePair<string, string>) &&
-                    valueMemberExpression.Expression is ConstantExpression ce)
-                {
-                    object? source = ce.Value; // value is anonymous object; need to extract the only member field
-                    if (source != null)
-                    {
-                        string fieldName = ReflectionHelper.GetFieldNames(source).First();
-                        var kvpObj = ReflectionHelper.GetFieldValue(source, fieldName)
-                            as KeyValuePair<string, string>?;
-                        if (kvpObj != null) {
-                            var kvp = kvpObj.Value;
-                            var item = (kvp.Key, kvp.Value);
-                            if (!TagFilters.Contains(item))
-                                TagFilters.Add(item);
-                        }
-                        else unsupportedExpression = true;
-                    }
-                    else unsupportedExpression = true;
                 }
                 else unsupportedExpression = true;
             }
@@ -253,6 +263,8 @@ internal class OsmExpressionVisitor : ExpressionVisitor
 
     protected override Expression VisitBinary(BinaryExpression node)
     {
+        Debug.WriteLine("VisitBinary: " + node);
+
         bool unsupportedExpression = false;
 
         // Support: conditionA && conditionB
@@ -261,76 +273,41 @@ internal class OsmExpressionVisitor : ExpressionVisitor
             Visit(node.Left);
             Visit(node.Right);
         }
-        // Support: x.Lat >= min, x.Lat > min, x.Lat <= max, x.Lat < max
-        // NOTE: For simplicity, we treat less/greater than the same as -or-equal.
-        // (for geodata it usually doesn't matter)
         else if (node.NodeType == ExpressionType.GreaterThanOrEqual ||
-            node.NodeType == ExpressionType.LessThanOrEqual ||
-            node.NodeType == ExpressionType.GreaterThan ||
-            node.NodeType == ExpressionType.LessThan)
+            node.NodeType == ExpressionType.LessThanOrEqual)
         {
-            // Support p.Coord.X <= ...
-            if (node.Left is MemberExpression memberExpression && // actually PropertyExpression
-                (memberExpression.Member.Name == "Y" || memberExpression.Member.Name == "X"))
+            // Support: p.Coord.X <= ...
+            if (node.Left is MemberExpression me && // actual: PropertyExpression
+                (me.Member.Name == "X" || me.Member.Name == "Y"))
             {
-                // Support p.Coord.X <= 12.3
-                if (node.Right is ConstantExpression constantExpression)
-                {
-                    if (memberExpression.Member.Name == "X")
-                    {
-                        if (node.NodeType == ExpressionType.GreaterThan ||
-                            node.NodeType == ExpressionType.GreaterThanOrEqual)
-                            XMin = Convert.ToDouble(constantExpression.Value);
-                        else
-                            XMax = Convert.ToDouble(constantExpression.Value);
-                    }
-                    else if (memberExpression.Member.Name == "Y")
-                    {
-                        if (node.NodeType == ExpressionType.GreaterThan ||
-                            node.NodeType == ExpressionType.GreaterThanOrEqual)
-                            YMin = Convert.ToDouble(constantExpression.Value);
-                        else
-                            YMax = Convert.ToDouble(constantExpression.Value);
-                    }
-                    else unsupportedExpression = true;
+                if (TryEvaluateValue<double>(node.Right, out var coord)) {
+                    ref double? target = ref me.Member.Name == "X" ?
+                        ref (node.NodeType == ExpressionType.GreaterThanOrEqual ? ref XMin : ref XMax) :
+                        ref (node.NodeType == ExpressionType.GreaterThanOrEqual ? ref YMin : ref YMax);
+                    target = coord;
                 }
-                // Support: p.Coord.X <= bounds.XMax
-                else if (node.Right is MemberExpression rightMemberExpression &&
-                    rightMemberExpression.Type == typeof(double) &&
-                    rightMemberExpression.Expression is MemberExpression fieldExpression &&
-                    fieldExpression.Expression is ConstantExpression constantExpression2 &&
-                    constantExpression2.NodeType == ExpressionType.Constant)
+                else unsupportedExpression = true;
+            }
+            else unsupportedExpression = true;
+        }
+        // Support: equality, e.g. for tags
+        else if (node.NodeType == ExpressionType.Equal ||
+            node.NodeType == ExpressionType.NotEqual)
+        {
+            // Support: object["tag"] ==
+            if (node.Left is MethodCallExpression indexerCall &&
+                indexerCall.Method.Name == "get_Item" &&
+                indexerCall.Arguments.Count == 1 &&
+                indexerCall.Arguments[0] is ConstantExpression constKey &&
+                constKey.Value is string stringKey)
+            {
+                // Support: object["tag"] == "value"
+                if (node.Right is ConstantExpression constValue &&
+                    constValue.Value is string stringValue)
                 {
-                    object source = constantExpression2.Value!;
-                    string fieldName = fieldExpression.Member.Name;
-                    object? obj = ReflectionHelper.GetFieldValue(source, fieldName);
-                    if (obj is Bounds bounds)
-                    {
-                        string subMemberName = rightMemberExpression.Member.Name;
-                        object? value = ReflectionHelper.GetPropertyValue(obj, subMemberName);
-                        if (value is double)
-                        {
-
-                            if (memberExpression.Member.Name == "X")
-                            {
-                                if (node.NodeType == ExpressionType.GreaterThan ||
-                                    node.NodeType == ExpressionType.GreaterThanOrEqual)
-                                    XMin = (double)value;
-                                else
-                                    XMax = (double)value;
-                            }
-                            else if (memberExpression.Member.Name == "Y")
-                            {
-                                if (node.NodeType == ExpressionType.GreaterThan ||
-                                    node.NodeType == ExpressionType.GreaterThanOrEqual)
-                                    YMin = (double)value;
-                                else
-                                    YMax = (double)value;
-                            }
-                        }
-                        else unsupportedExpression = true;
-                    }
-                    else unsupportedExpression = true;
+                    var item = (stringKey, stringValue);
+                    if (!TagFilters.Contains(item))
+                        TagFilters.Add(item);
                 }
                 else unsupportedExpression = true;
             }
@@ -371,5 +348,134 @@ internal class OsmExpressionVisitor : ExpressionVisitor
 
         sb.Append(";\nout body;");
         return sb.ToString();
+    }
+}
+
+// From https://blog.jeremylikness.com/blog/look-behind-the-iqueryable-curtain/
+public class InOrderExpressionConsoleWriter : ExpressionVisitor
+{
+    protected override Expression VisitBinary(BinaryExpression node)
+    {
+        Console.Write($" binary:{node.NodeType} ");
+        return base.VisitBinary(node);
+    }
+
+    protected override Expression VisitUnary(UnaryExpression node)
+    {
+        if (node.Method != null)
+        {
+            Console.Write($" unary:{node.Method.Name} ");
+        }
+        Console.Write($" unary:{node.Operand.NodeType} ");
+        return base.VisitUnary(node);
+    }
+
+    protected override Expression VisitConstant(ConstantExpression node)
+    {
+        Console.Write($" constant:{node.Value} ");
+        return base.VisitConstant(node);
+    }
+
+    protected override Expression VisitMember(MemberExpression node)
+    {
+        Console.Write($" member:{node.Member.Name} ");
+        return base.VisitMember(node);
+    }
+
+    protected override Expression VisitMethodCall(MethodCallExpression node)
+    {
+        Console.Write($" call:{node.Method.Name} ");
+        return base.VisitMethodCall(node);
+    }
+
+    protected override Expression VisitParameter(ParameterExpression node)
+    {
+        Console.Write($" p:{node.Name} ");
+        return base.VisitParameter(node);
+    }
+}
+public class HierarchicalExpressionConsoleWriter
+    : ExpressionVisitor
+{
+    int indent;
+
+    private string Indent =>
+        $"\r\n{new string('\t', indent)}";
+
+    public void Parse(Expression expression)
+    {
+        indent = 0;
+        Visit(expression);
+    }
+
+    protected override Expression VisitConstant(ConstantExpression node)
+    {
+        if (node.Value is Expression value)
+        {
+            Visit(value);
+        }
+        else
+        {
+            Console.Write($"{node.Value}");
+        }
+        return node;
+    }
+
+    protected override Expression VisitParameter(ParameterExpression node)
+    {
+        Console.Write(node.Name);
+        return node;
+    }
+
+    protected override Expression VisitMember(MemberExpression node)
+    {
+        if (node.Expression != null)
+        {
+            Visit(node.Expression);
+        }
+        Console.Write($".{node.Member?.Name}.");
+        return node;
+    }
+
+    protected override Expression VisitMethodCall(MethodCallExpression node)
+    {
+        if (node.Object != null)
+        {
+            Visit(node.Object);
+        }
+        Console.Write($"{Indent}{node.Method.Name}( ");
+        var first = true;
+        indent++;
+        foreach (var arg in node.Arguments)
+        {
+            if (first)
+            {
+                first = false;
+            }
+            else
+            {
+                indent--;
+                Console.Write($"{Indent},");
+                indent++;
+            }
+            Visit(arg);
+        }
+        indent--;
+        Console.Write(") ");
+        return node;
+    }
+
+    protected override Expression VisitBinary(BinaryExpression node)
+    {
+        Console.Write($"{Indent}<");
+        indent++;
+        Visit(node.Left);
+        indent--;
+        Console.Write($"{Indent}{node.NodeType}");
+        indent++;
+        Visit(node.Right);
+        indent--;
+        Console.Write(">");
+        return node;
     }
 }

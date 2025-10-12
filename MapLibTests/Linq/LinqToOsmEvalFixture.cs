@@ -22,20 +22,20 @@ public class LinqToOsmEvalFixture : BaseFixture
 
     ///// Filter by tags
 
+    // Supported
     [Test] public void TestEval_FilterNodesByTags_New() =>
         new Osm<Point>(_provider)
             .OfType<Point>()
-            .Where(p => p.Tags.Contains(new KeyValuePair<string, string>("highway", "bus_stop")))
+            .Where(p => p.Tags.Contains(
+                new KeyValuePair<string, string>("highway", "bus_stop")))
             .ToList();
 
-    // TODO: implement support for this case
     [Test] public void TestEval_FilterNodesByTags_IndexerEqual() =>
         new Osm<Point>(_provider)
             .OfType<Point>()
             .Where(p => p["highway"] == "bus_stop")
             .ToList();
 
-    // TODO: implement support for this case
     [Test] public void TestEval_FilterNodesByTags_IndexerEqual_Union() =>
         new Osm<Point>(_provider)
             .OfType<Point>()
@@ -44,7 +44,6 @@ public class LinqToOsmEvalFixture : BaseFixture
                 p["highway"] == "crossing")
             .ToList();
 
-    // TODO: implement support for this case
     [Test] public void TestEval_FilterNodesByTags_IndexerEqual_Intersection() =>
         new Osm<Point>(_provider)
             .OfType<Point>()
@@ -53,7 +52,6 @@ public class LinqToOsmEvalFixture : BaseFixture
                 p["shelter"] == "yes")
             .ToList();
 
-    // TODO: implement support for this case
     [Test] public void TestEval_FilterNodesByTags_IndexerNotEqual_Intersection() =>
         new Osm<Point>(_provider)
             .OfType<Point>()
@@ -62,7 +60,6 @@ public class LinqToOsmEvalFixture : BaseFixture
                 p["shelter"] != "no")
             .ToList();
 
-    // TODO: implement support for this case
     [Test] public void TestEval_FilterNodesByMultipleTags_IndexerEqual2() {
         List<Point> nodes = new Osm<Point>(_provider)
             .OfType<Point>()
@@ -70,10 +67,7 @@ public class LinqToOsmEvalFixture : BaseFixture
             .ToList();
     }
 
-    // TODO: implement support for this case
-    [Test]
-    public void TestEval_FilterNodesByMultipleTags_IndexerEqual()
-    {
+    [Test] public void TestEval_FilterNodesByMultipleTags_IndexerEqual() {
         var highwayPoints = new[] { "bus_stop", "crossing" };
         List<Point> nodes = new Osm<Point>(_provider)
             .OfType<Point>()
@@ -81,6 +75,7 @@ public class LinqToOsmEvalFixture : BaseFixture
             .ToList();
     }
 
+    // Supported
     [Test] public void TestEval_FilterNodesByTags_Object() {
         KeyValuePair<string, string> tag1b = new("highway", "bus_stop");
         List<Point> nodes = new Osm<Point>(_provider)
@@ -89,7 +84,6 @@ public class LinqToOsmEvalFixture : BaseFixture
             .ToList();
     }
 
-    // TODO: implement support for this case
     [Test] public void TestEval_FilterNodesByTags_Key() =>
         new Osm<Point>(_provider)
             .OfType<Point>()
@@ -99,6 +93,7 @@ public class LinqToOsmEvalFixture : BaseFixture
 
     ///// Filter by area
 
+    // Supported
     [Test] public void TestEval_FilterNodesByLonLat_Constant() =>
         new Osm<Point>(_provider)
             .OfType<Point>()
@@ -109,7 +104,7 @@ public class LinqToOsmEvalFixture : BaseFixture
                 p.Coord.X <= 10.8)
             .ToList();
 
-    // TODO: implement support for this case
+    // Supported
     [Test] public void TestEval_FilterNodesByLonLat_Expression() {
         Bounds bounds = new(10.7, 10.8, 59.9, 60.0);
         List<Point> nodes = new Osm<Point>(_provider)
@@ -122,7 +117,7 @@ public class LinqToOsmEvalFixture : BaseFixture
             .ToList();
     }
 
-    // TODO: implement support for this case
+    // Supported
     [Test] public void TestEval_FilterNodesByLonLat_WithinBounds() {
         Bounds bounds = new(10.7, 10.8, 59.9, 60.0);
         List<Point> nodes = new Osm<Point>(_provider)
@@ -135,7 +130,7 @@ public class LinqToOsmEvalFixture : BaseFixture
             .ToList();
     }
 
-    // TODO: implement support for this case
+    // Supported
     [Test] public void TestEval_FilterNodesByIsWithin() {
         Bounds bounds = new(10.7, 10.8, 59.9, 60.0);
         List<Point> nodes = new Osm<Point>(_provider)
@@ -144,6 +139,7 @@ public class LinqToOsmEvalFixture : BaseFixture
             .ToList();
     }
 
+    // Supported
     [Test] public void TestEval_FilterNodesByIsWithin_New() =>
         new Osm<Point>(_provider)
             .OfType<Point>()
