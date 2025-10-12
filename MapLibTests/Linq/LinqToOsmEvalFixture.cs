@@ -30,6 +30,7 @@ public class LinqToOsmEvalFixture : BaseFixture
                 new KeyValuePair<string, string>("highway", "bus_stop")))
             .ToList();
 
+    // Supported
     [Test] public void TestEval_FilterNodesByTags_IndexerEqual() =>
         new Osm<Point>(_provider)
             .OfType<Point>()

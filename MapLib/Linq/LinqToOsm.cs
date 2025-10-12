@@ -280,6 +280,10 @@ internal class OsmExpressionVisitor : ExpressionVisitor
                 OverpassObjectType = "way";
             Visit(node.Arguments[0]);
         }
+        else if (node.Method.Name == "get_Item")
+        {
+            // Indexer. This is handled elsewhere. Do nothing here.
+        }
         else unsupportedExpression = true;
 
         if (unsupportedExpression)
