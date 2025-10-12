@@ -84,6 +84,7 @@ public class LinqToOsmEvalFixture : BaseFixture
             .ToList();
     }
 
+    // Supported
     [Test] public void TestEval_FilterNodesByTags_Key() =>
         new Osm<Point>(_provider)
             .OfType<Point>()

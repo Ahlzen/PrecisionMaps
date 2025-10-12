@@ -30,6 +30,14 @@ public struct Bounds : IEquatable<Bounds>
         YMax = Math.Max(c1.Y, c2.Y);
     }
 
+    public void Deconstruct(
+        out double xmin, out double xmax,
+        out double ymin, out double ymax)
+    {
+        xmin = XMin; xmax = XMax;
+        ymin = YMin; ymax = YMax;
+    }
+ 
     public double Width => XMax - XMin;
     public double Height => YMax - YMin;
     public Coord BottomLeft => new(XMin, YMin);

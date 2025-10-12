@@ -138,10 +138,21 @@ public class OsmQueryProvider : IQueryProvider
 
 internal class OsmExpressionVisitor : ExpressionVisitor
 {
+    // Bounding box, if specified. Expression should specify all or none.
     public double? XMin, XMax, YMin, YMax;
-    public List<(string key, string value)> TagFilters = new();
-    public string? OverpassObjectType; // "node", "way", "relation", or null for all
 
+    // List of tag key/values to filter on. The value "*" is wildcard.
+    public List<(string key, string value)> TagFilters = new();
+
+    // Object type in OQL, such as "node", "way", "relation" or "nwr" (all).
+    public string? OverpassObjectType = "nwr";
+
+
+    /// <summary>Evaluates the specified expression as a value.</summary>
+    /// <typeparam name="T">Expected type of the ealuated expression.</typeparam>
+    /// <param name="ex">Expression to be evaluated.</param>
+    /// <param name="value">Evaluated value, null if function returns fall.</param>
+    /// <returns>True if successful, in which case value contains the result.</returns>
     private bool TryEvaluateValue<T>(Expression ex, out T? value)
     {
         if (ex is ConstantExpression ce)
@@ -206,6 +217,22 @@ internal class OsmExpressionVisitor : ExpressionVisitor
             }
             else unsupportedExpression = true;
         }
+        // Handle: .HasTag(value)
+        else if (node.Method.Name == "HasTag")
+        {
+            // Right hand side must be something we can evaluate to a constant value
+            if (TryEvaluateValue<string>(node.Arguments[0], out string? key))
+            {
+                if (key != null)
+                {
+                    (string, string) item = new(key, "*");
+                    if (!TagFilters.Contains(item))
+                        TagFilters.Add(item);
+                }
+                else unsupportedExpression = true;
+            }
+            else unsupportedExpression = true;
+        }
         // Handle: .IsWithin(bounds)
         else if (node.Method.Name == "IsWithin")
         {
@@ -218,8 +245,8 @@ internal class OsmExpressionVisitor : ExpressionVisitor
                 {
                     string fieldName = ReflectionHelper.GetFieldNames(ce.Value).First();
                     var bounds = ReflectionHelper.GetFieldValue(ce.Value, fieldName) as Bounds?;
-                    if (bounds != null)
-                    {
+                    if (bounds != null) {
+                        // Can't use deconstructor since LHS is nullable :(
                         XMin = bounds.Value.XMin;
                         XMax = bounds.Value.XMax;
                         YMin = bounds.Value.YMin;
@@ -335,7 +362,7 @@ internal class OsmExpressionVisitor : ExpressionVisitor
             foreach (var (key, value) in TagFilters)
             {
                 sb.Append($"[\"{key}\"");
-                if (value != null) sb.Append($"=\"{value}\"");
+                if (value != "*") sb.Append($"=\"{value}\"");
                 sb.Append("]");
             }
         }
