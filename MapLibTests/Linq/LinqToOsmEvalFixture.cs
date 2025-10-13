@@ -45,6 +45,7 @@ public class LinqToOsmEvalFixture : BaseFixture
                 p["highway"] == "crossing")
             .ToList();
 
+    // Supported
     [Test] public void TestEval_FilterNodesByTags_IndexerEqual_Intersection() =>
         new Osm<Point>(_provider)
             .OfType<Point>()
@@ -61,6 +62,7 @@ public class LinqToOsmEvalFixture : BaseFixture
                 p["shelter"] != "no")
             .ToList();
 
+    // In progress (should be union, not intersection)
     [Test] public void TestEval_FilterNodesByMultipleTags_IndexerEqual2() {
         List<Point> nodes = new Osm<Point>(_provider)
             .OfType<Point>()
@@ -68,6 +70,7 @@ public class LinqToOsmEvalFixture : BaseFixture
             .ToList();
     }
 
+    // In progress (should be union, not intersection)
     [Test] public void TestEval_FilterNodesByMultipleTags_IndexerEqual() {
         var highwayPoints = new[] { "bus_stop", "crossing" };
         List<Point> nodes = new Osm<Point>(_provider)

@@ -2,6 +2,7 @@
 using MapLib.Tests.Util;
 using MapLib.Util;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Drawing.Interop;
 using System.IO;
 using System.Linq;
@@ -83,6 +84,7 @@ public class OsmQueryProvider : IQueryProvider
 
         var visitor = new OsmExpressionVisitor();
         visitor.Visit(expression);
+        visitor.RunPostProcessing();
         string overpassQuery = visitor.BuildOverpassQuery(typeof(T));
         if (EvaluateOnly)
         {
@@ -141,19 +143,72 @@ internal class OsmExpressionVisitor : ExpressionVisitor
     // Bounding box, if specified. Expression should specify all or none.
     public double? XMin, XMax, YMin, YMax;
 
-    // List of tag key/values to filter on. The value "*" is wildcard.
-    public List<(string key, string value)> TagFilters = new();
+    /// <summary>
+    /// Dictionaries of key/values to filter on. See remarks.
+    /// </summary>
+    /// <remarks>
+    /// The value "*" is a wildcard.
+    /// A value starting with '!' is negated (not equal to).
+    /// Each dictionary is a list of conditions that all have to be
+    /// true (intersection of all tag/value pairs).
+    /// If more than one dictionary, the result is a union of these.
+    /// 
+    /// For example:
+    /// 
+    /// p["highway"] == "primary" && p["surface"] != "asphalt"
+    ///   -> {{"highway","primary"} {"surface","!asphalt"}} (one dictionary)
+    ///   -> OQL: ["highway"="primary"]["surface"!="asphalt"]
+    ///
+    /// p["highway"] == "primary" || p["highway"] == "secondary"
+    ///   -> {{"highway","primary"}}, {{"highway","secondary"}} (two dictionaries)
+    ///   -> OQL: (["highway"="primary"];["highway"="secondary"];)
+    /// </remarks>
+    public List<Dictionary<string, string>> TagFilterSets = new();
+
+    /// <summary>
+    /// List we're currently adding to. This ultimately gets
+    /// added to TagFilters.
+    /// </summary>
+    private Dictionary<string, string> CurrentFilterSet = new();
 
     // Object type in OQL, such as "node", "way", "relation" or "nwr" (all).
     public string? OverpassObjectType = "nwr";
 
+
+    /// <summary>
+    /// Runs any processing to be peformed after the tree has been visited.
+    /// </summary>
+    public void RunPostProcessing()
+    {
+        // Make sure the filter set we were currently working on
+        // is added to the main list.
+        if (CurrentFilterSet.Any())
+            TagFilterSets.Add(CurrentFilterSet);
+    }
+
+    private void AddToFilterSet(string key, string value, bool negate = false)
+    {
+        if (negate)
+            CurrentFilterSet[key] = "!" + value;
+        else
+            CurrentFilterSet[key] = value;
+    }
+
+    private void StartNewFilterSet()
+    {
+        if (CurrentFilterSet.Any())
+        {
+            TagFilterSets.Add(CurrentFilterSet);
+            CurrentFilterSet = new();
+        }
+    }
 
     /// <summary>Evaluates the specified expression as a value.</summary>
     /// <typeparam name="T">Expected type of the ealuated expression.</typeparam>
     /// <param name="ex">Expression to be evaluated.</param>
     /// <param name="value">Evaluated value, null if function returns fall.</param>
     /// <returns>True if successful, in which case value contains the result.</returns>
-    private bool TryEvaluateValue<T>(Expression ex, out T? value)
+    private bool TryEvaluateValue<T>(Expression ex, [NotNullWhen(true)] out T? value)
     {
         if (ex is ConstantExpression ce)
         {
@@ -207,11 +262,25 @@ internal class OsmExpressionVisitor : ExpressionVisitor
                 sourceExpression.Member.Name == "Tags")
             {
                 // Right hand side must be something we can evaluate to a constant value
-                if (TryEvaluateValue<KeyValuePair<string,string>>(node.Arguments[1], out var kvp))
+                if (TryEvaluateValue<KeyValuePair<string, string>>(node.Arguments[1], out var kvp))
+                    AddToFilterSet(kvp.Key, kvp.Value);
+                else unsupportedExpression = true;
+            }
+            // Handle: IEnumerable<string>.Contains(p["tag"])
+            else if (node.Arguments.Count > 1 &&
+                node.Arguments[1] is MethodCallExpression mce &&
+                mce.Method.Name == "get_Item")
+            {
+                if (TryEvaluateValue(mce.Arguments[0], out string? key))
                 {
-                    var item = (kvp.Key, kvp.Value);
-                    if (!TagFilters.Contains(item))
-                        TagFilters.Add(item);
+                    if (TryEvaluateValue(node.Arguments[0], out IEnumerable<string>? values))
+                    {
+                        foreach (string value in values) {
+                            StartNewFilterSet();
+                            AddToFilterSet(key, value);
+                        }
+                    }
+                    else unsupportedExpression = true;
                 }
                 else unsupportedExpression = true;
             }
@@ -224,11 +293,7 @@ internal class OsmExpressionVisitor : ExpressionVisitor
             if (TryEvaluateValue<string>(node.Arguments[0], out string? key))
             {
                 if (key != null)
-                {
-                    (string, string) item = new(key, "*");
-                    if (!TagFilters.Contains(item))
-                        TagFilters.Add(item);
-                }
+                    AddToFilterSet(key, "*");
                 else unsupportedExpression = true;
             }
             else unsupportedExpression = true;
@@ -298,10 +363,17 @@ internal class OsmExpressionVisitor : ExpressionVisitor
 
         bool unsupportedExpression = false;
 
-        // Support: conditionA && conditionB
+        // Support: conditionA && conditionB (for tag filters)
         if (node.NodeType == ExpressionType.AndAlso)
         {
             Visit(node.Left);
+            Visit(node.Right);
+        }
+        // Support: conditionA || conditionB (for tag filters)
+        else if (node.NodeType == ExpressionType.OrElse)
+        {
+            Visit(node.Left);
+            StartNewFilterSet();
             Visit(node.Right);
         }
         else if (node.NodeType == ExpressionType.GreaterThanOrEqual ||
@@ -336,9 +408,9 @@ internal class OsmExpressionVisitor : ExpressionVisitor
                 if (node.Right is ConstantExpression constValue &&
                     constValue.Value is string stringValue)
                 {
-                    var item = (stringKey, stringValue);
-                    if (!TagFilters.Contains(item))
-                        TagFilters.Add(item);
+                    AddToFilterSet(stringKey, stringValue,
+                        negate: node.NodeType == ExpressionType.NotEqual);
+                    return node;
                 }
                 else unsupportedExpression = true;
             }
@@ -361,14 +433,37 @@ internal class OsmExpressionVisitor : ExpressionVisitor
         sb.Append(OverpassObjectType ?? "nwr"); // nwr is OQL for node, way, relation
 
         // Tag type filter(s)
-        if (TagFilters.Count > 0)
+        bool hasFilterSets = TagFilterSets.Count > 0;
+        bool hasMultipleFilterSets = TagFilterSets.Count > 1;
+
+        if (hasFilterSets)
         {
-            foreach (var (key, value) in TagFilters)
+            // If we have multiple filter sets, we need to take
+            // the union of those, or in OQL (filter1;filter2;...)
+            if (hasMultipleFilterSets)
+                sb.Append("(\n  ");
+
+            foreach (Dictionary<string,string> filterSet in TagFilterSets)
             {
-                sb.Append($"[\"{key}\"");
-                if (value != "*") sb.Append($"=\"{value}\"");
-                sb.Append("]");
+                foreach (KeyValuePair<string, string> item in filterSet)
+                {
+                    sb.Append($"[\"{item.Key}\"");
+                    if (item.Value != "*")
+                    {
+                        if (item.Value.StartsWith("!"))
+                            sb.Append($"!=\"{item.Value.Substring(1)}\"");
+                        else
+                            sb.Append($"=\"{item.Value}\"");
+                    }
+                    sb.Append("]");
+                }
+
+                if (hasMultipleFilterSets)
+                    sb.Append(";\n  ");
             }
+
+            if (hasMultipleFilterSets)
+                sb.Append(")");
         }
 
         // Bounding box filter
