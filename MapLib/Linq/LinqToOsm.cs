@@ -424,6 +424,21 @@ internal class OsmExpressionVisitor : ExpressionVisitor
         return base.VisitBinary(node);
     }
 
+    /// <summary>
+    /// Calculates a sort-of hash for the whole dictionary. See below
+    /// for usage and why this is needed.
+    /// </summary>
+    public static int CalcDictHash(Dictionary<string, string> dict) {
+        // NOTE: this is not efficient, but it doesn't matter for this purpose
+        StringBuilder sb = new();
+        foreach (var item in dict) {
+            sb.Append(item.Key);
+            sb.Append(item.Value);
+            sb.Append(",");
+        }
+        return sb.ToString().GetHashCode();
+    }
+
     public string BuildOverpassQuery(Type osmType)
     {
         var sb = new StringBuilder();
@@ -432,18 +447,28 @@ internal class OsmExpressionVisitor : ExpressionVisitor
         // Object type filter
         sb.Append(OverpassObjectType ?? "nwr"); // nwr is OQL for node, way, relation
 
+        // Bit of a HACK!
+        // To avoid a fair amount of bookkeeping traversing the tree
+        // we may end up with duplicate dictionaries.
+        // Dictionary<K,E> doesn't compute predictable hash codes
+        // even when their elements do, so just Distinct() doesn't work,
+        // hence DistinctBy() using our own function.
+        // (stricly speaking this hash is not guaranteed to be unique, but
+        // for our purposes it's extremely unlikely that we'll have a collision)
+        IList<Dictionary<string, string>> filterSets =
+            TagFilterSets.DistinctBy(CalcDictHash).ToList();
+
         // Tag type filter(s)
-        bool hasFilterSets = TagFilterSets.Count > 0;
-        bool hasMultipleFilterSets = TagFilterSets.Count > 1;
+        bool hasFilterSets = filterSets.Count > 0;
+        bool hasMultipleFilterSets = filterSets.Count > 1;
 
         if (hasFilterSets)
         {
             // If we have multiple filter sets, we need to take
             // the union of those, or in OQL (filter1;filter2;...)
-            if (hasMultipleFilterSets)
-                sb.Append("(\n  ");
+            if (hasMultipleFilterSets) sb.Append("(\n  ");
 
-            foreach (Dictionary<string,string> filterSet in TagFilterSets)
+            foreach (Dictionary<string,string> filterSet in filterSets)
             {
                 foreach (KeyValuePair<string, string> item in filterSet)
                 {
@@ -457,13 +482,10 @@ internal class OsmExpressionVisitor : ExpressionVisitor
                     }
                     sb.Append("]");
                 }
-
-                if (hasMultipleFilterSets)
-                    sb.Append(";\n  ");
+                if (hasMultipleFilterSets) sb.Append(";\n  ");
             }
 
-            if (hasMultipleFilterSets)
-                sb.Append(")");
+            if (hasMultipleFilterSets) sb.Append(")");
         }
 
         // Bounding box filter

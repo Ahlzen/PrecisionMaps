@@ -1,11 +1,4 @@
 ﻿using MapLib.Linq;
-using MapLib.Tests;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MapLib.Tests.Linq;
 
@@ -17,6 +10,31 @@ public class LinqToOsmEvalFixture : BaseFixture
     [SetUp] public void SetUp() {
         _provider = new OsmQueryProvider();
         _provider.EvaluateOnly = true;
+    }
+
+    
+    [Test]
+    public void TestDictionaryEquality()
+    {
+        // Just verifying that dictionary equality works
+        // as we expect it to...
+
+        Dictionary<string, string>
+            dict1 = new() { { "key1", "val1" }, { "key2", "val2" } },
+            dict2 = new() { { "key1", "val1" }, { "key2", "val2" } },
+            dict3 = new() { { "key1", "val3" }, { "key2", "val4" } };
+        
+        Assert.That(dict1, Is.EqualTo(dict2));
+        //Assert.That(dict1.GetHashCode(),
+        //    Is.EqualTo(dict2.GetHashCode())); // NOT true
+        Assert.That(OsmExpressionVisitor.CalcDictHash(dict1),
+            Is.EqualTo(OsmExpressionVisitor.CalcDictHash(dict2)));
+
+        Assert.That(dict1, Is.Not.EqualTo(dict3));
+        //Assert.That(dict1.GetHashCode(),
+        //    Is.Not.EqualTo(dict3.GetHashCode())); // NOT true
+        Assert.That(OsmExpressionVisitor.CalcDictHash(dict1),
+            Is.Not.EqualTo(OsmExpressionVisitor.CalcDictHash(dict3)));
     }
 
 
@@ -164,6 +182,4 @@ public class LinqToOsmEvalFixture : BaseFixture
                 p.Coord.X >= 10.7 &&
                 p.Coord.X <= 10.8)
             .ToList();
-
-
 }
