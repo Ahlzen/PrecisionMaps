@@ -13,7 +13,7 @@ public class OsmDataReaderBenchmark : BaseBenchmark
     public VectorData ReadOsm_OsmDataReader()
     {
         string filename = "Weymouth Detail.osm";
-        OsmDataReader reader = new();
+        OsmXmlDataReader reader = new();
         VectorData data = reader.ReadFile(
             Path.Join(BasePath, filename));
         Console.WriteLine($"{filename}: Feature count: {data.Count}");

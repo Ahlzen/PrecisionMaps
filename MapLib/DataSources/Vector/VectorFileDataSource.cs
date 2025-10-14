@@ -27,7 +27,7 @@ public class VectorFileDataSource : BaseVectorDataSource
         switch (extension)
         {
             case ".osm":
-                _reader = new OsmDataReader();
+                _reader = new OsmXmlDataReader();
                 Srs = Srs.Wgs84;
                 break;
             case ".geojson":

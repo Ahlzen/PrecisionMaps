@@ -11,7 +11,7 @@ internal class OsmDataReaderFixture : BaseFixture
     [TestCase("osm-xml/Weymouth Detail.osm")]
     public void TestReadOsmData(string filename)
     {
-        OsmDataReader reader = new();
+        OsmXmlDataReader reader = new();
         VectorData map = reader.ReadFile(Path.Join(TestDataPath, filename));
 
         // These should be non-null (by may be empty)

@@ -40,7 +40,7 @@ public class OsmDataSource : BaseVectorDataSource
         string? filename = _cacheManager.GetExistingCachedFile(baseFilename, ".osm");
         if (filename == null)
             filename = await DownloadData(bounds);
-        OsmDataReader reader = new();
+        OsmXmlDataReader reader = new();
         VectorData data = reader.ReadFile(filename);
         return data;
     }

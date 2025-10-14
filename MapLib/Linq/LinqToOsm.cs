@@ -1,4 +1,5 @@
-﻿using MapLib.Geometry;
+﻿using MapLib.FileFormats.Vector;
+using MapLib.Geometry;
 using MapLib.Tests.Util;
 using MapLib.Util;
 using System.Diagnostics;
@@ -74,69 +75,49 @@ public class OsmQueryProvider : IQueryProvider
         => (TResult)Execute(expression);
         
     private async Task<IEnumerable<T>> ExecuteAsync<T>(Expression expression)
+        where T : Shape
     {
         TextWriter logger = Console.Out;
 
-        //
-        //new InOrderExpressionConsoleWriter().Visit(expression);
-        //new HierarchicalExpressionConsoleWriter().Parse(expression);
-        //return [];
-
-        var visitor = new OsmExpressionVisitor();
+        // Evaluate the LINQ-to-OSM expression
+        OsmExpressionVisitor visitor = new();
         visitor.Visit(expression);
         visitor.RunPostProcessing();
+        
+        // Build Overpass Query (OQL)
         string overpassQuery = visitor.BuildOverpassQuery(typeof(T));
+        logger.WriteLine("---");
+        logger.WriteLine("Expression:" + Environment.NewLine + expression.ToString());
+        logger.WriteLine("Overpass QL:" + Environment.NewLine + overpassQuery);
         if (EvaluateOnly)
         {
-            logger.WriteLine("---");
-            logger.WriteLine("Expression:" + Environment.NewLine + expression.ToString());
-            logger.WriteLine("Overpass QL:" + Environment.NewLine + overpassQuery);
             return [];
         }
-        throw new NotImplementedException();
 
+        // Execute Overpass Query
+        using HttpClient client = new();
+        StringContent content = new(overpassQuery, Encoding.UTF8, "application/x-www-form-urlencoded");
+        HttpResponseMessage response = await client.PostAsync(_overpassApiUrl, content);
+        response.EnsureSuccessStatusCode();
+        string rawXml = await response.Content.ReadAsStringAsync();
 
-        //// Send HTTP request
-        //using var client = new HttpClient();
-        //var content = new StringContent(overpassQuery, Encoding.UTF8, "application/x-www-form-urlencoded");
-        //var response = await client.PostAsync(_overpassApiUrl, content);
-        //response.EnsureSuccessStatusCode();
-        //var json = await response.Content.ReadAsStringAsync();
-        //// Parse OSM JSON (TODO: improve)
-        //JsonDocument doc = JsonDocument.Parse(json);
-        //JsonElement elements = doc.RootElement.GetProperty("elements");
-        //logger.WriteLine("Elements: " + Environment.NewLine + elements);
-
-
-        //var results = new List<T>();
-        //foreach (var el in elements.EnumerateArray())
-        //{
-        //    if (typeof(T) == typeof(OsmNode) && el.GetProperty("type").GetString() == "node")
-        //        results.Add((T)(object)new OsmNode
-        //        {
-        //            Id = el.GetProperty("id").GetInt64(),
-        //            Lat = el.GetProperty("lat").GetDouble(),
-        //            Lon = el.GetProperty("lon").GetDouble(),
-        //            Tags = el.TryGetProperty("tags", out var tags) ? tags.EnumerateObject().ToDictionary(t => t.Name, t => t.Value.GetString() ?? "") : new()
-        //        });
-        //    else if (typeof(T) == typeof(OsmWay) && el.GetProperty("type").GetString() == "way")
-        //        results.Add((T)(object)new OsmWay
-        //        {
-        //            Id = el.GetProperty("id").GetInt64(),
-        //            Nodes = el.GetProperty("nodes").EnumerateArray().Select(n => n.GetInt64()).ToList(),
-        //            Tags = el.TryGetProperty("tags", out var tags) ? tags.EnumerateObject().ToDictionary(t => t.Name, t => t.Value.GetString() ?? "") : new()
-        //        });
-        //    else if (typeof(T) == typeof(OsmRelation) && el.GetProperty("type").GetString() == "relation")
-        //        results.Add((T)(object)new OsmRelation
-        //        {
-        //            Id = el.GetProperty("id").GetInt64(),
-        //            Members = el.GetProperty("members").EnumerateArray().Select(m => (object)m).ToList(),
-        //            Tags = el.TryGetProperty("tags", out var tags) ? tags.EnumerateObject().ToDictionary(t => t.Name, t => t.Value.GetString() ?? "") : new()
-        //        });
-        //}
-        //return results;
-
-        // TODO: sort out way -> line vs polygon
+        // Parse and return the relevant data
+        VectorData data = new OsmXmlDataReader().Parse(rawXml);
+        // This can probably be made more efficient
+        // TODO: Can we support multi-geometries?
+        if (typeof(T) == typeof(Point))
+            return data.Points.Cast<T>();
+        else if (typeof(T) == typeof(Line))
+            return data.Lines.Cast<T>();
+        else if (typeof(T) == typeof(Polygon))
+            return data.Lines.Cast<T>();
+        else if (typeof(T) == typeof(Shape))
+            return data.Points.Cast<T>()
+                .Union(data.Lines.Cast<T>())
+                .Union(data.Polygons.Cast<T>());
+        else
+            throw new NotSupportedException(
+                $"Geometry type not supported: {typeof(T)}");
     }
 }
 
@@ -427,7 +408,7 @@ internal class OsmExpressionVisitor : ExpressionVisitor
     public string BuildOverpassQuery(Type osmType)
     {
         var sb = new StringBuilder();
-        sb.Append("[out:json];\n");
+        sb.Append("[out:xml];\n");
 
         // Object type filter
         sb.Append(OverpassObjectType ?? "nwr"); // nwr is OQL for node, way, relation
@@ -481,134 +462,5 @@ internal class OsmExpressionVisitor : ExpressionVisitor
 
         sb.Append(";\nout body;");
         return sb.ToString();
-    }
-}
-
-// From https://blog.jeremylikness.com/blog/look-behind-the-iqueryable-curtain/
-public class InOrderExpressionConsoleWriter : ExpressionVisitor
-{
-    protected override Expression VisitBinary(BinaryExpression node)
-    {
-        Console.Write($" binary:{node.NodeType} ");
-        return base.VisitBinary(node);
-    }
-
-    protected override Expression VisitUnary(UnaryExpression node)
-    {
-        if (node.Method != null)
-        {
-            Console.Write($" unary:{node.Method.Name} ");
-        }
-        Console.Write($" unary:{node.Operand.NodeType} ");
-        return base.VisitUnary(node);
-    }
-
-    protected override Expression VisitConstant(ConstantExpression node)
-    {
-        Console.Write($" constant:{node.Value} ");
-        return base.VisitConstant(node);
-    }
-
-    protected override Expression VisitMember(MemberExpression node)
-    {
-        Console.Write($" member:{node.Member.Name} ");
-        return base.VisitMember(node);
-    }
-
-    protected override Expression VisitMethodCall(MethodCallExpression node)
-    {
-        Console.Write($" call:{node.Method.Name} ");
-        return base.VisitMethodCall(node);
-    }
-
-    protected override Expression VisitParameter(ParameterExpression node)
-    {
-        Console.Write($" p:{node.Name} ");
-        return base.VisitParameter(node);
-    }
-}
-public class HierarchicalExpressionConsoleWriter
-    : ExpressionVisitor
-{
-    int indent;
-
-    private string Indent =>
-        $"\r\n{new string('\t', indent)}";
-
-    public void Parse(Expression expression)
-    {
-        indent = 0;
-        Visit(expression);
-    }
-
-    protected override Expression VisitConstant(ConstantExpression node)
-    {
-        if (node.Value is Expression value)
-        {
-            Visit(value);
-        }
-        else
-        {
-            Console.Write($"{node.Value}");
-        }
-        return node;
-    }
-
-    protected override Expression VisitParameter(ParameterExpression node)
-    {
-        Console.Write(node.Name);
-        return node;
-    }
-
-    protected override Expression VisitMember(MemberExpression node)
-    {
-        if (node.Expression != null)
-        {
-            Visit(node.Expression);
-        }
-        Console.Write($".{node.Member?.Name}.");
-        return node;
-    }
-
-    protected override Expression VisitMethodCall(MethodCallExpression node)
-    {
-        if (node.Object != null)
-        {
-            Visit(node.Object);
-        }
-        Console.Write($"{Indent}{node.Method.Name}( ");
-        var first = true;
-        indent++;
-        foreach (var arg in node.Arguments)
-        {
-            if (first)
-            {
-                first = false;
-            }
-            else
-            {
-                indent--;
-                Console.Write($"{Indent},");
-                indent++;
-            }
-            Visit(arg);
-        }
-        indent--;
-        Console.Write(") ");
-        return node;
-    }
-
-    protected override Expression VisitBinary(BinaryExpression node)
-    {
-        Console.Write($"{Indent}<");
-        indent++;
-        Visit(node.Left);
-        indent--;
-        Console.Write($"{Indent}{node.NodeType}");
-        indent++;
-        Visit(node.Right);
-        indent--;
-        Console.Write(">");
-        return node;
     }
 }

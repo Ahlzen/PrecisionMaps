@@ -95,7 +95,7 @@ internal class Visualizer
         double geometryWidth, double geometryHeight,
         int canvasWidth, int canvasHeight,
         Color background, Action<CanvasStack, IEnumerable<MultiPolygon>> drawingFunc)
-        => DrawPolygons(new OsmDataReader().ReadFile(inputFilename),
+        => DrawPolygons(new OsmXmlDataReader().ReadFile(inputFilename),
             geometryWidth, geometryHeight,
             canvasWidth, canvasHeight, background, drawingFunc);
 
