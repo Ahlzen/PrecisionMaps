@@ -135,6 +135,8 @@ public class OsmQueryProvider : IQueryProvider
         //        });
         //}
         //return results;
+
+        // TODO: sort out way -> line vs polygon
     }
 }
 
@@ -290,7 +292,7 @@ internal class OsmExpressionVisitor : ExpressionVisitor
         else if (node.Method.Name == "HasTag")
         {
             // Right hand side must be something we can evaluate to a constant value
-            if (TryEvaluateValue<string>(node.Arguments[0], out string? key))
+            if (TryEvaluateValue(node.Arguments[0], out string? key))
             {
                 if (key != null)
                     AddToFilterSet(key, "*");
@@ -301,35 +303,12 @@ internal class OsmExpressionVisitor : ExpressionVisitor
         // Handle: .IsWithin(bounds)
         else if (node.Method.Name == "IsWithin")
         {
-            // Handle: .IsWithin(existingBounds)
-            if (node.Arguments.Count == 1 &&
-                node.Arguments[0] is MemberExpression me &&
-                me.Type == typeof(Bounds))
-            {
-                if (me.Expression is ConstantExpression ce && ce.Value != null)
-                {
-                    string fieldName = ReflectionHelper.GetFieldNames(ce.Value).First();
-                    var bounds = ReflectionHelper.GetFieldValue(ce.Value, fieldName) as Bounds?;
-                    if (bounds != null) {
-                        // Can't use deconstructor since LHS is nullable :(
-                        XMin = bounds.Value.XMin;
-                        XMax = bounds.Value.XMax;
-                        YMin = bounds.Value.YMin;
-                        YMax = bounds.Value.YMax;
-                    }
-                    else unsupportedExpression = true;
-                }
-                else unsupportedExpression = true;
-            }
-            else if (node.Arguments.Count == 1 &&
-                node.Arguments[0] is NewExpression ne &&
-                ne.Type == typeof(Bounds) &&
-                ne.Arguments.Count == 4)
-            {
-                XMin = (double)((ConstantExpression)ne.Arguments[0]).Value!;
-                XMax = (double)((ConstantExpression)ne.Arguments[1]).Value!;
-                YMin = (double)((ConstantExpression)ne.Arguments[2]).Value!;
-                XMax = (double)((ConstantExpression)ne.Arguments[3]).Value!;
+            if (TryEvaluateValue(node.Arguments[0], out Bounds bounds)) {
+                // Can't use deconstructor since LHS is nullable :(
+                XMin = bounds.XMin;
+                XMax = bounds.XMax;
+                YMin = bounds.YMin;
+                YMax = bounds.YMax;
             }
             else unsupportedExpression = true;
         }
@@ -342,7 +321,10 @@ internal class OsmExpressionVisitor : ExpressionVisitor
             else if (typeArg == typeof(Line))
                 OverpassObjectType = "way";
             else if (typeArg == typeof(Polygon))
-                OverpassObjectType = "way";
+                OverpassObjectType = "way"; // TODO: save actual target type?
+            else if (typeArg == typeof(Shape))
+                OverpassObjectType = "nwr";
+            else unsupportedExpression = true;
             Visit(node.Arguments[0]);
         }
         else if (node.Method.Name == "get_Item")
@@ -425,13 +407,16 @@ internal class OsmExpressionVisitor : ExpressionVisitor
     }
 
     /// <summary>
-    /// Calculates a sort-of hash for the whole dictionary. See below
-    /// for usage and why this is needed.
+    /// Calculates a sort-of hash for the whole dictionary. See
+    /// usage further down for how and why this is needed.
     /// </summary>
     public static int CalcDictHash(Dictionary<string, string> dict) {
         // NOTE: this is not efficient, but it doesn't matter for this purpose
+        // Adding up the hash of each KeyValuePair does not work since
+        // that appears to be based only on the key, not the value.
+        // 
         StringBuilder sb = new();
-        foreach (var item in dict) {
+        foreach (var item in dict.OrderBy(kvp => kvp.Key)) {
             sb.Append(item.Key);
             sb.Append(item.Value);
             sb.Append(",");

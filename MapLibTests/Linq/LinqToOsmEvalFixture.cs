@@ -2,6 +2,11 @@
 
 namespace MapLib.Tests.Linq;
 
+/// <summary>
+/// Evaluates OSM-to-LINQ expressions and prints
+/// the corresponding OQL on the console (for debugging).
+/// Does NOT perform any actual queries.
+/// </summary>
 [TestFixture]
 public class LinqToOsmEvalFixture : BaseFixture
 {
@@ -38,9 +43,42 @@ public class LinqToOsmEvalFixture : BaseFixture
     }
 
 
+    ///// Filter by type of geometry
+
+    [Test] public void TestEval_GeometryType_All() =>
+         new Osm<Shape>(_provider)
+            .Where(p =>
+                (p["natural"] == "wetland") &&
+                p.IsWithin(new (10.7, 10.8, 59.9, 60.0)))
+            .ToList();
+
+    [Test] public void TestEval_GeometryType_AllExplicit() =>
+         new Osm<Shape>(_provider)
+            .OfType<Shape>()
+            .Where(p =>
+                (p["natural"] == "wetland") &&
+                p.IsWithin(new(10.7, 10.8, 59.9, 60.0)))
+            .ToList();
+
+    [Test] public void TestEval_GeometryType_Points() =>
+        new Osm<Point>(_provider)
+            .OfType<Point>()
+            .Where(p =>
+                (p["natural"] == "wetland") &&
+                p.IsWithin(new(10.7, 10.8, 59.9, 60.0)))
+            .ToList();
+
+     [Test] public void TestEval_GeometryType_Polygons() =>
+         new Osm<Polygon>(_provider)
+            .OfType<Polygon>()
+            .Where(p =>
+                (p["natural"] == "wetland") &&
+                p.IsWithin(new(10.7, 10.8, 59.9, 60.0)))
+            .ToList();
+
+
     ///// Filter by tags
 
-    // Supported
     [Test] public void TestEval_FilterNodesByTags_New() =>
         new Osm<Point>(_provider)
             .OfType<Point>()
@@ -48,7 +86,6 @@ public class LinqToOsmEvalFixture : BaseFixture
                 new KeyValuePair<string, string>("highway", "bus_stop")))
             .ToList();
 
-    // Supported
     [Test] public void TestEval_FilterNodesByTags_IndexerEqual() =>
         new Osm<Point>(_provider)
             .OfType<Point>()
@@ -63,7 +100,6 @@ public class LinqToOsmEvalFixture : BaseFixture
                 p["highway"] == "crossing")
             .ToList();
 
-    // Supported
     [Test] public void TestEval_FilterNodesByTags_IndexerEqual_Intersection() =>
         new Osm<Point>(_provider)
             .OfType<Point>()
@@ -80,7 +116,6 @@ public class LinqToOsmEvalFixture : BaseFixture
                 p["shelter"] != "no")
             .ToList();
 
-    // In progress (should be union, not intersection)
     [Test] public void TestEval_FilterNodesByMultipleTags_IndexerEqual2() {
         List<Point> nodes = new Osm<Point>(_provider)
             .OfType<Point>()
@@ -88,7 +123,6 @@ public class LinqToOsmEvalFixture : BaseFixture
             .ToList();
     }
 
-    // In progress (should be union, not intersection)
     [Test] public void TestEval_FilterNodesByMultipleTags_IndexerEqual() {
         var highwayPoints = new[] { "bus_stop", "crossing" };
         List<Point> nodes = new Osm<Point>(_provider)
@@ -97,7 +131,6 @@ public class LinqToOsmEvalFixture : BaseFixture
             .ToList();
     }
 
-    // Supported
     [Test] public void TestEval_FilterNodesByTags_Object() {
         KeyValuePair<string, string> tag1b = new("highway", "bus_stop");
         List<Point> nodes = new Osm<Point>(_provider)
@@ -106,7 +139,6 @@ public class LinqToOsmEvalFixture : BaseFixture
             .ToList();
     }
 
-    // Supported
     [Test] public void TestEval_FilterNodesByTags_Key() =>
         new Osm<Point>(_provider)
             .OfType<Point>()
@@ -116,7 +148,6 @@ public class LinqToOsmEvalFixture : BaseFixture
 
     ///// Filter by area
 
-    // Supported
     [Test] public void TestEval_FilterNodesByLonLat_Constant() =>
         new Osm<Point>(_provider)
             .OfType<Point>()
@@ -127,7 +158,6 @@ public class LinqToOsmEvalFixture : BaseFixture
                 p.Coord.X <= 10.8)
             .ToList();
 
-    // Supported
     [Test] public void TestEval_FilterNodesByLonLat_Expression() {
         Bounds bounds = new(10.7, 10.8, 59.9, 60.0);
         List<Point> nodes = new Osm<Point>(_provider)
@@ -140,7 +170,6 @@ public class LinqToOsmEvalFixture : BaseFixture
             .ToList();
     }
 
-    // Supported
     [Test] public void TestEval_FilterNodesByLonLat_WithinBounds() {
         Bounds bounds = new(10.7, 10.8, 59.9, 60.0);
         List<Point> nodes = new Osm<Point>(_provider)
@@ -153,7 +182,6 @@ public class LinqToOsmEvalFixture : BaseFixture
             .ToList();
     }
 
-    // Supported
     [Test] public void TestEval_FilterNodesByIsWithin() {
         Bounds bounds = new(10.7, 10.8, 59.9, 60.0);
         List<Point> nodes = new Osm<Point>(_provider)
@@ -162,7 +190,6 @@ public class LinqToOsmEvalFixture : BaseFixture
             .ToList();
     }
 
-    // Supported
     [Test] public void TestEval_FilterNodesByIsWithin_New() =>
         new Osm<Point>(_provider)
             .OfType<Point>()
@@ -181,5 +208,14 @@ public class LinqToOsmEvalFixture : BaseFixture
                 p.Coord.Y <= 60.0 &&
                 p.Coord.X >= 10.7 &&
                 p.Coord.X <= 10.8)
+            .ToList();
+
+    [Test]
+    public void TestEval_FilterNodesByLonLatAndMultipleTags() =>
+        new Osm<Line>(_provider)
+            .OfType<Line>()
+            .Where(p =>
+                (p["highway"] == "motorway" || p["highway"] == "primary") &&
+                p.IsWithin(new(10.7, 10.8, 59.9, 60.0)))
             .ToList();
 }
