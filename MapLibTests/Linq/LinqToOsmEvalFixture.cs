@@ -43,19 +43,6 @@ public class LinqToOsmEvalFixture : BaseFixture
     }
 
 
-    ///// Test settings
-
-    [Test] public void TestEval_LongTimeout()
-    {
-        OsmQueryProvider longTimeoutProvider = new();
-        longTimeoutProvider.EvaluateOnly = true;
-        longTimeoutProvider.TimeoutSeconds = 3600;
-        var allCoastLines = Osm.Lines
-            .Where(l => l["natural"] == "coastline")
-            .ToList();
-    }
-
-
     ///// Filter by type of geometry
 
     [Test] public void TestEval_GeometryType_All() =>
@@ -210,6 +197,16 @@ public class LinqToOsmEvalFixture : BaseFixture
             .ToList();
 
 
+    ///// Limit result set (Take)
+
+    [Test] public void TestEval_Take_100BusStops() =>
+        new Osm<Point>(_provider)
+            .OfType<Point>()
+            .Where(p => p["highway"] == "bus_stop")
+            .Take(100)
+            .ToList();
+
+
     ///// Combinations
 
     [Test] public void TestEval_FilterNodesByLonLatAndTags() =>
@@ -231,4 +228,17 @@ public class LinqToOsmEvalFixture : BaseFixture
                 (p["highway"] == "motorway" || p["highway"] == "primary") &&
                 p.IsWithin(new(10.7, 10.8, 59.9, 60.0)))
             .ToList();
+
+
+    ///// Test overriding default settings
+
+    [Test] public void TestEval_LongTimeout() {
+        OsmQueryProvider longTimeoutProvider = new();
+        longTimeoutProvider.EvaluateOnly = true;
+        longTimeoutProvider.TimeoutSeconds = 3600;
+        var allCoastLines = new Osm<Line>(longTimeoutProvider)
+            .OfType<Line>()
+            .Where(l => l["natural"] == "coastline")
+            .ToList();
+    }
 }

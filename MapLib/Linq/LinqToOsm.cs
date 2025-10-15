@@ -38,9 +38,16 @@ namespace MapLib.Linq;
 ///   .Where(l => l["highway"] == "primary" || l["highway"] == "secondary")
 ///   .Where(p => new[] {"bus_stop", "crossing"}.Contains(p["highway"])
 ///   
+/// By maximum result set size:
+///   .Take(100)
+///   
 /// If an expression is NOT supported (because of limitations in LINQ-to-OSM or
 /// in Overpass), a NotSupportedException is thrown with a message containing
 /// more details about the part of the expression that is unsupported.
+/// 
+/// Various defaults, like server URL and timouts, can be overridden
+/// by supplying a provider with custom settings to the constructor.
+/// 
 /// </remarks>
 /// <typeparam name="T">
 /// The ultimate geometry type. Shape for general queries,
@@ -93,14 +100,14 @@ public class Osm()
 public class OsmQueryProvider : IQueryProvider
 {
     /// <summary>
-    /// Base API URL.
+    /// API URL to which the Overpass query is posted.
     /// </summary>
     private string OverpassApiUrl { get; set; } = "https://overpass-api.de/api/interpreter";
 
     /// <summary>
     /// If true, the expression is evaluated and the Overpass query is printed
     /// but no call is made the API. An empty result is returned.
-    /// This is useful for debugging.
+    /// This is useful for debugging and testing provider capabilities.
     /// </summary>
     public bool EvaluateOnly { get; set; } = false;
 
@@ -178,6 +185,9 @@ public class OsmQueryProvider : IQueryProvider
     }
 }
 
+/// <summary>
+/// Internal class to traverse and evaluate a LINQ-to-OSM expression tree.
+/// </summary>
 internal class OsmExpressionVisitor : ExpressionVisitor
 {
     // Bounding box, if specified. Expression should specify all or none.
@@ -211,8 +221,16 @@ internal class OsmExpressionVisitor : ExpressionVisitor
     /// </summary>
     private Dictionary<string, string> CurrentFilterSet = new();
 
-    // Object type in OQL, such as "node", "way", "relation" or "nwr" (all).
+    /// <summary>
+    /// Object type in OQL, such as "node", "way", "relation" or "nwr" (all).
+    /// </summary>
     public string? OverpassObjectType = "nwr";
+
+    /// <summary>
+    /// Maximum element count in result set, as specified with .Take().
+    /// Null is unlimited.
+    /// </summary>
+    public int? ResultSetMaxElements = null;
 
 
     /// <summary>
@@ -244,9 +262,9 @@ internal class OsmExpressionVisitor : ExpressionVisitor
     }
 
     /// <summary>Evaluates the specified expression as a value.</summary>
-    /// <typeparam name="T">Expected type of the ealuated expression.</typeparam>
+    /// <typeparam name="T">Expected type of the evaluated expression.</typeparam>
     /// <param name="ex">Expression to be evaluated.</param>
-    /// <param name="value">Evaluated value, null if function returns fall.</param>
+    /// <param name="value">Evaluated value, null if function returns false.</param>
     /// <returns>True if successful, in which case value contains the result.</returns>
     private bool TryEvaluateValue<T>(Expression ex, [NotNullWhen(true)] out T? value)
     {
@@ -350,7 +368,7 @@ internal class OsmExpressionVisitor : ExpressionVisitor
             }
             else unsupportedExpression = true;
         }
-        // Handle: OfType<T>
+        // Handle: .OfType<T>
         else if (node.Method.Name == "OfType" && node.Method.IsGenericMethod)
         {
             var typeArg = node.Method.GetGenericArguments()[0];
@@ -364,6 +382,13 @@ internal class OsmExpressionVisitor : ExpressionVisitor
                 OverpassObjectType = "nwr";
             else unsupportedExpression = true;
             Visit(node.Arguments[0]);
+        }
+        // Handle: .Take(n)
+        else if (node.Method.Name == "Take")
+        {
+            if (TryEvaluateValue(node.Arguments[1], out int count))
+                ResultSetMaxElements = count;
+            else unsupportedExpression = true;
         }
         else if (node.Method.Name == "get_Item")
         {
@@ -472,9 +497,9 @@ internal class OsmExpressionVisitor : ExpressionVisitor
         sb.Append(";\n");
 
         // Object type filter
-        sb.Append(OverpassObjectType ?? "nwr"); // nwr is OQL for node, way, relation
+        sb.Append(OverpassObjectType ?? "nwr"); // "nwr" is OQL for node+way+relation
 
-        // Bit of a HACK!
+        // HACK!
         // To avoid a fair amount of bookkeeping traversing the tree
         // we may end up with duplicate dictionaries.
         // Dictionary<K,E> doesn't compute predictable hash codes
@@ -521,7 +546,10 @@ internal class OsmExpressionVisitor : ExpressionVisitor
             sb.Append($"({YMin.Value},{XMin.Value},{YMax.Value},{XMax.Value})");
         }
 
-        sb.Append(";\nout body;");
+        sb.Append(";\nout body");
+        if (ResultSetMaxElements.HasValue)
+            sb.Append($" {ResultSetMaxElements}");
+        sb.Append(";");
         return sb.ToString();
     }
 }
