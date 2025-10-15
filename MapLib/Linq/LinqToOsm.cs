@@ -1,32 +1,64 @@
 ﻿using MapLib.FileFormats.Vector;
 using MapLib.Geometry;
-using MapLib.Tests.Util;
-using MapLib.Util;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Drawing.Interop;
 using System.IO;
-using System.Linq;
 using System.Linq.Expressions;
 using System.Net.Http;
 using System.Text;
-using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace MapLib.Linq;
 
+/// <summary>
+/// A LINQ interface to query OpenStreetMap data (via the Overpass API).
+/// LINQ expressions are translated, where possible, to an efficient
+/// API call that is executed server-side, similar in concept to
+/// and ORM mapper like EF with LINQ-to-SQL.
+/// </summary>
+/// <remarks>
+/// Supports querying via geometry type, bounding box and
+/// tags/values (and combinations thereof).
+/// 
+/// Examples of supported query types:
+/// 
+/// By geometry type:
+///   .OfType<typeparamref name="T"/>()
+/// 
+/// By area (bounding box):
+///   .Where(s => s.IsWithin(new(10.7, 10.8, 59.9, 60.0)))
+///   .Where(p => p.Coord.Y >= 59.9 &&
+///               p.Coord.Y <= 60.0 &&
+///               p.Coord.X >= 10.7 &&
+///               p.Coord.X <= 10.8) // points only
+/// 
+/// By tags:
+///   .Where(l => l.HasTag("highway"))
+///   .Where(l => l["highway"] == "primary" && l["surface"] == "asphalt")
+///   .Where(l => l["highway"] == "primary" || l["highway"] == "secondary")
+///   .Where(p => new[] {"bus_stop", "crossing"}.Contains(p["highway"])
+///   
+/// If an expression is NOT supported (because of limitations in LINQ-to-OSM or
+/// in Overpass), a NotSupportedException is thrown with a message containing
+/// more details about the part of the expression that is unsupported.
+/// </remarks>
+/// <typeparam name="T">
+/// The ultimate geometry type. Shape for general queries,
+/// or a type derived from Shape, like Point, Line or Polygon if querying a
+/// specific geometry type (e.g. via .OfType).
+/// </typeparam>
 public class Osm<T> : IQueryable<T>, IQueryable
 {
     public Type ElementType => typeof(T);
     public Expression Expression { get; }
     public IQueryProvider Provider { get; }
 
-    public Osm(OsmQueryProvider provider, Expression? expression = null)
+    public Osm(OsmQueryProvider? provider = null, Expression? expression = null)
     {
         if (!typeof(Shape).IsAssignableFrom(typeof(T)))
             throw new NotSupportedException(
                 $"Osm<T> only supports types implementing Shape. '{typeof(T)}' is not supported.");
-        Provider = provider;
+        Provider = provider ?? new OsmQueryProvider();
         Expression = expression ?? Expression.Constant(this);
     }
 
@@ -45,9 +77,25 @@ public class Osm<T> : IQueryable<T>, IQueryable
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 }
 
+public class Osm()
+{
+    // Shortcut accessors
+    public static IQueryable<Shape> All => new Osm<Shape>();
+    public static IQueryable<Point> Nodes => new Osm<Point>().OfType<Point>();
+    public static IQueryable<Line> Lines => new Osm<Line>().OfType<Line>();
+    public static IQueryable<Polygon> Polygons => new Osm<Polygon>().OfType<Polygon>();
+}
+
+/// <summary>
+/// Query provider supporting the Osm class. Can be manually instantiated
+/// to override the default settings.
+/// </summary>
 public class OsmQueryProvider : IQueryProvider
 {
-    private readonly string _overpassApiUrl;
+    /// <summary>
+    /// Base API URL.
+    /// </summary>
+    private string OverpassApiUrl { get; set; } = "https://overpass-api.de/api/interpreter";
 
     /// <summary>
     /// If true, the expression is evaluated and the Overpass query is printed
@@ -56,9 +104,17 @@ public class OsmQueryProvider : IQueryProvider
     /// </summary>
     public bool EvaluateOnly { get; set; } = false;
 
-    public OsmQueryProvider(string overpassApiUrl = "https://overpass-api.de/api/interpreter")
+    /// <summary>
+    /// Timeout (in seconds) for the query.
+    /// If null, the 180 s default Overpass timeout is used.
+    /// Increase if queries are timing out. Note that, according to the Overpass
+    /// docs, long timeouts make the server more likely to reject the query altogether.
+    /// </summary>
+    public int? TimeoutSeconds { get; set; } = null;
+
+
+    public OsmQueryProvider()
     {
-        _overpassApiUrl = overpassApiUrl;
     }
 
     public IQueryable CreateQuery(Expression expression)
@@ -68,7 +124,7 @@ public class OsmQueryProvider : IQueryProvider
     public IQueryable<TElement> CreateQuery<TElement>(Expression expression)
         => new Osm<TElement>(this, expression);
 
-    public object? Execute(Expression expression)
+    public object Execute(Expression expression)
         => ExecuteAsync<Shape>(expression).GetAwaiter().GetResult();
 
     public TResult Execute<TResult>(Expression expression)
@@ -85,7 +141,8 @@ public class OsmQueryProvider : IQueryProvider
         visitor.RunPostProcessing();
         
         // Build Overpass Query (OQL)
-        string overpassQuery = visitor.BuildOverpassQuery(typeof(T));
+        string overpassQuery = visitor.BuildOverpassQuery(
+            typeof(T), TimeoutSeconds);
         logger.WriteLine("---");
         logger.WriteLine("Expression:" + Environment.NewLine + expression.ToString());
         logger.WriteLine("Overpass QL:" + Environment.NewLine + overpassQuery);
@@ -97,7 +154,7 @@ public class OsmQueryProvider : IQueryProvider
         // Execute Overpass Query
         using HttpClient client = new();
         StringContent content = new(overpassQuery, Encoding.UTF8, "application/x-www-form-urlencoded");
-        HttpResponseMessage response = await client.PostAsync(_overpassApiUrl, content);
+        HttpResponseMessage response = await client.PostAsync(OverpassApiUrl, content);
         response.EnsureSuccessStatusCode();
         string rawXml = await response.Content.ReadAsStringAsync();
 
@@ -405,10 +462,14 @@ internal class OsmExpressionVisitor : ExpressionVisitor
         return sb.ToString().GetHashCode();
     }
 
-    public string BuildOverpassQuery(Type osmType)
+    public string BuildOverpassQuery(Type osmType,
+        int? timeoutSeconds)
     {
         var sb = new StringBuilder();
-        sb.Append("[out:xml];\n");
+        sb.Append("[out:xml]");
+        if (timeoutSeconds.HasValue)
+            sb.Append($"[timeout:{timeoutSeconds}]");
+        sb.Append(";\n");
 
         // Object type filter
         sb.Append(OverpassObjectType ?? "nwr"); // nwr is OQL for node, way, relation

@@ -43,6 +43,19 @@ public class LinqToOsmEvalFixture : BaseFixture
     }
 
 
+    ///// Test settings
+
+    [Test] public void TestEval_LongTimeout()
+    {
+        OsmQueryProvider longTimeoutProvider = new();
+        longTimeoutProvider.EvaluateOnly = true;
+        longTimeoutProvider.TimeoutSeconds = 3600;
+        var allCoastLines = Osm.Lines
+            .Where(l => l["natural"] == "coastline")
+            .ToList();
+    }
+
+
     ///// Filter by type of geometry
 
     [Test] public void TestEval_GeometryType_All() =>
