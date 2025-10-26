@@ -48,7 +48,7 @@ public class Map : IHasSrs, IBounded
 
     public List<MapLayer> MapLayers { get; } = new();
 
-    public ObjectPlacementManager PlacementManager { get; } = new();
+    public ObjectOverlapManager OverlapManager { get; } = new();
 
     private double _scaleX, _scaleY;
     private double _offsetX, _offsetY;
@@ -277,9 +277,9 @@ public class Map : IHasSrs, IBounded
             style.PolygonMaskWidth);
         Stroke(canvas, mask, data.Lines, data.MultiLines, data.Polygons,
             data.MultiPolygons, style.LineColor, style.LineWidth, style.LineMaskWidth);
-        DrawSymbols(canvas, mask, PlacementManager, allPoints, style.Symbol,
+        DrawSymbols(canvas, mask, OverlapManager, allPoints, style.Symbol,
             style.SymbolSize, style.SymbolColor, style.SymbolMaskWidth);
-        DrawTextLabels(canvas, mask, PlacementManager, allPoints, style.TextTag,
+        DrawTextLabels(canvas, mask, OverlapManager, allPoints, style.Symbol, style.TextTag,
             style.TextColor, style.TextFont, style.TextSize, null, null, style.TextMaskWidth);
     }
 
@@ -358,7 +358,7 @@ public class Map : IHasSrs, IBounded
     }
 
     private void DrawSymbols(Canvas canvas, Canvas? mask,
-        ObjectPlacementManager placementManager,
+        ObjectOverlapManager overlapManager,
         IEnumerable<(Coord[] coords, TagList tags)> allPoints,
         SymbolType? symbolType, double? symbolSize, Color? symbolFillColor,
         double? maskWidth = null)
@@ -373,7 +373,7 @@ public class Map : IHasSrs, IBounded
             case SymbolType.Circle:
                 foreach (Coord point in allPoints.SelectMany(p => p.coords))
                 {
-                    Bounds? bounds = placementManager.TryAdd([new Bounds(
+                    Bounds? bounds = overlapManager.TryAdd([new Bounds(
                         point.X-radius, point.X+radius,
                         point.Y-radius, point.Y+radius)]);
                     if (bounds == null)
@@ -392,10 +392,10 @@ public class Map : IHasSrs, IBounded
     }
 
     private void DrawTextLabels(Canvas canvas, Canvas? mask,
-        ObjectPlacementManager placementManager,
+        ObjectOverlapManager overlapManager,
         IEnumerable<(Coord[] coords, TagList tags)> allPoints,
-        string? textTag, Color? textColor, string? fontName, double? fontSize,
-        Color? outlineColor = null, double? outlineWidth = null,
+        SymbolType? symbolType, string? textTag, Color? textColor, string? fontName,
+        double? fontSize, Color? outlineColor = null, double? outlineWidth = null,
         double? maskWidth = null)
     {
         if (textTag == null) return;
@@ -403,6 +403,7 @@ public class Map : IHasSrs, IBounded
         Color effectiveTextColor = textColor ?? Color.Black; // default color
         string effectiveFontName = fontName ?? "Calibri"; // default font
         double effectiveFontSize = fontSize ?? canvas.Width * 0.003; // default size
+        bool hasSymbol = symbolType != null;
 
         foreach ((Coord[] coords, TagList tags) point in allPoints)
         {
@@ -417,7 +418,7 @@ public class Map : IHasSrs, IBounded
             // are text labels)
             foreach (Coord coord in point.coords)
             {
-                Coord? placement = GetLabelPlacement(placementManager, coord, textSize, spacing);
+                Coord? placement = GetLabelPlacement(overlapManager, coord, textSize, spacing, hasSymbol);
                 if (placement != null)
                 {
                     canvas.DrawText(effectiveFontName, effectiveFontSize, labelText, placement.Value, effectiveTextColor);
@@ -445,31 +446,51 @@ public class Map : IHasSrs, IBounded
 
     /// <param name="featureCoord">Feature centerpoint.</param>
     /// <param name="textSize">Measured size of text</param>
+    /// <param name="hasSymbol">
+    /// If true, center placement (where the symbol is assumed to be) is avoided.
+    /// Typically true for point features and false for polygons/areas.
+    /// </param>
     /// <returns>
     /// The text centerpoint for the text label as placed by
     /// alignment priority and existing labels. Null if no suitable
     /// placement found.
     /// </returns>
-    private Coord? GetLabelPlacement(ObjectPlacementManager placementManager,
-        Coord featureCoord, Coord textSize, double spacing)
+    private Coord? GetLabelPlacement(ObjectOverlapManager overlapManager,
+        Coord featureCoord, Coord textSize, double spacing, bool hasSymbol)
     {
-        // TODO: Pick more appropriate order?
         /* Current priority order:
+         *  With symbol:
          *   8 4 7
          *   2 * 1
          *   6 3 5
+         *  Without symbol:
+         *   8 3 9
+         *   4 1 5
+         *   6 2 7
          */
-        return
-            GetLabelPlacement(placementManager, featureCoord, textSize, spacing, TextHAlign.Left, TextVAlign.Center) ??
-            GetLabelPlacement(placementManager, featureCoord, textSize, spacing, TextHAlign.Right, TextVAlign.Center) ??
-            GetLabelPlacement(placementManager, featureCoord, textSize, spacing, TextHAlign.Center, TextVAlign.Top) ??
-            GetLabelPlacement(placementManager, featureCoord, textSize, spacing, TextHAlign.Center, TextVAlign.Bottom) ??
-            GetLabelPlacement(placementManager, featureCoord, textSize, spacing, TextHAlign.Left, TextVAlign.Top) ??
-            GetLabelPlacement(placementManager, featureCoord, textSize, spacing, TextHAlign.Right, TextVAlign.Top) ??
-            GetLabelPlacement(placementManager, featureCoord, textSize, spacing, TextHAlign.Left, TextVAlign.Bottom) ??
-            GetLabelPlacement(placementManager, featureCoord, textSize, spacing, TextHAlign.Right, TextVAlign.Bottom);
+        if (hasSymbol)
+            return
+                GetLabelPlacement(overlapManager, featureCoord, textSize, spacing, TextHAlign.Left, TextVAlign.Center) ??
+                GetLabelPlacement(overlapManager, featureCoord, textSize, spacing, TextHAlign.Right, TextVAlign.Center) ??
+                GetLabelPlacement(overlapManager, featureCoord, textSize, spacing, TextHAlign.Center, TextVAlign.Top) ??
+                GetLabelPlacement(overlapManager, featureCoord, textSize, spacing, TextHAlign.Center, TextVAlign.Bottom) ??
+                GetLabelPlacement(overlapManager, featureCoord, textSize, spacing, TextHAlign.Left, TextVAlign.Top) ??
+                GetLabelPlacement(overlapManager, featureCoord, textSize, spacing, TextHAlign.Right, TextVAlign.Top) ??
+                GetLabelPlacement(overlapManager, featureCoord, textSize, spacing, TextHAlign.Left, TextVAlign.Bottom) ??
+                GetLabelPlacement(overlapManager, featureCoord, textSize, spacing, TextHAlign.Right, TextVAlign.Bottom);
+        else
+            return
+                GetLabelPlacement(overlapManager, featureCoord, textSize, spacing, TextHAlign.Center, TextVAlign.Center) ??
+                GetLabelPlacement(overlapManager, featureCoord, textSize, spacing, TextHAlign.Center, TextVAlign.Top) ??
+                GetLabelPlacement(overlapManager, featureCoord, textSize, spacing, TextHAlign.Center, TextVAlign.Bottom) ??
+                GetLabelPlacement(overlapManager, featureCoord, textSize, spacing, TextHAlign.Right, TextVAlign.Center) ??
+                GetLabelPlacement(overlapManager, featureCoord, textSize, spacing, TextHAlign.Left, TextVAlign.Center) ??
+                GetLabelPlacement(overlapManager, featureCoord, textSize, spacing, TextHAlign.Right, TextVAlign.Top) ??
+                GetLabelPlacement(overlapManager, featureCoord, textSize, spacing, TextHAlign.Left, TextVAlign.Top) ??
+                GetLabelPlacement(overlapManager, featureCoord, textSize, spacing, TextHAlign.Right, TextVAlign.Bottom) ??
+                GetLabelPlacement(overlapManager, featureCoord, textSize, spacing, TextHAlign.Left, TextVAlign.Bottom);
     }
-    private Coord? GetLabelPlacement(ObjectPlacementManager placementManager,
+    private Coord? GetLabelPlacement(ObjectOverlapManager overlapManager,
         Coord featureCoord, Coord textSize, double spacing,
         TextHAlign halign, TextVAlign valign)
     {
@@ -481,7 +502,7 @@ public class Map : IHasSrs, IBounded
         Bounds bounds = new Bounds(
             x - 0.5 * textSize.X, x + 0.5 * textSize.X,
             y - 0.5 * textSize.Y, y + textSize.Y);
-        if (placementManager.TryAdd([bounds]) != null)
+        if (overlapManager.TryAdd([bounds]) != null)
             return new Coord(x, y);
         return null;
     }

@@ -25,7 +25,7 @@ public class QuadtreeFixture : BaseFixture
     [Test]
     public void TestRandomBoundsOverlap()
     {
-        ObjectPlacementManager placementManager = new();
+        ObjectOverlapManager placementManager = new();
         QuadtreeNode quadtree = new(overallBounds, 10);
 
         int overlapCount = 0;

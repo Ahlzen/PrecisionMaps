@@ -9,7 +9,7 @@
 /// a smaller number of bounds.
 /// TODO: Make a more scalable implementation (some form of spatial index?).
 /// </remarks>
-public class ObjectPlacementManager
+public class ObjectOverlapManager
 {
     private List<Bounds> AllBounds { get; } = new();
 

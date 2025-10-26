@@ -104,9 +104,9 @@ public class NaturalEarthDataSourceFixture : BaseFixture
     private static Color bgColor = Color.LightGray;
     public static IEnumerable<CanvasStack> A3CanvasStacks()
     {
-        yield return new BitmapCanvasStack(CanvasUnit.Mm, 420.0, 297.0, bgColor, 1.0);
+        //yield return new BitmapCanvasStack(CanvasUnit.Mm, 420.0, 297.0, bgColor, 1.0);
         yield return new BitmapCanvasStack(CanvasUnit.Mm, 420.0, 297.0, bgColor, 4.0);
-        yield return new SvgCanvasStack(CanvasUnit.Mm, 420.0, 297.0, bgColor);
+        //yield return new SvgCanvasStack(CanvasUnit.Mm, 420.0, 297.0, bgColor);
     }
     public static IEnumerable<Srs> WorldMapProjections()
     {
@@ -140,20 +140,17 @@ public class NaturalEarthDataSourceFixture : BaseFixture
         // Styles
         map.MapLayers.Add(new RasterMapLayer("neBaseRaster", "neBaseRaster", new RasterStyle()));
         map.MapLayers.Add(new VectorMapLayer("graticule", "graticule", new VectorStyle {
-            LineColor = Color.Navy,
+            LineColor = Color.FromArgb(120, Color.Navy),
             LineWidth = 0.06,
             MaskedBy = { "labelsMask" }
         }));
         map.MapLayers.Add(new VectorMapLayer("borders", "countries", new VectorStyle {
-            LineColor = Color.FromArgb(60, Color.Black),
-            LineWidth = 0.1,
+            LineColor = Color.FromArgb(70, Color.Black),
+            LineWidth = 0.15,
             MaskedBy = { "labelsMask" }
         }));
         map.MapLayers.Add(new VectorMapLayer("labels", "countries", new VectorStyle {
             MaskName = "labelsMask",
-            Symbol = SymbolType.Circle,
-            SymbolSize = 0.5,
-            SymbolMaskWidth = 0.5,
             TextColor = Color.Black,
             TextSize = 1.2,
             TextTag = "NAME",

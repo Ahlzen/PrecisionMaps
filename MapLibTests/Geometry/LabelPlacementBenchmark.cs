@@ -48,7 +48,7 @@ public class LabelPlacementBenchmark : BaseBenchmark
     [Benchmark]
     public void PlaceLabels_ObjectPlacementManager()
     {
-        ObjectPlacementManager placementManager = new();
+        ObjectOverlapManager placementManager = new();
         int overlapCount = 0;
         foreach (Bounds bounds in LabelBounds)
         {
