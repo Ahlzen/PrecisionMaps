@@ -95,10 +95,10 @@ public class OgrDataReader : IVectorFormatReader
                         case wkbGeometryType.wkbMultiPolygon:
                             Debug.Assert(geometry.GetGeometryCount() > 0);
                             int polygonCount = geometry.GetGeometryCount();
-                            for (int n = 0; n < polygonCount; n++) {
-                                OSGeo.OGR.Geometry subGeometry = geometry.GetGeometryRef(n);
-                                ReadAndAddPolygon(subGeometry, tags, builder);
-                            }
+                            var subGeometries = new OSGeo.OGR.Geometry[polygonCount];
+                            for (int n = 0; n < polygonCount; n++) 
+                                subGeometries[n] = geometry.GetGeometryRef(n);
+                            ReadAndAddPolygon(subGeometries, tags, builder);
                             break;
 
                         default:
@@ -138,19 +138,34 @@ public class OgrDataReader : IVectorFormatReader
         OSGeo.OGR.Geometry geometry,
         TagList tags,
         VectorDataBuilder builder)
+        => ReadAndAddPolygon([geometry], tags, builder);
+
+    private void ReadAndAddPolygon(
+        IEnumerable<OSGeo.OGR.Geometry> geometries,
+        TagList tags,
+        VectorDataBuilder builder)
     {
         // OGR/SimpleFeatures polygons consist of one or more
         // individual linear rings:
 
-        Debug.Assert(geometry.GetGeometryCount() > 0);
+        List<Coord[]> rings = new();
 
-        var rings = ReadSubGeometry2DCoords(geometry);
-        if (rings.Length > 1)
+        foreach (OSGeo.OGR.Geometry geometry in geometries)
         {
-            // Polygon has holes. We consider this a multipolygon.
-            builder.MultiPolygons.Add(new MultiPolygon(rings, tags));
+            Debug.Assert(geometry.GetGeometryCount() > 0);
+            Coord[][] currentRings = ReadSubGeometry2DCoords(geometry); // one outer, zero or more inner
+            foreach (Coord[] currentRing in currentRings)
+            {
+                rings.Add(currentRing);
+            }
         }
-        else if (rings.Length == 1)
+
+        if (rings.Count > 1)
+        {
+            // Polygon has holes or multiple outer rings. Create multipolygon.
+            builder.MultiPolygons.Add(new MultiPolygon(rings.ToArray(), tags));
+        }
+        else if (rings.Count == 1)
         {
             builder.Polygons.Add(new Polygon(rings[0], tags));
         }
