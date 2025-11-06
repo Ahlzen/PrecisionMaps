@@ -11,7 +11,6 @@ public record class VectorStyle
     /// <summary>
     /// Optional. Name of mask this layer is masked by.
     /// </summary>
-    //public List<string> MaskedBy { get; } = new();
     public List<string> MaskedBy { get; set; } = new();
 
     /// <summary>
@@ -42,5 +41,47 @@ public record class VectorStyle
     public double? TextSize { get; set; } = null; // CartoCSS: text-size
     public Color? TextColor { get; set; } = null; // CartoCSS: text-fill
     public double? TextMaskWidth { get; set; } = null;
+}
 
+public record TextStyle
+{
+    public string? Tag { get; set; } = null; // CartoCSS: text-name
+    public string? Font { get; set; } = null; // CartoCSS: text-face-name
+    public double? Size { get; set; } = null; // CartoCSS: text-size
+    public Color? Color { get; set; } = null; // CartoCSS: text-fill
+    public double? MaskWidth { get; set; } = null;
+}
+
+public record LabelRewritingStyle
+{
+    /// <summary>
+    /// Try to break lines longer than this (characters), if
+    /// there's a natural word break (space, hyphen, etc)
+    /// </summary>
+    public int? WordBreakAt { get; set; } = null;
+
+    /// <summary>
+    /// Try to hyphenate to break lines longer than this number of characters
+    /// that otherwise can't be broken. If set, normally greater than
+    /// PreferLineBreakAt.
+    /// Uses hyphenation algorithms for English.
+    /// </summary>
+    public int? HyphenateAt { get; set; } = null;
+
+    /// <summary>
+    /// Dictionary of Word->Abbreviation. If null or empty, no abbreviations
+    /// are performed.
+    /// </summary>
+    public Dictionary<string,string>? Abbreviations { get; set; }
+
+    /// <summary>
+    /// Appended to abbreviations. Usually "." or empty/null.
+    /// </summary>
+    public string? AbbreviationIndicator = null;
+
+    /// <summary>
+    /// If true, partial matches at the end of a longer word
+    /// is abbreviated. With "mount"->"mt", "silvermount" would become "silvermt".
+    /// </summary>
+    public bool? AbbreviateEndings = null;
 }

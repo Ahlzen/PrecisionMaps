@@ -16,9 +16,417 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Data\hyph-en-gb.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-af.hyp.txt" />
+    <None Remove="Data\hyphenation\hyph-af.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-as.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-be.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-bg.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-bn.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-ca.hyp.txt" />
+    <None Remove="Data\hyphenation\hyph-ca.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-cop.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-cs.hyp.txt" />
+    <None Remove="Data\hyphenation\hyph-cs.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-cu.hyp.txt" />
+    <None Remove="Data\hyphenation\hyph-cu.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-cy.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-da.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-de-1901.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-de-1996.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-de-ch-1901.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-el-monoton.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-el-polyton.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-en-gb.hyp.txt" />
+    <None Remove="Data\hyphenation\hyph-en-gb.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-en-us.hyp.txt" />
+    <None Remove="Data\hyphenation\hyph-en-us.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-eo.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-es.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-et.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-eu.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-fi-x-school.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-fi.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-fr.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-fur.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-ga.hyp.txt" />
+    <None Remove="Data\hyphenation\hyph-ga.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-gl.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-grc.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-gu.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-hi.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-hr.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-hsb.hyp.txt" />
+    <None Remove="Data\hyphenation\hyph-hsb.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-hu.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-hy.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-ia.hyp.txt" />
+    <None Remove="Data\hyphenation\hyph-ia.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-id.hyp.txt" />
+    <None Remove="Data\hyphenation\hyph-id.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-is.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-it.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-ka.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-kmr.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-kn.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-la-x-classic.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-la-x-liturgic.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-la.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-lt.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-lv.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-mk.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-ml.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-mn-cyrl.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-mr.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-mul-ethi.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-nb.hyp.txt" />
+    <None Remove="Data\hyphenation\hyph-nb.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-nl.hyp.txt" />
+    <None Remove="Data\hyphenation\hyph-nl.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-nn.hyp.txt" />
+    <None Remove="Data\hyphenation\hyph-nn.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-oc.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-or.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-pa.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-pi.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-pl.hyp.txt" />
+    <None Remove="Data\hyphenation\hyph-pl.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-pms.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-pt.hyp.txt" />
+    <None Remove="Data\hyphenation\hyph-pt.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-rm.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-ro.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-ru.hyp.txt" />
+    <None Remove="Data\hyphenation\hyph-ru.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-sa.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-sh-cyrl.hyp.txt" />
+    <None Remove="Data\hyphenation\hyph-sh-cyrl.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-sh-latn.hyp.txt" />
+    <None Remove="Data\hyphenation\hyph-sh-latn.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-sk.hyp.txt" />
+    <None Remove="Data\hyphenation\hyph-sk.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-sl.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-sq.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-sr-cyrl.hyp.txt" />
+    <None Remove="Data\hyphenation\hyph-sr-cyrl.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-sv.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-ta.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-te.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-th.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-tk.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-tr.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-uk.pat.txt" />
+    <None Remove="Data\hyphenation\hyph-zh-latn-pinyin.pat.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Data\hyphenation\hyph-af.hyp.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-af.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-as.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-be.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-bg.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-bn.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-ca.hyp.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-ca.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-cop.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-cs.hyp.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-cs.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-cu.hyp.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-cu.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-cy.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-da.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-de-1901.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-de-1996.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-de-ch-1901.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-el-monoton.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-el-polyton.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-en-gb.hyp.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-en-gb.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-en-us.hyp.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-en-us.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-eo.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-es.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-et.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-eu.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-fi-x-school.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-fi.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-fr.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-fur.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-ga.hyp.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-ga.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-gl.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-grc.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-gu.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-hi.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-hr.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-hsb.hyp.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-hsb.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-hu.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-hy.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-ia.hyp.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-ia.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-id.hyp.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-id.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-is.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-it.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-ka.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-kmr.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-kn.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-la-x-classic.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-la-x-liturgic.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-la.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-lt.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-lv.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-mk.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-ml.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-mn-cyrl.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-mr.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-mul-ethi.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-nb.hyp.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-nb.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-nl.hyp.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-nl.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-nn.hyp.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-nn.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-oc.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-or.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-pa.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-pi.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-pl.hyp.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-pl.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-pms.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-pt.hyp.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-pt.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-rm.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-ro.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-ru.hyp.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-ru.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-sa.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-sh-cyrl.hyp.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-sh-cyrl.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-sh-latn.hyp.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-sh-latn.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-sk.hyp.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-sk.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-sl.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-sq.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-sr-cyrl.hyp.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-sr-cyrl.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-sv.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-ta.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-te.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-th.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-tk.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-tr.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-uk.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Data\hyphenation\hyph-zh-latn-pinyin.pat.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Clipper2" Version="1.4.0" />
     <PackageReference Include="GDAL" Version="3.10.0" />
     <PackageReference Include="GDAL.Native" Version="3.10.0" />
+    <PackageReference Include="NHyphenator" Version="2.0.0" />
     <PackageReference Include="System.Drawing.Common" Version="9.0.1" />
   </ItemGroup>
 
