@@ -53,6 +53,14 @@ public struct Bounds : IEquatable<Bounds>
     public Line AsLine() => new Line(
         [(XMin, YMin), (XMin, YMax), (XMax, YMax), (XMax, YMin), (XMin, YMin)], null);
 
+    // Tiled global data sets are frequently 1x1 degree tiles.
+    // This returns current bounds rounded outward to whole degrees:
+    public int XDegMin => (int)Math.Floor(XMin);
+    public int XDegMax => (int)Math.Ceiling(XMax);
+    public int YDegMin => (int)Math.Floor(YMin);
+    public int YDegMax => (int)Math.Ceiling(YMax);
+
+
     public static Bounds FromCoords(IEnumerable<Coord> srcCoords)
     {
         if (!srcCoords.Any()) throw new InvalidOperationException();

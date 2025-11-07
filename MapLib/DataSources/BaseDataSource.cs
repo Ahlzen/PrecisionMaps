@@ -1,6 +1,7 @@
 ﻿using MapLib.GdalSupport;
 using MapLib.Geometry;
 using MapLib.Util;
+using System;
 using System.IO;
 using System.IO.Compression;
 using System.Threading.Tasks;
@@ -92,34 +93,26 @@ public abstract class BaseDataSource<TData> : IHasSrs
     /// </param>
     /// <returns>Full path to the target file in the data cache.</returns>
     /// <exception cref="ApplicationException">
-    /// Thrown if download failed. Message contains details.
+    /// Thrown if download failed or URL was previously marked as not found.
+    /// Message contains details.
     /// </exception>
     protected virtual async Task<string> DownloadAndCache(
         string url, string? subdirectory, string? targetFileName = null)
     {
-        // Create destination directory
-        string destDirectory = subdirectory == null ?
-            FileSystemHelpers.SourceCachePath :
-            Path.Combine(FileSystemHelpers.SourceCachePath, subdirectory);
-        try 
-        {
-            Directory.CreateDirectory(destDirectory);
-        }
-        catch (Exception ex)
-        {
-            throw new ApplicationException(
-                "Failed to create destination directory \"\": "
-                + ex.Message, ex);
-        }
+        GetTargetFilePath(url, subdirectory, targetFileName,
+            out string destPath, out string destDirectory, out string targetPath);
 
-        string urlFilename = UrlHelper.GetFilenameFromUrl(url);
-        string destPath = Path.Combine(destDirectory, urlFilename);
-        targetFileName ??= urlFilename;
-        string targetPath = Path.Combine(destDirectory, targetFileName);
         if (File.Exists(targetPath))
         {
             // Target exists. We're done!
             return targetPath;
+        }
+
+        // Check if the URL has previously been marked as not found
+        // (e.g. a tile that is not part of a data set)
+        if (UrlMarkedNotFound(targetPath))
+        {
+            throw new ApplicationException($"Target file marked as not found: {targetPath}");
         }
 
         // Download the file (this may throw ApplicationException)
@@ -143,8 +136,46 @@ public abstract class BaseDataSource<TData> : IHasSrs
         }
 
         if (!File.Exists(targetPath))
-            throw new ApplicationException($"Expected target file not found: {targetPath}");
+            throw new ApplicationException($"Target file not found: {targetPath}");
         return targetPath;
+    }
+
+    protected virtual bool UrlMarkedNotFound(string targetPath)
+        => File.Exists(targetPath + ".notfound");
+
+    protected virtual void MarkUrlNotFound(string url, string? subdirectory, string? targetFileName = null)
+    {
+        GetTargetFilePath(url, subdirectory, targetFileName,
+            out string destPath, out string destDirectory, out string targetPath);
+
+        // Create an empty file with .notfound extension to mark that the URL was not found
+        targetPath += ".notfound";
+        if (!File.Exists(targetPath))
+            File.Create(targetPath).Dispose();
+    }
+
+    private void GetTargetFilePath(string url, string? subdirectory, string? targetFileName,
+        out string destPath, out string destDirectory, out string targetPath)
+    {
+        // Create destination directory
+        destDirectory = subdirectory == null ?
+            FileSystemHelpers.SourceCachePath :
+            Path.Combine(FileSystemHelpers.SourceCachePath, subdirectory);
+        try
+        {
+            Directory.CreateDirectory(destDirectory);
+        }
+        catch (Exception ex)
+        {
+            throw new ApplicationException(
+                "Failed to create destination directory \"\": "
+                + ex.Message, ex);
+        }
+
+        string urlFilename = UrlHelper.GetFilenameFromUrl(url);
+        destPath = Path.Combine(destDirectory, urlFilename);
+        targetFileName ??= urlFilename;
+        targetPath = Path.Combine(destDirectory, targetFileName);
     }
 
     private static void MoveFilesUpOneLevel(string subdirectoryPath)

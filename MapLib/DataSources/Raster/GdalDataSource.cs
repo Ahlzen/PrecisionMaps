@@ -1,6 +1,8 @@
 ﻿using MapLib.GdalSupport;
 using MapLib.Geometry;
 using OSGeo.GDAL;
+using System.Data;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 
@@ -227,13 +229,21 @@ public class GdalDataSource : BaseRasterDataSource
             {
                 // 8-bit raw data
 
-                byte[] buffer = new byte[pixelCount];
+                var buffer = new byte[pixelCount];
                 band.ReadRaster(0, 0, SourceWidthPx, SourceHeightPx, buffer,
                     BitmapWidthPx, BitmapHeightPx, 0, 0);
+                singleBandData = new float[pixelCount];
+                for (long pixel = 0; pixel < pixelCount; pixel++)
+                    singleBandData[pixel] = (float)buffer[pixel];
+            }
+            else if (bandDataTypes[0] == DataType.GDT_Int16 &&
+                bandColorInterp[0] == ColorInterp.GCI_Undefined)
+            {
+                // 16-bit raw data
 
-                // TODO: Record nodata value
-
-                // Build single-band raw data
+                var buffer = new Int16[pixelCount];
+                band.ReadRaster(0, 0, SourceWidthPx, SourceHeightPx, buffer,
+                    BitmapWidthPx, BitmapHeightPx, 0, 0);
                 singleBandData = new float[pixelCount];
                 for (long pixel = 0; pixel < pixelCount; pixel++)
                     singleBandData[pixel] = (float)buffer[pixel];
@@ -289,8 +299,7 @@ public class GdalDataSource : BaseRasterDataSource
                 }
             }
             else
-                throw new NotSupportedException(
-                    "Unsupported raster band configuration.");
+                ThrowUnsupportedRasterBandConfiguration(dataset);
         }
         else if ((rasterCount == 3 || rasterCount == 4) &&
             bandColorInterp.Contains(ColorInterp.GCI_RedBand) &&
@@ -311,8 +320,7 @@ public class GdalDataSource : BaseRasterDataSource
             {
                 Band band = dataset.GetRasterBand(b);
                 if (band.DataType != DataType.GDT_Byte)
-                    throw new NotSupportedException(
-                        "Unsupported raster band configuration.");
+                    ThrowUnsupportedRasterBandConfiguration(dataset);
 
                 band.GetNoDataValue(out double rawNoDataValue, out int hasNoDataValue);
                 byte noDataByte = (hasNoDataValue == 1) ? (byte)rawNoDataValue : (byte)0;
@@ -324,27 +332,31 @@ public class GdalDataSource : BaseRasterDataSource
                 ColorInterp colorInterpretation = band.GetRasterColorInterpretation();
                 bool isAlphaBand = false;
                 long byteOffset = 0;
-                
+
                 switch (colorInterpretation)
                 {
                     case ColorInterp.GCI_Undefined:
-                    case ColorInterp.GCI_AlphaBand: {
-                        isAlphaBand = true;
-                        byteOffset = 3;
-                        break;
-                    }
-                    case ColorInterp.GCI_RedBand: {
-                        byteOffset = 2; break;
-                    }
-                    case ColorInterp.GCI_GreenBand: {
+                    case ColorInterp.GCI_AlphaBand:
+                        {
+                            isAlphaBand = true;
+                            byteOffset = 3;
+                            break;
+                        }
+                    case ColorInterp.GCI_RedBand:
+                        {
+                            byteOffset = 2; break;
+                        }
+                    case ColorInterp.GCI_GreenBand:
+                        {
                             byteOffset = 1; break;
-                    }
-                    case ColorInterp.GCI_BlueBand: {
+                        }
+                    case ColorInterp.GCI_BlueBand:
+                        {
                             byteOffset = 0; break;
-                    }
+                        }
                     default:
-                        throw new NotSupportedException(
-                            "Unsupported raster band configuration.");
+                        ThrowUnsupportedRasterBandConfiguration(dataset);
+                        break;
                 };
 
                 if (byteOffset == -1) continue;
@@ -360,13 +372,20 @@ public class GdalDataSource : BaseRasterDataSource
             }
         }
         else
-            throw new NotSupportedException(
-                "Unsupported raster band configuration.");
+            ThrowUnsupportedRasterBandConfiguration(dataset);
 
         if (imageData != null)
             return new ImageRasterData(srs, bounds, BitmapWidthPx, BitmapHeightPx, imageData!);
         else
             return new SingleBandRasterData(srs, bounds, BitmapWidthPx, BitmapHeightPx,
                 singleBandData!, noDataValue);
+    }
+
+    private void ThrowUnsupportedRasterBandConfiguration(Dataset dataset)
+    {
+        string rasterInfo = GdalUtils.GetRasterBandSummary(dataset);
+        throw new NotSupportedException(
+            "Unsupported raster band configuration:" + Environment.NewLine +
+            rasterInfo);
     }
 }

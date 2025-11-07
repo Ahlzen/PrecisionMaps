@@ -32,12 +32,14 @@ public class Usgs3depDataSource : BaseRasterDataSource
 
     public override Task<RasterData> GetData()
     {
-        throw new NotImplementedException();
+        throw new InvalidOperationException(
+            "USGS 3DEP: Must specify bounds.");
     }
 
     public override Task<RasterData> GetData(Srs destSrs)
     {
-        throw new NotImplementedException();
+        throw new NotImplementedException(
+            "USGS 3DEP: Must specify bounds.");
     }
 
     public override async Task<RasterData> GetData(Bounds boundsWgs84)

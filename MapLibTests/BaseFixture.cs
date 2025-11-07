@@ -1,8 +1,6 @@
 ﻿using MapLib.DataSources.Raster;
 using MapLib.GdalSupport;
-using MapLib.Output;
 using MapLib.Util;
-using Microsoft.Diagnostics.Tracing.Parsers.JScript;
 using System.Drawing;
 using System.IO;
 
@@ -26,8 +24,14 @@ public abstract class BaseFixture
 
     public static string TestDataPath => FileSystemHelpers.TestDataPath;
 
+
+    // Approximate bounds. For testing only.
+
     protected static readonly Bounds MassachusettsBounds =
         new(-73.30, -69.56, 41.14, 42.53);
+
+    protected static readonly Bounds UnitedKingdomBounds =
+        new(-9.23, 2.59, 49.47, 61.19);
 
 
     [OneTimeSetUp]
