@@ -24,7 +24,6 @@ public static class UrlHelper
             using var fs = new FileStream(destFilename, FileMode.OpenOrCreate);
             //await stream.Result.CopyToAsync(fs);
             stream.Result.CopyTo(fs);
-
         }
         catch (Exception ex)
         {

@@ -28,9 +28,9 @@ namespace MapLib.DataSources.Raster;
 /// TODO: Support SRTM1 global (depending on mirrors)
 /// TODO: Support a later and void-filled version like v3 (depending on mirrors)
 /// </remarks>
-public class SrtmDataSource : BaseRasterDataSource
+public class SrtmDataSource : BaseTiledRasterDataSource
 {
-    public override string Name => "SRTM";
+    public override string Name => "Shuttle Radio Topography Mission (SRTM)";
 
     public override Srs Srs => Srs.Wgs84;
 
@@ -39,63 +39,11 @@ public class SrtmDataSource : BaseRasterDataSource
 
     public override bool IsBounded => false;
 
-    private string Subdirectory => "SRTM3";
-
-    public double ScaleFactor { get; set; }
+    protected override string CacheSubdirectory => "SRTM3";
 
     public SrtmDataSource(double scaleFactor = 1)
+        : base(scaleFactor)
     {
-        ScaleFactor = scaleFactor;
-    }
-
-
-    public override Task<RasterData> GetData()
-    {
-        throw new InvalidOperationException(
-            "SRTM: Must specify bounds.");
-    }
-
-    public override Task<RasterData> GetData(Srs destSrs)
-    {
-        throw new NotImplementedException(
-            "SRTM: Must specify bounds.");
-    }
-
-    public override async Task<RasterData> GetData(Bounds boundsWgs84)
-    {
-        List<string> localFiles = new();
-        foreach (string tileBasename in GetSrtm3BaseNames(boundsWgs84))
-        {
-            foreach (string url in GetPossibleUrlsForSrtm3Base(tileBasename))
-            {
-                try
-                {
-                    string filePath = await DownloadAndCache(url, Subdirectory);
-                    Console.WriteLine("Including file: " + filePath);
-                    localFiles.Add(filePath);
-                    break;
-                }
-                catch (ApplicationException ex)
-                {
-                    // Download failed. This is expected, since the dataset
-                    // only has coverage over land, and we try several URLs
-                    // for each tile (see below).
-                }
-
-                // Not found among all possible urls for this tile. Mark as not found.
-                MarkUrlNotFound(url, Subdirectory);
-            }
-        }
-
-        // Read data using GDAL
-        GdalDataSource gdalSource = new GdalDataSource(localFiles, ScaleFactor);
-        RasterData data = await gdalSource.GetData(boundsWgs84);
-        return data;
-    }
-
-    public override Task<RasterData> GetData(Bounds boundsWgs84, Srs destSrs)
-    {
-        throw new NotImplementedException();
     }
 
     // Files are organized by area. Also, some end in
@@ -104,16 +52,16 @@ public class SrtmDataSource : BaseRasterDataSource
     private static string[] Areas =
         ["Africa", "Australia", "Eurasia", "Islands", "North_America", "South_America"];
     private static string[] Extensions = [".hgt.zip", "hgt.zip"];
-    private IEnumerable<string> GetPossibleUrlsForSrtm3Base(string baseName)
+    protected override IEnumerable<string> GetUrlsForFile(string baseName)
     {
         // Link format (kurviger SRTM mirror):
         // https://srtm.kurviger.de/SRTM3/Eurasia/N00E073.hgt.zip
         foreach (string area in Areas)
             foreach (string extension in Extensions)
                 yield return $"https://srtm.kurviger.de/SRTM3/{area}/{baseName}{extension}";
-    }        
+    }
 
-    private IEnumerable<string> GetSrtm3BaseNames(Bounds b)
+    protected override IEnumerable<string> GetBaseFileNames(Bounds b)
     {
         // Name refers to bottom left coordinates. Format: "N04E072".
         for (int x = b.XDegMin; x < b.XDegMax; x++)

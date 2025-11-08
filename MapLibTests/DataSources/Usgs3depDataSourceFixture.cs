@@ -21,6 +21,6 @@ public class Usgs3depDataSourceFixture : BaseFixture
             .ToImageRasterData();
         Assert.That(imageData, Is.Not.Null);
 
-        SaveTempBitmap(imageData.Bitmap, "Usgs3depDataSourceFixture_3DEP", ".jpg");
+        SaveTempBitmap(imageData.Bitmap, "Usgs3depDataSourceFixture_MA", ".jpg");
     }
 }
