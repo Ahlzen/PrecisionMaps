@@ -86,25 +86,13 @@ public class NaturalEarthRasterDataSource(NaturalEarthRasterDataSet dataSet)
 
     public NaturalEarthRasterDataSet DataSet => dataSet;
 
-    public override async Task<RasterData> GetData()
-    {
-        GdalDataSource source = await GetDataSource();
-        return await source.GetData();
-    }
-
-    public override async Task<RasterData> GetData(Srs destSrs)
+    public override async Task<RasterData> GetData(Srs? destSrs)
     {
         GdalDataSource source = await GetDataSource();
         return await source.GetData(destSrs);
     }
 
-    public override async Task<RasterData> GetData(Bounds boundsWgs84)
-    {
-        GdalDataSource source = await GetDataSource();
-        return await source.GetData(boundsWgs84);
-    }
-
-    public override async Task<RasterData> GetData(Bounds boundsWgs84, Srs destSrs)
+    public override async Task<RasterData> GetData(Bounds boundsWgs84, Srs? destSrs)
     {
         GdalDataSource source = await GetDataSource();
         return await source.GetData(boundsWgs84, destSrs);

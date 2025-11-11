@@ -44,9 +44,9 @@ public class GraticuleDataSource : BaseVectorDataSource
     public int Segments { get; set; } = 20;
 
 
-    public override Task<VectorData> GetData() => GetData(_bounds);
+    public override Task<VectorData> GetData(Srs? destSrs) => GetData(_bounds, destSrs);
 
-    public override Task<VectorData> GetData(Bounds boundsWgs84)
+    public override Task<VectorData> GetData(Bounds boundsWgs84, Srs? destSrs)
     {
         VectorDataBuilder builder = new();
         
@@ -82,6 +82,7 @@ public class GraticuleDataSource : BaseVectorDataSource
                 [new ("Longitude", x.ToString("F3"))])); // TODO: Adaptive/max decimals. W/E/N/S
         }
 
-        return Task.FromResult(builder.ToVectorData(Srs));
+        VectorData data = builder.ToVectorData(Srs);
+        return ReprojectIfNeeded(data, destSrs);
     }
 }

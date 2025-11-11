@@ -30,19 +30,13 @@ public abstract class BaseTiledRasterDataSource : BaseRasterDataSource
         ScaleFactor = scaleFactor;
     }
 
-    public override Task<RasterData> GetData()
-    {
-        throw new InvalidOperationException(
-            "GetData(): Must specify bounds.");
-    }
-
-    public override Task<RasterData> GetData(Srs destSrs)
+    public override Task<RasterData> GetData(Srs? destSrs)
     {
         throw new NotImplementedException(
             "GetData(): Must specify bounds.");
     }
 
-    public override async Task<RasterData> GetData(Bounds boundsWgs84)
+    public override async Task<RasterData> GetData(Bounds boundsWgs84, Srs? destSrs)
     {
         List<string> localFiles = new();
         foreach (string baseFilename in GetBaseFileNames(boundsWgs84))
@@ -60,7 +54,7 @@ public abstract class BaseTiledRasterDataSource : BaseRasterDataSource
                     foundTile = true;
                     break;
                 }
-                catch (ApplicationException ex)
+                catch (ApplicationException)
                 {
                     // Download failed.
                     // This is expected, since the dataset
@@ -79,15 +73,9 @@ public abstract class BaseTiledRasterDataSource : BaseRasterDataSource
 
         // Read data using GDAL
         GdalDataSource gdalSource = new GdalDataSource(localFiles, ScaleFactor);
-        RasterData data = await gdalSource.GetData(boundsWgs84);
+        RasterData data = await gdalSource.GetData(boundsWgs84, destSrs);
         return data;
     }
-
-    public override Task<RasterData> GetData(Bounds boundsWgs84, Srs destSrs)
-    {
-        throw new NotImplementedException();
-    }
-
 
     /// <summary>
     /// Returns the file names of all tiles within the specified bounds.

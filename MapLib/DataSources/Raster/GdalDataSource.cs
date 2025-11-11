@@ -130,12 +130,6 @@ public class GdalDataSource : BaseRasterDataSource
         return Task.FromResult(GetRasterData(sourceDataset));
     }
 
-    public override Task<RasterData> GetData()
-        => GetData(null);
-
-    public override Task<RasterData> GetData(Bounds boundsWgs84)
-        => GetData(null);
-
     public override Task<RasterData> GetData(Bounds boundsWgs84, Srs? destSrs = null)
         => GetData(destSrs);
 

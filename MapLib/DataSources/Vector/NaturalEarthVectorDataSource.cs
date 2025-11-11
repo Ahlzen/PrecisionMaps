@@ -216,16 +216,16 @@ public class NaturalEarthVectorDataSource(NaturalEarthVectorDataSet dataSet)
         return await DownloadAndCache(url, Subdirectory, targetFileName);
     }
 
-    public override async Task<VectorData> GetData()
+    public override async Task<VectorData> GetData(Srs? destSrs)
     {
         string targetFilePath = await Download();
         VectorFileDataSource source = new(targetFilePath);
         VectorData data = await source.GetData();
-        return data;
+        return await ReprojectIfNeeded(data, destSrs);
     }
 
-    public override async Task<VectorData> GetData(Bounds boundsWgs84)
-        => await GetData();
+    public override async Task<VectorData> GetData(Bounds boundsWgs84, Srs? destSrs)
+        => await GetData(destSrs);
 
 
 

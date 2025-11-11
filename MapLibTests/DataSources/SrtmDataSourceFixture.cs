@@ -1,4 +1,5 @@
 ﻿using MapLib.DataSources.Raster;
+using MapLib.GdalSupport;
 using MapLib.RasterOps;
 
 namespace MapLib.Tests.DataSources;
@@ -6,12 +7,24 @@ namespace MapLib.Tests.DataSources;
 [TestFixture]
 public class SrtmDataSourceFixture : BaseFixture
 {
+    private static IEnumerable<Srs?> TestProjections()
+    {
+        yield return null;
+        yield return Srs.Robinson;
+    }
+
     [Test]
-    public async Task TestDownloadUnitedKingdom()
+    [TestCaseSource("TestProjections")]
+    public async Task TestDownloadUnitedKingdom(Srs? srs)
     {
         // Download and save at quarter resolution (full res is too large)
         SrtmDataSource source = new(scaleFactor: 0.25);
-        RasterData data = await source.GetData(UnitedKingdomBounds);
+        RasterData data;
+
+        if (srs != null)
+            data = await source.GetData(UnitedKingdomBounds, srs);
+        else
+            data = await source.GetData(UnitedKingdomBounds);
 
         SingleBandRasterData? demData = data as SingleBandRasterData;
         Assert.That(demData, Is.Not.Null);
@@ -23,6 +36,8 @@ public class SrtmDataSourceFixture : BaseFixture
 
         SaveTempBitmap(imageData.Bitmap, "SrtmDataSourceFixture_UK", ".jpg");
     }
+
+
 
     [Test]
     public async Task TestDownloadGlasgow()

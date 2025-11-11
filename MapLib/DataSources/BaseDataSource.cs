@@ -46,13 +46,14 @@ public abstract class BaseDataSource<TData> : IHasSrs
     /// <exception cref="InvalidOperationException">
     /// Thrown if called on an unbounded source.
     /// </exception>
-    public abstract Task<TData> GetData();
+    public virtual Task<TData> GetData() => GetData(null);
 
     /// <summary>
     /// See GetData(). Returns data in the specified SRS,
-    /// reprojecting/warping if needed.
+    /// reprojecting/warping if needed, or in the original
+    /// SRS if destSrs is null.
     /// </summary>
-    public abstract Task<TData> GetData(Srs destSrs);
+    public abstract Task<TData> GetData(Srs? destSrs);
 
     /// <summary>
     /// Return data for (at least) the specified bounds from
@@ -63,16 +64,17 @@ public abstract class BaseDataSource<TData> : IHasSrs
     /// this data source.
     /// May return more if needed (e.g. may not crop/trim a file data source).
     /// </remarks>
-    public abstract Task<TData> GetData(Bounds boundsWgs84);
+    public virtual Task<TData> GetData(Bounds boundsWgs84) => GetData(boundsWgs84, null);
 
     /// <summary>
     /// See GetData(). Returns data in the specified SRS,
-    /// reprojecting/warping if needed.
+    /// reprojecting/warping as needed, or in the original
+    /// SRS if destSrs is null.
     /// </summary>
-    public abstract Task<TData> GetData(Bounds boundsWgs84, Srs destSrs);
+    public abstract Task<TData> GetData(Bounds boundsWgs84, Srs? destSrs);
+
 
     #region Data file caching
-
 
     /// <summary>
     /// Download a file to the data cache (if needed) and returns path
@@ -193,16 +195,18 @@ public abstract class BaseDataSource<TData> : IHasSrs
 
 public abstract class BaseVectorDataSource : BaseDataSource<VectorData>
 {
-    public override async Task<VectorData> GetData(Srs destSrs)
-        => Reproject(GetData().Result, destSrs);
+    public async Task<VectorData> ReprojectIfNeeded(VectorData data, Srs? destSrs)
+    {
+        if (destSrs == null || destSrs == Srs)
+            return data;
+        else
+            return await Reproject(data, destSrs);
+    }
 
-    public override async Task<VectorData> GetData(Bounds boundsWgs84, Srs destSrs)
-        => Reproject(GetData(boundsWgs84).Result, destSrs);
-
-    public VectorData Reproject(VectorData data, Srs destSrs)
+    public async Task<VectorData> Reproject(VectorData data, Srs destSrs)
     {
         Transformer transformer = new(this.Srs, destSrs);
-        return data.Transform(transformer);
+        return await Task.FromResult(data.Transform(transformer));
     }
 }
 

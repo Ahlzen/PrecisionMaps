@@ -46,9 +46,9 @@ public class VectorFileDataSource : BaseVectorDataSource
         }
     }
 
-    public override Task<VectorData> GetData()
-        => Task.FromResult(_reader.ReadFile(Filename));
+    public override Task<VectorData> GetData(Srs? destSrs)
+        => ReprojectIfNeeded(_reader.ReadFile(Filename), destSrs);
 
-    public override Task<VectorData> GetData(Bounds bounds)
-        => GetData();
+    public override Task<VectorData> GetData(Bounds bounds, Srs? destSrs)
+        => GetData(destSrs);
 }

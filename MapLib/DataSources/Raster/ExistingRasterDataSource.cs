@@ -23,12 +23,9 @@ internal class ExistingRasterDataSource : BaseRasterDataSource
         RasterData = rasterData;
     }
 
-    public override Task<RasterData> GetData()
-        => Task.FromResult(RasterData);
-
-    public override Task<RasterData> GetData(Srs destSrs)
+    public override Task<RasterData> GetData(Srs? destSrs)
     {
-        if (Srs == destSrs)
+        if (destSrs == null || destSrs == Srs)
         {
             return Task.FromResult(RasterData);
         }
@@ -52,9 +49,6 @@ internal class ExistingRasterDataSource : BaseRasterDataSource
         }
     }
 
-    public override Task<RasterData> GetData(Bounds boundsWgs84)
-        => GetData(); // for now, no reprojection or cropping
-
-    public override Task<RasterData> GetData(Bounds boundsWgs84, Srs destSrs)
-        => GetData(destSrs); // for now, no reprojection or cropping
+    public override Task<RasterData> GetData(Bounds boundsWgs84, Srs? destSrs)
+        => GetData(destSrs); // for now, no cropping
 }

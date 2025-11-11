@@ -28,13 +28,13 @@ public class OsmDataSource : BaseVectorDataSource
         _cacheManager = new(DefaultCacheDuration);
     }
 
-    public override Task<VectorData> GetData()
+    public override Task<VectorData> GetData(Srs? destSrs)
     {
         throw new InvalidOperationException(
             "Must specify bounds with OSM data source.");
     }
 
-    public override async Task<VectorData> GetData(Bounds bounds)
+    public override async Task<VectorData> GetData(Bounds bounds, Srs? destSrs)
     {
         string baseFilename = $"osm_{bounds.XMin}_{bounds.YMin}_{bounds.XMax}_{bounds.YMax}";
         string? filename = _cacheManager.GetExistingCachedFile(baseFilename, ".osm");
@@ -42,7 +42,9 @@ public class OsmDataSource : BaseVectorDataSource
             filename = await DownloadData(bounds);
         OsmXmlDataReader reader = new();
         VectorData data = reader.ReadFile(filename);
-        return data;
+
+        // Reproject if needed
+        return await ReprojectIfNeeded(data, destSrs);
     }
 
     private async Task<string> DownloadData(Bounds bounds)

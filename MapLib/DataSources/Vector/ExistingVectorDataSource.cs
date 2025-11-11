@@ -13,9 +13,12 @@ public class ExistingVectorDataSource(VectorData vectorData) : BaseVectorDataSou
         
     public VectorData VectorData { get; } = vectorData;
 
-    public override Task<VectorData> GetData()
-        => Task.FromResult(VectorData);
+    public override Task<VectorData> GetData(Srs? destSrs)
+    {
+        Task<VectorData> data = Task.FromResult(VectorData);
+        return ReprojectIfNeeded(data.Result, destSrs);
+    }
 
-    public override Task<VectorData> GetData(Bounds boundsWgs84)
-        => Task.FromResult(VectorData); // for now
+    public override Task<VectorData> GetData(Bounds boundsWgs84, Srs? destSrs)
+        => GetData(destSrs); // for now
 }
