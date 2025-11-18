@@ -21,6 +21,13 @@ public class MapRenderFixture : BaseFixture
         yield return new SvgCanvasStack(CanvasUnit.In, 11.0, 8.5, Color.White);
     }
 
+    public static IEnumerable<CanvasStack> A3SizeCanvases()
+    {
+        yield return new BitmapCanvasStack(CanvasUnit.Mm, 297, 420, Color.White, 1.0);
+        yield return new BitmapCanvasStack(CanvasUnit.Mm, 297, 420, Color.White, 4.0);
+        yield return new SvgCanvasStack(CanvasUnit.Mm, 297, 420, Color.White);
+    }
+
     [Test]
     [TestCaseSource(nameof(LetterSizeCanvases))]
     public async Task RenderSimpleOsmData(CanvasStack canvas)
@@ -186,6 +193,45 @@ public class MapRenderFixture : BaseFixture
         await map.Render(canvas);
         string filename = FileSystemHelpers.GetTempOutputFileName(
             canvas.DefaultFileExtension, "MassachusettsTopo");
+        canvas.SaveToFile(filename);
+        Console.WriteLine(filename);
+        canvas.Dispose();
+    }
+
+    [Test]
+    public async Task RenderMaskedTopoMapOfScotland()
+    {
+        Bounds bounds = ScotlandBounds;
+
+        Map map = new(bounds, new Srs("EPSG:32630")); // UTM zone 30N
+
+        // Get SRTM elevation data
+        SrtmDataSource srtmDataSource = new(scaleFactor: 0.1);
+        var demData = await srtmDataSource.GetData(bounds) as SingleBandRasterData;
+        Assert.That(demData, Is.Not.Null);
+
+        // Generate hillshade
+        demData!.PrintMinMax("DEM data");
+        var hillshadeData = demData!
+            .Hillshade_Basic()
+            .Normalize()
+            .AdjustMidpoint(0.75f)
+            .ToImageRasterData();
+
+        // Style map
+        map.RasterDataSources.Add("hillshade",
+            new ExistingRasterDataSource(hillshadeData));
+        map.MapLayers.Add(new RasterMapLayer("hillshade", "hillshade",
+            new RasterStyle()));
+
+        // TODO: Add mask for raster layer (when supported)
+
+        // Render and save
+        var canvas = new BitmapCanvasStack(CanvasUnit.Mm, 297, 420, Color.White, 1.0);
+
+        await map.Render(canvas);
+        string filename = FileSystemHelpers.GetTempOutputFileName(
+            canvas.DefaultFileExtension, "ScotlandTopo");
         canvas.SaveToFile(filename);
         Console.WriteLine(filename);
         canvas.Dispose();

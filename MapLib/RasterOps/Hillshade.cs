@@ -14,10 +14,9 @@ public static class Hillshade
     public static SingleBandRasterData Hillshade_Basic(
         this SingleBandRasterData source)
     {
-        // TODO: Handle no-data pixels better
-
         long pixelCount = source.HeightPx * source.WidthPx;
         float[] hillshadeData = new float[pixelCount];
+        float? nodataValue = source.NoDataValue;
 
         for (int y = 1; y < source.HeightPx; y++)
         {
@@ -27,10 +26,12 @@ public static class Hillshade
                 float to = source.SingleBandData[y * source.WidthPx + x];
 
                 // TODO: handle nodata better
+                // This may result in artifacts around nodata areas
+                // but at least values will be reasonable.
                 if (from == nodataValue || to == nodataValue)
                     hillshadeData[y * source.WidthPx + x] = 0;
                 else
-                hillshadeData[y * source.WidthPx + x] = to - from;
+                    hillshadeData[y * source.WidthPx + x] = to - from;
             }
             // fill in left column
             hillshadeData[y * source.WidthPx] = hillshadeData[y * source.WidthPx + 1];

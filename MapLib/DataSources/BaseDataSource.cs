@@ -15,7 +15,7 @@ public abstract class BaseDataSource<TData> : IHasSrs
     public abstract Srs Srs { get; }
 
     /// <summary>
-    /// Bounds of full data set. In source (dataset) SRS. If known/applicable.
+    /// Bounds of this data set. In source (dataset) SRS. If known/applicable.
     /// </summary>
     /// <remarks>
     /// For a file, this is the extent of the data in the file.
@@ -25,7 +25,7 @@ public abstract class BaseDataSource<TData> : IHasSrs
     public abstract Bounds? Bounds { get; }
 
     /// <summary>
-    /// Bounds of full data set, in lon/lat WGS84. If known/applicable.
+    /// Bounds of this data set, in lon/lat WGS84. If known/applicable.
     /// </summary>
     public Bounds? BoundsWgs84 => Bounds?.ToWgs84(Srs);
 
@@ -88,7 +88,7 @@ public abstract class BaseDataSource<TData> : IHasSrs
     /// Optional. Destination directory under the data cache. Created if necessary.
     /// </param>
     /// <param name="targetFileName">
-    /// Optional.  The file of interest, whose path is returned.
+    /// Optional. The file of interest, whose path is returned.
     /// May be different from the file name in the URL, e.g. for archives.
     /// E.g. "relief_50.tif" for the above URL.
     /// If null, this is derived directly from the URL.
@@ -144,6 +144,12 @@ public abstract class BaseDataSource<TData> : IHasSrs
 
     protected virtual bool UrlMarkedNotFound(string targetPath)
         => File.Exists(targetPath + ".notfound");
+    protected virtual bool UrlMarkedNotFound(string url, string? subdirectory, string? targetFileName = null)
+    {
+        GetTargetFilePath(url, subdirectory, targetFileName,
+            out string destPath, out string destDirectory, out string targetPath);
+        return UrlMarkedNotFound(targetPath);
+    }
 
     protected virtual void MarkUrlNotFound(string url, string? subdirectory, string? targetFileName = null)
     {
@@ -209,6 +215,7 @@ public abstract class BaseVectorDataSource : BaseDataSource<VectorData>
         return await Task.FromResult(data.Transform(transformer));
     }
 }
+
 
 public abstract class BaseRasterDataSource : BaseDataSource<RasterData>
 {

@@ -2,6 +2,8 @@
 using MapLib.Geometry;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -39,13 +41,34 @@ public abstract class BaseTiledRasterDataSource : BaseRasterDataSource
     public override async Task<RasterData> GetData(Bounds boundsWgs84, Srs? destSrs)
     {
         List<string> localFiles = new();
-        foreach (string baseFilename in GetBaseFileNames(boundsWgs84))
+
+        foreach (string baseFileName in GetBaseFileNames(boundsWgs84))
         {
+            // List of possible URLs for this file. In most cases
+            // this is a single URL, but for some data sources we have
+            // to try multiple.
+            List<string> possibleUrls =
+            [
+                //foreach (string baseFileName in GetBaseFileNames(boundsWgs84))
+                .. GetUrlsForFile(baseFileName),
+            ];
+            if (possibleUrls.Count == 0)
+                throw new ApplicationException("No download URLs for data source.");
+
+            // Main URL: if multiple possible URLs, this is the one we use
+            // to mark tiles as not found.
+            string mainUrl = possibleUrls[0];
+
+            // Manually check if main URL was marked as not found
+            // (this is a workaround for the fact that sometimes we have
+            // multible base names for the same tile)
+            if (UrlMarkedNotFound(mainUrl, CacheSubdirectory))
+                continue;
+
+            // Try URLs one by one
             bool foundTile = false;
-            string lastUrl = "";
-            foreach (string url in GetUrlsForFile(baseFilename))
+            foreach (string url in possibleUrls)
             {
-                lastUrl = url;
                 try
                 {
                     string filePath = await DownloadAndCache(url, CacheSubdirectory);
@@ -67,7 +90,7 @@ public abstract class BaseTiledRasterDataSource : BaseRasterDataSource
             {
                 // Not found among all possible urls for this tile.
                 // Mark as not found.
-                MarkUrlNotFound(lastUrl, CacheSubdirectory);
+                MarkUrlNotFound(mainUrl, CacheSubdirectory);
             }
         }
 

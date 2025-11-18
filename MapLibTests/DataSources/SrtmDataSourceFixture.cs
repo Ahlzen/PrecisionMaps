@@ -15,7 +15,7 @@ public class SrtmDataSourceFixture : BaseFixture
 
     [Test]
     [TestCaseSource("TestProjections")]
-    public async Task TestDownloadUnitedKingdom(Srs? srs)
+    public async Task TestDownloadAndSaveUnitedKingdom(Srs? srs)
     {
         // Download and save at quarter resolution (full res is too large)
         SrtmDataSource source = new(scaleFactor: 0.25);
@@ -37,19 +37,19 @@ public class SrtmDataSourceFixture : BaseFixture
         SaveTempBitmap(imageData.Bitmap, "SrtmDataSourceFixture_UK", ".jpg");
     }
 
-
+    [Test]
+    public async Task TestDownloadScotland()
+    {
+        SrtmDataSource source = new(scaleFactor: 0.25);
+        await source.GetData(ScotlandBounds);
+    }
 
     [Test]
     public async Task TestDownloadGlasgow()
     {
         // Download and save at quarter resolution (full res is too large)
         SrtmDataSource source = new(scaleFactor: 0.25);
-        Bounds glasgowBounds = new(
-            xmin: -4.50,
-            xmax: -4.10, 
-            ymin: 55.80,
-            ymax: 55.95);
-        RasterData data = await source.GetData(glasgowBounds);
+        RasterData data = await source.GetData(GlasgowBounds);
         Assert.That(data, Is.Not.Null);
     }
 }

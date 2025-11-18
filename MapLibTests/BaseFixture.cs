@@ -33,6 +33,13 @@ public abstract class BaseFixture
     protected static readonly Bounds UnitedKingdomBounds =
         new(-9.23, 2.59, 49.47, 61.19);
 
+    protected static readonly Bounds ScotlandBounds =
+        new(xmin: -7.98, xmax: -0.53, ymin: 54.50, ymax: 60.99);
+
+    protected static readonly Bounds GlasgowBounds = new(
+        xmin: -4.50, xmax: -4.10, ymin: 55.80, ymax: 55.95);
+
+
 
     [OneTimeSetUp]
     public void OneTimeSetUp()

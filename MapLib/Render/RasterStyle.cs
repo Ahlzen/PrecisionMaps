@@ -5,6 +5,16 @@
 /// </remarks>
 public record class RasterStyle
 {
-    // TODO: add properties for raster style
+    /// <summary>
+    /// Optional. Name of mask this layer is masked by.
+    /// </summary>
+    public List<string> MaskedBy { get; set; } = new();
 
+    /// <summary>
+    /// Optional. Name of the mask this layer creates.
+    /// </summary>
+    public string? MaskName { get; set; }
+
+
+    // TODO: add properties for raster style
 }

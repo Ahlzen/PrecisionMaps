@@ -1,4 +1,6 @@
-﻿namespace MapLib.RasterOps;
+﻿using static System.Runtime.InteropServices.JavaScript.JSType;
+
+namespace MapLib.RasterOps;
 
 public static class RasterStatsExtensions
 {
@@ -12,8 +14,8 @@ public static class RasterStatsExtensions
     public static void GetMinMax(
         this SingleBandRasterData source, out float min, out float max)
         => GetMinMax(source.SingleBandData, out min, out max, source.NoDataValue);
-
-    internal static void GetMinMax(float[] data, out float min, out float max, float? noDataValue)
+    internal static void GetMinMax(
+        float[] data, out float min, out float max, float? noDataValue)
     {
         min = float.MaxValue;
         max = float.MinValue;
@@ -44,6 +46,14 @@ public static class RasterStatsExtensions
         // Special case, where there are no pixels with data
         if (min == float.MaxValue && max == float.MinValue)
             throw new InvalidOperationException("No data");
+    }
+
+    public static void PrintMinMax(this SingleBandRasterData data, string? prefix = null)
+        => PrintMinMax(data.SingleBandData, data.NoDataValue, prefix);
+    internal static void PrintMinMax(float[] data, float? noDataValue, string? prefix = null)
+    {
+        GetMinMax(data, out float min, out float max, noDataValue);
+        Console.WriteLine($"{prefix}Min: {min}, Max: {max}");
     }
 
     /// <summary>
