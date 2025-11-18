@@ -25,6 +25,11 @@ public static class Hillshade
             {
                 float from = source.SingleBandData[(y - 1) * source.WidthPx + (x - 1)];
                 float to = source.SingleBandData[y * source.WidthPx + x];
+
+                // TODO: handle nodata better
+                if (from == nodataValue || to == nodataValue)
+                    hillshadeData[y * source.WidthPx + x] = 0;
+                else
                 hillshadeData[y * source.WidthPx + x] = to - from;
             }
             // fill in left column
