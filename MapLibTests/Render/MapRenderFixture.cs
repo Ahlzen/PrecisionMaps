@@ -241,6 +241,8 @@ public class MapRenderFixture : BaseFixture
         var canvas = new BitmapCanvasStack(
             CanvasUnit.Mm, 297, 420, Color.AntiqueWhite, 1.0);
 
+        // TODO: This transform doesn't seem to work. Fix.
+
         await map.Render(canvas);
         string filename = FileSystemHelpers.GetTempOutputFileName(
             canvas.DefaultFileExtension, "ScotlandTopo");
