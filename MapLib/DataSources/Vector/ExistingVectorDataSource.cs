@@ -8,7 +8,7 @@ public class ExistingVectorDataSource(VectorData vectorData) : BaseVectorDataSou
 {
     public override string Name => "Existing Vector Data";
     public override Srs Srs => VectorData.Srs;
-    public override Bounds? Bounds => VectorData.Bounds;
+    public override Bounds Bounds => VectorData.Bounds;
     public override bool IsBounded => true;
         
     public VectorData VectorData { get; } = vectorData;

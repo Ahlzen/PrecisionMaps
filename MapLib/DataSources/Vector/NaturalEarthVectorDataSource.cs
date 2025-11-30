@@ -202,7 +202,7 @@ public class NaturalEarthVectorDataSource(NaturalEarthVectorDataSet dataSet)
 
     private string Subdirectory => "NaturalEarth_Vector";
 
-    public override Bounds? Bounds => Geometry.Bounds.GlobalWgs84;
+    public override Bounds Bounds => Geometry.Bounds.GlobalWgs84;
     public override bool IsBounded => true;
 
     public NaturalEarthVectorDataSet DataSet => dataSet;

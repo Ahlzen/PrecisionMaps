@@ -17,7 +17,7 @@ public class Usgs3depDataSource : BaseTiledRasterDataSource
 
     // Approximate bounds (Lower 48 + AK + HI)
     // TODO: Find actual bounds of 3DEP
-    public override Bounds? Bounds =>
+    public override Bounds Bounds =>
         new(xmin: -179.8, xmax: -65.7, ymin: 18.3, ymax: 71.9);
     
     public override bool IsBounded => false;

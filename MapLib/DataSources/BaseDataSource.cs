@@ -1,4 +1,5 @@
-﻿using MapLib.GdalSupport;
+﻿using MapLib.DataSources.Vector;
+using MapLib.GdalSupport;
 using MapLib.Geometry;
 using MapLib.Util;
 using System;
@@ -15,19 +16,19 @@ public abstract class BaseDataSource<TData> : IHasSrs
     public abstract Srs Srs { get; }
 
     /// <summary>
-    /// Bounds of this data set. In source (dataset) SRS. If known/applicable.
+    /// Bounds of this data set. In source (dataset) SRS.
     /// </summary>
     /// <remarks>
     /// For a file, this is the extent of the data in the file.
     /// For an online data source, this returns the full applicable
     /// bounds for that source.
     /// </remarks>
-    public abstract Bounds? Bounds { get; }
+    public abstract Bounds Bounds { get; }
 
     /// <summary>
     /// Bounds of this data set, in lon/lat WGS84. If known/applicable.
     /// </summary>
-    public Bounds? BoundsWgs84 => Bounds?.ToWgs84(Srs);
+    public Bounds? BoundsWgs84 => Bounds.ToWgs84(Srs);
 
 
     /// <summary>
@@ -214,6 +215,12 @@ public abstract class BaseVectorDataSource : BaseDataSource<VectorData>
         Transformer transformer = new(this.Srs, destSrs);
         return await Task.FromResult(data.Transform(transformer));
     }
+
+    //public BaseVectorDataSource Filter(Func<Shape, bool> predicate)
+    //{
+    //    return new ExistingVectorDataSource(
+    //        );
+    //}
 }
 
 

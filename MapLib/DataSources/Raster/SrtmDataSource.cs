@@ -34,7 +34,7 @@ public class SrtmDataSource : BaseTiledRasterDataSource
 
     public override Srs Srs => Srs.Wgs84;
 
-    public override Bounds? Bounds =>
+    public override Bounds Bounds =>
         new(xmin: -180, xmax: 180, ymin: -54, ymax: 60);
 
     public override bool IsBounded => false;

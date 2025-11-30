@@ -13,7 +13,7 @@ public class VectorFileDataSource : BaseVectorDataSource
 {
     public override string Name => "Vector file";
     public override Srs Srs { get; }
-    public override Bounds? Bounds { get; }
+    public override Bounds Bounds { get; }
     public string Filename { get; }
 
     public override bool IsBounded => true;

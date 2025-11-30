@@ -44,4 +44,7 @@ public static class CoordinateTransformationExtensions
 
     public static Bounds ToWgs84(this Bounds bounds, Srs srcSrs)
         => bounds.Transform(srcSrs, Srs.Wgs84);
+
+    public static Bounds FromWgs84(this Bounds boundsWgs84, Srs destSrs)
+        => boundsWgs84.Transform(Srs.Wgs84, destSrs);
 }

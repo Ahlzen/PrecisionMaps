@@ -4,15 +4,18 @@ using OSGeo.GDAL;
 
 namespace MapLib;
 
-public abstract class RasterData : GeoData
+public abstract class RasterData : IGeoData
 {
-    public override Bounds Bounds { get; }
+    public Srs Srs { get; }
+
+    public Bounds Bounds { get; }
 
     public int WidthPx { get; }
     public int HeightPx { get; }
 
-    public RasterData(Srs srs, Bounds bounds, int widthPx, int heightPx) : base(srs)
+    public RasterData(Srs srs, Bounds bounds, int widthPx, int heightPx)
     {
+        Srs = srs;
         Bounds = bounds;
         WidthPx = widthPx;
         HeightPx = heightPx;

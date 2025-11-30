@@ -12,7 +12,7 @@ public class GraticuleDataSource : BaseVectorDataSource
     public override bool IsBounded => false;
 
     private static readonly Bounds _bounds = new Bounds(-180, 180, -90, 90);
-    public override Bounds? Bounds => _bounds;
+    public override Bounds Bounds => _bounds;
 
     /// <summary>
     /// Interval between graticule lines in the X direction (longitudes)

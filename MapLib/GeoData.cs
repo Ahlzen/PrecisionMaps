@@ -19,22 +19,24 @@ public interface IBounded : IHasSrs
     public Bounds Bounds { get; }
 }
 
-public abstract class GeoData : IHasSrs, IBounded
-{
-    /// <summary>
-    /// Bounds, in source (dataset) SRS.
-    /// </summary>
-    public abstract Bounds Bounds { get; }
+public interface IGeoData : IHasSrs, IBounded { }
 
-    public virtual Coord Center => Bounds.Center;
+//public abstract class GeoData : IHasSrs, IBounded
+//{
+//    /// <summary>
+//    /// Bounds, in source (dataset) SRS.
+//    /// </summary>
+//    public abstract Bounds Bounds { get; }
 
-    /// <summary>
-    /// Spatial Reference System / Coordinate Reference System
-    /// </summary>
-    public Srs Srs { get; }
+//    public virtual Coord Center => Bounds.Center;
 
-    protected GeoData(Srs srs)
-    {
-        Srs = srs;
-    }
-}
+//    /// <summary>
+//    /// Spatial Reference System / Coordinate Reference System
+//    /// </summary>
+//    public Srs Srs { get; }
+
+//    protected GeoData(Srs srs)
+//    {
+//        Srs = srs;
+//    }
+//}

@@ -11,7 +11,7 @@ internal class ExistingRasterDataSource : BaseRasterDataSource
     public override string Name => "Existing Raster Data";
 
     public override Srs Srs => RasterData.Srs;
-    public override Bounds? Bounds => RasterData.Bounds;
+    public override Bounds Bounds => RasterData.Bounds;
     public override bool IsBounded => true;
     public int WidthPx => RasterData.WidthPx;
     public int HeightPx => RasterData.HeightPx;

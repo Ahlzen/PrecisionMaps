@@ -1,5 +1,8 @@
-﻿using MapLib.GdalSupport;
+﻿using MapLib.DataSources;
+using MapLib.GdalSupport;
 using MapLib.Geometry;
+using System.ComponentModel.Design;
+using System.Threading.Tasks;
 
 namespace MapLib;
 
@@ -10,8 +13,10 @@ namespace MapLib;
 /// This mostly implements the data structures for
 /// OGC Simple Feature Access.
 /// </remarks>
-public class VectorData : GeoData
+public class VectorData : BaseVectorDataSource, IGeoData
 {
+    public override Srs Srs { get; }
+
     /// <remarks>
     /// At least one of the geometry parameters must be non-empty.
     /// </remarks>
@@ -20,8 +25,9 @@ public class VectorData : GeoData
         Point[]? points, MultiPoint[]? multiPoints,
         Line[]? lines, MultiLine[]? multiLines,
         Polygon[]? polygons, MultiPolygon[]? multiPolygons)
-        : base(srs)
     {
+        Srs = srs;
+
         Points = points ?? [];
         MultiPoints = multiPoints ?? [];
 
@@ -49,6 +55,10 @@ public class VectorData : GeoData
         Points.Length + MultiPoints.Length +
         Lines.Length + MultiLines.Length +
         Polygons.Length + MultiPolygons.Length;
+
+    public override string Name => throw new NotImplementedException();
+
+    public override bool IsBounded => throw new NotImplementedException();
 
     private Bounds ComputeBounds()
     {
@@ -97,6 +107,34 @@ public class VectorData : GeoData
             MultiLines.Select(ml => ml.Transform(transformer)).ToArray(),
             Polygons.Select(p => p.Transform(transformer)).ToArray(),
             MultiPolygons.Select(mp => mp.Transform(transformer)).ToArray());
+
+    public VectorData Filter(Func<Shape, bool> predicate)
+    {
+        return new VectorData(this.Srs,
+            Points.Where(predicate).Cast<Point>().ToArray(),
+            MultiPoints.Where(predicate).Cast<MultiPoint>().ToArray(),
+            Lines.Where(predicate).Cast<Line>().ToArray(),
+            MultiLines.Where(predicate).Cast<MultiLine>().ToArray(),
+            Polygons.Where(predicate).Cast<Polygon>().ToArray(),
+            MultiPolygons.Where(predicate).Cast<MultiPolygon>().ToArray());
+    }
+
+    public override Task<VectorData> GetData(Srs? destSrs)
+    {
+        if (destSrs == null)
+            return Task.FromResult(this);
+        else
+            return Task.FromResult(Transform(new Transformer(this.Srs, destSrs)));
+    }
+
+    public override Task<VectorData> GetData(Bounds boundsWgs84, Srs? destSrs)
+    {
+        Bounds bounds = Bounds.FromWgs84(destSrs ?? Srs);
+        if (destSrs == null)
+            return Task.FromResult(Filter(shape => shape.IsWithin(bounds)));
+        else
+            return Filter(shape => shape.IsWithin(bounds)).GetData(destSrs);
+    }
 
     #endregion
 }

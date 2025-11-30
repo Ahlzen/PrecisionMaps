@@ -17,8 +17,8 @@ public class GdalDataSource : BaseRasterDataSource
     private Srs _srs;
     public override Srs Srs => _srs;
 
-    private Bounds? _bounds;
-    public override Bounds? Bounds => _bounds;
+    private Bounds _bounds;
+    public override Bounds Bounds => _bounds;
 
     public override bool IsBounded => true; // Probably depends on the source
 

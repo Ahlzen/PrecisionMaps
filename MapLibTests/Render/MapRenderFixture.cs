@@ -224,10 +224,22 @@ public class MapRenderFixture : BaseFixture
         map.MapLayers.Add(new RasterMapLayer("hillshade", "hillshade",
             new RasterStyle()));
 
+        map.VectorDataSources.Add("naturalearth-ocean",
+            new NaturalEarthVectorDataSource(NaturalEarthVectorDataSet.Ocean_10m));
+        map.MapLayers.Add(new VectorMapLayer(
+            "ocean", "naturalearth-ocean", new VectorStyle {
+                LineColor = Color.CornflowerBlue,
+                LineWidth = 1.0,
+            }));
+
+        map.VectorDataSources.Add("naturalearth-scotland",
+            new NaturalEarthVectorDataSource(NaturalEarthVectorDataSet.Admin0_Countries_10m));
+
         // TODO: Add mask for raster layer (when supported)
 
         // Render and save
-        var canvas = new BitmapCanvasStack(CanvasUnit.Mm, 297, 420, Color.White, 1.0);
+        var canvas = new BitmapCanvasStack(
+            CanvasUnit.Mm, 297, 420, Color.AntiqueWhite, 1.0);
 
         await map.Render(canvas);
         string filename = FileSystemHelpers.GetTempOutputFileName(

@@ -81,7 +81,7 @@ public class NaturalEarthRasterDataSource(NaturalEarthRasterDataSet dataSet)
 
     private string Subdirectory => "NaturalEarth_Raster";
 
-    public override Bounds? Bounds => Geometry.Bounds.GlobalWgs84;
+    public override Bounds Bounds => Bounds.GlobalWgs84;
     public override bool IsBounded => true;
 
     public NaturalEarthRasterDataSet DataSet => dataSet;

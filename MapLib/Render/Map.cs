@@ -247,6 +247,7 @@ public class Map : IHasSrs, IBounded
             dataSource.Srs, Srs);
         Bounds dataSourceBounds = wgs84ToSourceTransformer.Transform(RequestedBoundsWgs84);
 
+        // TODO: This transform doesn't seem to work. Fix.
         VectorData data = await dataSource.GetData(dataSourceBounds, Srs);
 
         // Filter features (if applicable)
