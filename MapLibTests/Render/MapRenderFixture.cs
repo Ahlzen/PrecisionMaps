@@ -203,7 +203,8 @@ public class MapRenderFixture : BaseFixture
     {
         Bounds bounds = ScotlandBounds;
 
-        Map map = new(bounds, new Srs("EPSG:32630")); // UTM zone 30N
+        //Map map = new(bounds, new Srs("EPSG:32630")); // UTM zone 30N. This transform doesn't seem to work. TODO: look into...
+        Map map = new(bounds, Srs.WebMercator);
 
         // Get SRTM elevation data
         SrtmDataSource srtmDataSource = new(scaleFactor: 0.1);
@@ -215,7 +216,8 @@ public class MapRenderFixture : BaseFixture
         var hillshadeData = demData!
             .Hillshade_Basic()
             .Normalize()
-            .AdjustMidpoint(0.75f)
+            .ScaleAndClamp(0.5f, 2.5f)
+            .AdjustMidpoint(0.8f)
             .ToImageRasterData();
 
         // Style map
@@ -228,6 +230,7 @@ public class MapRenderFixture : BaseFixture
             new NaturalEarthVectorDataSource(NaturalEarthVectorDataSet.Ocean_10m));
         map.MapLayers.Add(new VectorMapLayer(
             "ocean", "naturalearth-ocean", new VectorStyle {
+                FillColor = Color.White,
                 LineColor = Color.CornflowerBlue,
                 LineWidth = 1.0,
             }));
@@ -240,8 +243,6 @@ public class MapRenderFixture : BaseFixture
         // Render and save
         var canvas = new BitmapCanvasStack(
             CanvasUnit.Mm, 297, 420, Color.AntiqueWhite, 1.0);
-
-        // TODO: This transform doesn't seem to work. Fix.
 
         await map.Render(canvas);
         string filename = FileSystemHelpers.GetTempOutputFileName(
